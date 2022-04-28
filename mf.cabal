@@ -1,0 +1,89 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 91624be2d01b74fc867d5480bc75719843fe9669227840878b5c68428008d103
+
+name:           mf
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/mf#readme>
+homepage:       https://github.com/githubuser/mf#readme
+bug-reports:    https://github.com/githubuser/mf/issues
+author:         Author name here
+maintainer:     example@example.com
+copyright:      2020 Author name here
+license:        BSD3
+license-file:   LICENSE
+build-type:     Custom
+extra-source-files:
+    README.md
+    ChangeLog.md
+    src/AttributeGrammar.ag
+    src/Lexer.x
+    src/Parser.y
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/mf
+
+library
+  exposed-modules:
+      AttributeGrammar
+      Lexer
+      Parser
+      Compiler
+  other-modules:
+      Paths_mf
+  hs-source-dirs:
+      src
+  build-tools:
+      alex
+    , happy
+    , uuagc
+  build-depends:
+      array
+    , base >=4.7 && <5
+    , containers
+    , uuagc >=0.9.53.1 && <0.9.54
+  default-language: Haskell2010
+
+executable mf-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_mf
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-tools:
+      alex
+    , happy
+    , uuagc
+  build-depends:
+      array
+    , base >=4.7 && <5
+    , containers
+    , mf
+    , uuagc >=0.9.53.1 && <0.9.54
+  default-language: Haskell2010
+
+test-suite mf-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_mf
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-tools:
+      alex
+    , happy
+    , uuagc
+  build-depends:
+      array
+    , base >=4.7 && <5
+    , containers
+    , mf
+    , uuagc >=0.9.53.1 && <0.9.54
+  default-language: Haskell2010

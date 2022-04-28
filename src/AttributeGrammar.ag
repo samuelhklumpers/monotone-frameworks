@@ -1,0 +1,344 @@
+{
+import qualified Data.Map as M
+import qualified Data.Maybe as Maybe
+import qualified Data.List as L
+}
+
+data Program
+  | Program   procs :: Procs
+              stat  :: Stat
+  deriving Program : Show
+
+data Program'
+  | Program'  procs :: Procs'
+              stat :: Stat'
+  deriving Program' : Show
+
+data Proc
+  | Proc          name :: String  inp :: {[String]}  out :: String   stat :: Stat
+deriving Proc : Show
+
+data Proc'
+  | Proc'         labelEntry :: Int  labelExit :: Int    name :: String  inp :: {[String]}  out :: String   stat :: Stat'
+deriving Proc' : Show
+
+data Stat
+  | Skip
+  | IfThenElse    cond  :: {BExpr}      stat1  :: Stat      stat2 :: Stat
+  | While         cond  :: {BExpr}      stat   :: Stat
+  | Call          name  :: String     params :: {Exprs}    out :: String
+  | IAssign       name  :: String     val    :: {IExpr}
+  | BAssign       name  :: String     val    :: {BExpr}
+  | Seq           stat1 :: Stat       stat2  :: Stat
+  | Malloc        name  :: String     size   :: {IExpr}
+  | Free          ptr   :: {IExpr}
+  | RefAssign     ptr   :: {IExpr}    val    :: {IExpr}
+  | Continue
+  | Break
+deriving Stat : Show
+
+data Stat'
+  | Skip'          label :: Int
+  | IfThenElse'    labelc :: Int       cond  :: BExpr      stat1  :: Stat'     stat2 :: Stat'
+  | While'         labelc :: Int       cond  :: BExpr      stat   :: Stat'
+  | Call'          labelCall :: Int    labelReturn :: Int  name  :: String     params :: Exprs    out :: String
+  | IAssign'       label :: Int        name  :: String     val    :: IExpr
+  | BAssign'       label :: Int        name  :: String     val    :: BExpr
+  | Seq'           stat1 :: Stat'      stat2  :: Stat'
+  | Malloc'        label :: Int        name  :: String     size   :: IExpr
+  | Free'          label :: Int        ptr   :: IExpr
+  | RefAssign'     label :: Int        ptr   :: IExpr      val :: IExpr
+  | Continue'      label :: Int
+  | Break'         label :: Int
+deriving Stat' : Show
+
+data IExpr 
+  | IConst        val  :: Int
+  | Var           name :: String
+  | Plus          left :: IExpr       right :: IExpr
+  | Minus         left :: IExpr       right :: IExpr
+  | Times         left :: IExpr       right :: IExpr
+  | Divide        left :: IExpr       right :: IExpr
+  | Deref         ptr  :: IExpr
+deriving IExpr : Eq, Show
+
+data BExpr
+  | BConst        val  :: Bool
+  | BVar          name :: String
+  | LessThan      left :: IExpr       right :: IExpr
+  | GreaterThan   left :: IExpr       right :: IExpr
+  | LessEqual     left :: IExpr       right :: IExpr
+  | GreaterEqual  left :: IExpr       right :: IExpr
+  | IEqual        left :: IExpr       right :: IExpr
+  | BEqual        left :: BExpr       right :: BExpr
+  | And           left :: BExpr       right :: BExpr
+  | Or            left :: BExpr       right :: BExpr
+  | Not           val  :: BExpr
+deriving BExpr : Eq, Show
+
+
+data Expr | B expr :: BExpr
+          | I expr :: IExpr
+deriving Expr : Eq, Show
+
+type Procs = [Proc]
+type Procs' = [Proc']
+type Exprs = [Expr]
+
+-- * Create a labelled AST
+
+attr Proc Procs Stat [ | label :: Int | ]
+
+attr Program [ | | labelled :: Program' ]
+attr Proc    [ | | labelled :: Proc'    ]
+attr Procs   [ | | labelled :: Procs'   ]
+attr Stat    [ | | labelled :: Stat'    ]
+
+sem Program
+  | Program
+    procs.label  = 1
+    stat.label   = @procs.label
+    lhs.labelled = Program' @procs.labelled @stat.labelled
+
+sem Procs
+  | Nil
+    lhs.labelled = []
+  | Cons
+    lhs.labelled = @hd.labelled : @tl.labelled
+
+sem Proc
+  | Proc
+    stat.label   = @lhs.label + 1
+    lhs.labelled = Proc' @lhs.label @stat.label @name @inp @out @stat.labelled
+    lhs.label    = @stat.label + 1
+
+sem Stat
+  | Skip
+    lhs.label    = @lhs.label + 1
+    lhs.labelled = Skip' @lhs.label
+
+  | IfThenElse
+    stat1.label  = @lhs.label + 1 -- lhs.label is the label of the conditional.
+    stat2.label  = @stat1.label
+    lhs.label    = @stat2.label
+    lhs.labelled = IfThenElse' @lhs.label @cond @stat1.labelled @stat2.labelled
+
+  | While
+    stat.label   = @lhs.label + 1 -- lhs.label is the label of the conditional.
+    lhs.label    = @stat.label
+    lhs.labelled = While' @lhs.label @cond @stat.labelled
+
+  | Call
+    lhs.label    = @lhs.label + 2 -- Entry and exit label
+    lhs.labelled = Call' @lhs.label (@lhs.label + 1) @name @params @out
+
+  | IAssign
+    lhs.label    = @lhs.label + 1
+    lhs.labelled = IAssign' @lhs.label @name @val
+
+  | BAssign
+    lhs.label    = @lhs.label + 1
+    lhs.labelled = BAssign' @lhs.label @name @val
+
+  | Seq
+    stat1.label  = @lhs.label
+    stat2.label  = @stat1.label
+    lhs.labelled = Seq' @stat1.labelled @stat2.labelled
+
+  | Malloc
+    lhs.label    = @lhs.label + 1
+    lhs.labelled = Malloc' @lhs.label @name @size
+
+  | Free
+    lhs.label    = @lhs.label + 1
+    lhs.labelled = Free' @lhs.label @ptr
+
+  | RefAssign
+    lhs.label    = @lhs.label + 1
+    lhs.labelled = RefAssign' @lhs.label @ptr @val
+
+  | Continue
+    lhs.label    = @lhs.label + 1
+    lhs.labelled = Continue' @lhs.label
+
+  | Break
+    lhs.label    = @lhs.label + 1
+    lhs.labelled = Break' @lhs.label
+
+-- * Pretty printer
+attr Program'           [ | | pretty :: String ]
+attr Proc' Procs' Stat' [ | | pretty :: { [String] } ]
+attr IExpr BExpr        [ | | pretty :: String  precedence :: Int ]
+attr Expr Exprs         [ | | pretty :: String ]
+attr Stat'              [ | | isSkip :: Bool  isSingle :: Bool]
+
+{
+indent :: [String] -> [String]
+indent = map ("  " ++)
+
+showLabel :: Int -> String
+showLabel label = "\ESC[93m" ++ reverse (go label) ++ "\ESC[0m"
+  where
+    go :: Int -> String
+    go x
+      | x < 0     = error "Negative label"
+      | r == 0    = subscript !! m : ""
+      | otherwise = subscript !! m : go r
+      where
+        (r, m) = x `divMod` 10
+    subscript = "₀₁₂₃₄₅₆₇₈₉"
+
+addSemicolon :: [String] -> [String]
+addSemicolon [] = []
+addSemicolon xs = init xs ++ [last xs ++ ";"]
+}
+
+sem Program'
+  | Program'
+    lhs.pretty = unlines ("begin" : indent @procs.pretty ++ indent @stat.pretty ++ ["end"])
+
+sem Procs'
+  | Nil
+    lhs.pretty = []
+  | Cons
+    lhs.pretty = @hd.pretty ++ @tl.pretty
+
+sem Proc'
+  | Proc'
+    lhs.pretty = ["proc " ++ @name ++ "(val " ++ (@inp >>= (++ ", ")) ++ "out " ++ @out ++ ") is" ++ showLabel @labelEntry]
+                  ++ indent @stat.pretty
+                  ++ ["end" ++ showLabel @labelExit ++ ";"]
+
+sem Stat'
+  | Skip'
+    lhs.pretty   = ["skip" ++ showLabel @label]
+    lhs.isSkip   = True
+    lhs.isSingle = True
+  | IfThenElse'
+    lhs.pretty   = ["if [" ++ @cond.pretty ++ "]" ++ showLabel @labelc ++ " then" ++ (if @stat1.isSingle then "" else " {")]
+                    ++ indent @stat1.pretty
+                    ++ (if @stat2.isSkip then (if @stat1.isSingle then [] else ["}"]) else
+                            [(if @stat1.isSingle then "" else "} ") ++ "else" ++ (if @stat2.isSingle then "" else " {")]
+                        ++ indent @stat2.pretty
+                        ++ (if @stat2.isSingle then [] else ["}"])
+                      )
+    lhs.isSkip   = False
+    lhs.isSingle = False
+  | While'
+    lhs.pretty   = ["while [" ++ @cond.pretty ++ "]" ++ showLabel @labelc ++ " do" ++ (if @stat.isSingle then "" else " {")]
+                    ++ indent @stat.pretty
+                    ++ (if @stat.isSingle then [] else ["}"])
+    lhs.isSkip   = False
+    lhs.isSingle = False
+  | Call'
+    lhs.pretty   = ["[call " ++ @name ++ "(" ++ @params.pretty ++ @out ++ ")]" ++ showLabel @labelCall ++ "₋" ++ showLabel @labelReturn]
+    lhs.isSkip   = False
+    lhs.isSingle = True
+  | IAssign'
+    lhs.pretty   = ["[" ++ @name ++ " := " ++ @val.pretty ++ "]" ++ showLabel @label]
+    lhs.isSkip   = False
+    lhs.isSingle = True
+  | BAssign'
+    lhs.pretty   = ["[" ++ @name ++ " := " ++ @val.pretty ++ "]" ++ showLabel @label]
+    lhs.isSkip   = False
+    lhs.isSingle = True
+  | Seq'
+    lhs.pretty   = addSemicolon @stat1.pretty ++ @stat2.pretty
+    lhs.isSkip   = False
+    lhs.isSingle = False
+  | Malloc'
+    lhs.pretty   = ["malloc(" ++ @name ++ ", " ++ @size.pretty ++ ")" ++ showLabel @label]
+    lhs.isSkip   = False
+    lhs.isSingle = True
+  | Free'
+    lhs.pretty   = ["free(" ++ @ptr.pretty ++ ")" ++ showLabel @label]
+    lhs.isSkip   = False
+    lhs.isSingle = True
+  | RefAssign'
+    lhs.pretty   = ["[*" ++ @ptr.pretty ++ " := " ++ @val.pretty ++ "]" ++ showLabel @label]
+    lhs.isSkip   = False
+    lhs.isSingle = True
+  | Continue'
+    lhs.pretty   = ["continue" ++ showLabel @label]
+    lhs.isSkip   = False
+    lhs.isSingle = True
+  | Break'
+    lhs.pretty   = ["continue" ++ showLabel @label]
+    lhs.isSkip   = False
+    lhs.isSingle = True
+
+{
+parensIf :: Bool -> String -> String
+parensIf False str = str
+parensIf True str = "(" ++ str ++ ")"
+}
+
+sem IExpr
+  | IConst
+    lhs.pretty = show @val
+    lhs.precedence = 10
+  | Var
+    lhs.pretty = @name
+    lhs.precedence = 10
+  | Plus
+    lhs.pretty = parensIf (@left.precedence < 6) @left.pretty ++ " + " ++ parensIf (@right.precedence <= 6) @right.pretty
+    lhs.precedence = 6
+  | Minus
+    lhs.pretty = parensIf (@left.precedence < 6) @left.pretty ++ " - " ++ parensIf (@right.precedence <= 6) @right.pretty
+    lhs.precedence = 6
+  | Times
+    lhs.pretty = parensIf (@left.precedence < 7) @left.pretty ++ " * " ++ parensIf (@right.precedence <= 7) @right.pretty
+    lhs.precedence = 7
+  | Divide
+    lhs.pretty = parensIf (@left.precedence < 7) @left.pretty ++ " / " ++ parensIf (@right.precedence <= 7) @right.pretty
+    lhs.precedence = 7
+  | Deref
+    lhs.pretty = "*" ++ parensIf (@ptr.precedence < 10) @ptr.pretty
+    lhs.precedence = 10
+
+sem BExpr
+  | BConst
+    lhs.pretty = show @val
+    lhs.precedence = 10
+  | BVar
+    lhs.pretty = @name
+    lhs.precedence = 10
+  | LessThan
+    lhs.pretty = parensIf (@left.precedence <= 4) @left.pretty ++ " < " ++ parensIf (@right.precedence <= 4) @right.pretty
+    lhs.precedence = 4
+  | GreaterThan
+    lhs.pretty = parensIf (@left.precedence <= 4) @left.pretty ++ " > " ++ parensIf (@right.precedence <= 4) @right.pretty
+    lhs.precedence = 4
+  | LessEqual
+    lhs.pretty = parensIf (@left.precedence <= 4) @left.pretty ++ " <= " ++ parensIf (@right.precedence <= 4) @right.pretty
+    lhs.precedence = 4
+  | GreaterEqual
+    lhs.pretty = parensIf (@left.precedence <= 4) @left.pretty ++ " >= " ++ parensIf (@right.precedence <= 4) @right.pretty
+    lhs.precedence = 4
+  | IEqual
+    lhs.pretty = parensIf (@left.precedence <= 4) @left.pretty ++ " == " ++ parensIf (@right.precedence <= 4) @right.pretty
+    lhs.precedence = 4
+  | BEqual
+    lhs.pretty = parensIf (@left.precedence <= 4) @left.pretty ++ " == " ++ parensIf (@right.precedence <= 4) @right.pretty
+    lhs.precedence = 4
+  | And
+    lhs.pretty = parensIf (@left.precedence < 3) @left.pretty ++ " && " ++ parensIf (@right.precedence < 3) @right.pretty
+    lhs.precedence = 3
+  | Or
+    lhs.pretty = parensIf (@left.precedence < 2) @left.pretty ++ " || " ++ parensIf (@right.precedence < 2) @right.pretty
+    lhs.precedence = 2
+  | Not
+    lhs.pretty = "not " ++ parensIf (@val.precedence < 10) @val.pretty
+    lhs.precedence = 10
+
+sem Expr
+  | B
+    lhs.pretty = @expr.pretty
+  | I
+    lhs.pretty = @expr.pretty
+
+sem Exprs
+  | Nil
+    lhs.pretty = ""
+  | Cons
+    lhs.pretty = @hd.pretty ++ ", " ++ @tl.pretty
