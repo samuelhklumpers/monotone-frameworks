@@ -15,3 +15,4 @@ main = do
     _ -> do
       putStrLn "Expected name of example program"
       putStrLn "Usage: stack run -- name"
+

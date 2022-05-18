@@ -2,30 +2,48 @@
 import qualified Data.Map as M
 import qualified Data.Maybe as Maybe
 import qualified Data.List as L
+import Data.Set
 }
 
 data Program
-  | Program   procs :: Procs
-              stat  :: Stat
+  | Program
+    procs :: Procs
+    stat  :: Stat
+  
   deriving Program : Show
 
 data Program'
-  | Program'  procs :: Procs'
-              stat :: Stat'
+  | Program'
+    procs :: Procs'
+    stat :: Stat'
+    dStar :: { [(String, (Int, Int))] }
+
   deriving Program' : Show
 
 data Proc
-  | Proc          name :: String  inp :: {[String]}  out :: String   stat :: Stat
-deriving Proc : Show
+  | Proc
+    name :: String
+    inp :: {[String]}
+    out :: String
+    stat :: Stat
+
+  deriving Proc : Show
 
 data Proc'
-  | Proc'         labelEntry :: Int  labelExit :: Int    name :: String  inp :: {[String]}  out :: String   stat :: Stat'
-deriving Proc' : Show
+  | Proc'
+    labelEntry :: Int
+    labelExit :: Int
+    name :: String
+    inp :: {[String]}
+    out :: String 
+    stat :: Stat'
+
+  deriving Proc' : Show
 
 data Stat
   | Skip
-  | IfThenElse    cond  :: {BExpr}      stat1  :: Stat      stat2 :: Stat
-  | While         cond  :: {BExpr}      stat   :: Stat
+  | IfThenElse    cond  :: {BExpr}    stat1  :: Stat       stat2 :: Stat
+  | While         cond  :: {BExpr}    stat   :: Stat
   | Call          name  :: String     params :: {Exprs}    out :: String
   | IAssign       name  :: String     val    :: {IExpr}
   | BAssign       name  :: String     val    :: {BExpr}
@@ -35,7 +53,8 @@ data Stat
   | RefAssign     ptr   :: {IExpr}    val    :: {IExpr}
   | Continue
   | Break
-deriving Stat : Show
+  
+  deriving Stat : Show
 
 data Stat'
   | Skip'          label :: Int
@@ -50,7 +69,9 @@ data Stat'
   | RefAssign'     label :: Int        ptr   :: IExpr      val :: IExpr
   | Continue'      label :: Int
   | Break'         label :: Int
-deriving Stat' : Show
+
+  deriving Stat' : Show
+
 
 data IExpr 
   | IConst        val  :: Int
@@ -90,26 +111,29 @@ type Exprs = [Expr]
 attr Proc Procs Stat [ | label :: Int | ]
 
 attr Program [ | | labelled :: Program' ]
-attr Proc    [ | | labelled :: Proc'    ]
-attr Procs   [ | | labelled :: Procs'   ]
+attr Proc    [ | | labelled :: Proc'   jump :: { (String, (Int, Int)) } ]
+attr Procs   [ | | labelled :: Procs'  dStar :: { [(String, (Int, Int))] } ]
 attr Stat    [ | | labelled :: Stat'    ]
 
 sem Program
   | Program
     procs.label  = 1
     stat.label   = @procs.label
-    lhs.labelled = Program' @procs.labelled @stat.labelled
+    lhs.labelled = Program' @procs.labelled @stat.labelled @procs.dStar
 
 sem Procs
   | Nil
     lhs.labelled = []
+    lhs.dStar = []
   | Cons
     lhs.labelled = @hd.labelled : @tl.labelled
+    lhs.dStar = @hd.jump : @tl.dStar
 
 sem Proc
   | Proc
     stat.label   = @lhs.label + 1
     lhs.labelled = Proc' @lhs.label @stat.label @name @inp @out @stat.labelled
+    lhs.jump = (@name, (@lhs.label, @stat.label))
     lhs.label    = @stat.label + 1
 
 sem Stat
@@ -166,15 +190,16 @@ sem Stat
     lhs.labelled = Break' @lhs.label
 
 -- * Pretty printer
-attr Program'           [ | | pretty :: String ]
-attr Proc' Procs' Stat' [ | | pretty :: { [String] } ]
+attr Program'           [ | | pretty :: String  init :: Int  final :: { Set Int }  flow :: { Set (Int, Int) } ]
+attr Proc' Stat'        [ dStar :: { [(String, (Int, Int))] } | | pretty :: { [String] }  init :: Int  final :: { Set Int }  flow :: { Set (Int, Int) } ]
+attr Procs'             [ dStar :: { [(String, (Int, Int))] } | | pretty :: { [String] }  flow :: { Set (Int, Int) } ]
 attr IExpr BExpr        [ | | pretty :: String  precedence :: Int ]
 attr Expr Exprs         [ | | pretty :: String ]
-attr Stat'              [ | | isSkip :: Bool  isSingle :: Bool]
+attr Stat'              [ | continueLabel :: Int | isSkip :: Bool  isSingle :: Bool ]
 
 {
 indent :: [String] -> [String]
-indent = map ("  " ++)
+indent = fmap ("  " ++)
 
 showLabel :: Int -> String
 showLabel label = "\ESC[93m" ++ reverse (go label) ++ "\ESC[0m"
@@ -196,24 +221,41 @@ addSemicolon xs = init xs ++ [last xs ++ ";"]
 sem Program'
   | Program'
     lhs.pretty = unlines ("begin" : indent @procs.pretty ++ indent @stat.pretty ++ ["end"])
+    lhs.init = @stat.init
+    lhs.final = @stat.final
+    stat.dStar = @dStar
+    stat.continueLabel = -1
+    procs.dStar = @dStar
+    lhs.flow = @procs.flow <> @stat.flow 
 
 sem Procs'
   | Nil
     lhs.pretty = []
+    lhs.flow = empty
   | Cons
     lhs.pretty = @hd.pretty ++ @tl.pretty
+    lhs.flow = @hd.flow <> @tl.flow
 
 sem Proc'
   | Proc'
     lhs.pretty = ["proc " ++ @name ++ "(val " ++ (@inp >>= (++ ", ")) ++ "out " ++ @out ++ ") is" ++ showLabel @labelEntry]
                   ++ indent @stat.pretty
                   ++ ["end" ++ showLabel @labelExit ++ ";"]
+    lhs.init = @stat.init
+    lhs.final = @stat.final
+    lhs.flow = singleton (@labelEntry, @stat.init) <> @stat.flow <> fromList [(label, @labelExit) | label <- toList @stat.final] 
+    stat.dStar = @lhs.dStar
+    stat.continueLabel = -1
 
 sem Stat'
   | Skip'
     lhs.pretty   = ["skip" ++ showLabel @label]
     lhs.isSkip   = True
     lhs.isSingle = True
+    lhs.init = @label
+    lhs.final = singleton @label
+    lhs.flow = empty
+
   | IfThenElse'
     lhs.pretty   = ["if [" ++ @cond.pretty ++ "]" ++ showLabel @labelc ++ " then" ++ (if @stat1.isSingle then "" else " {")]
                     ++ indent @stat1.pretty
@@ -224,48 +266,95 @@ sem Stat'
                       )
     lhs.isSkip   = False
     lhs.isSingle = False
+    lhs.init = @labelc
+    lhs.final = @stat1.final <> @stat2.final 
+    lhs.flow = @stat1.flow <> @stat2.flow <> fromList [(@labelc, @stat1.init), (@labelc, @stat2.init)]
+
   | While'
     lhs.pretty   = ["while [" ++ @cond.pretty ++ "]" ++ showLabel @labelc ++ " do" ++ (if @stat.isSingle then "" else " {")]
                     ++ indent @stat.pretty
                     ++ (if @stat.isSingle then [] else ["}"])
     lhs.isSkip   = False
     lhs.isSingle = False
+    lhs.init = @labelc
+    lhs.final = singleton @labelc
+    lhs.flow = @stat.flow <> singleton (@labelc, @stat.init) <> fromList [(label, @labelc) | label <- toList @stat.final ]
+    lhs.continueLabel = @labelc
+
   | Call'
     lhs.pretty   = ["[call " ++ @name ++ "(" ++ @params.pretty ++ @out ++ ")]" ++ showLabel @labelCall ++ "₋" ++ showLabel @labelReturn]
     lhs.isSkip   = False
     lhs.isSingle = True
+    lhs.init = @labelCall
+    lhs.final = singleton @labelReturn
+    lhs.flow = {
+        let (l_n, l_x) = Maybe.fromJust $ lookup @name @lhs.dStar in
+        fromList [(@labelCall, l_n), (l_x, @labelReturn)]
+      }
+
   | IAssign'
     lhs.pretty   = ["[" ++ @name ++ " := " ++ @val.pretty ++ "]" ++ showLabel @label]
     lhs.isSkip   = False
     lhs.isSingle = True
+    lhs.init = @label
+    lhs.final = singleton @label
+    lhs.flow = empty
+
   | BAssign'
     lhs.pretty   = ["[" ++ @name ++ " := " ++ @val.pretty ++ "]" ++ showLabel @label]
     lhs.isSkip   = False
     lhs.isSingle = True
+    lhs.init = @label
+    lhs.final = singleton @label
+    lhs.flow = empty
+
   | Seq'
     lhs.pretty   = addSemicolon @stat1.pretty ++ @stat2.pretty
     lhs.isSkip   = False
     lhs.isSingle = False
+    lhs.init = @stat1.init
+    lhs.final = @stat2.final
+    lhs.flow = @stat1.flow <> @stat2.flow <> fromList [(label, @stat2.init) | label <- toList @stat1.final]
+
   | Malloc'
     lhs.pretty   = ["malloc(" ++ @name ++ ", " ++ @size.pretty ++ ")" ++ showLabel @label]
     lhs.isSkip   = False
     lhs.isSingle = True
+    lhs.init = @label
+    lhs.final = singleton @label
+    lhs.flow = empty
+
   | Free'
     lhs.pretty   = ["free(" ++ @ptr.pretty ++ ")" ++ showLabel @label]
     lhs.isSkip   = False
     lhs.isSingle = True
+    lhs.init = @label
+    lhs.final = singleton @label
+    lhs.flow = empty
+
   | RefAssign'
     lhs.pretty   = ["[*" ++ @ptr.pretty ++ " := " ++ @val.pretty ++ "]" ++ showLabel @label]
     lhs.isSkip   = False
     lhs.isSingle = True
+    lhs.init = @label
+    lhs.final = singleton @label
+    lhs.flow = empty
+    
   | Continue'
     lhs.pretty   = ["continue" ++ showLabel @label]
     lhs.isSkip   = False
     lhs.isSingle = True
+    lhs.init = @label
+    lhs.final = singleton @label
+    lhs.flow = singleton (@label, @lhs.continueLabel)
+    
   | Break'
     lhs.pretty   = ["continue" ++ showLabel @label]
     lhs.isSkip   = False
     lhs.isSingle = True
+    lhs.init = @label
+    lhs.final = singleton @label
+    lhs.flow = singleton (@label, @lhs.continueLabel) -- TODO consider if this is reasonable, or we should return all finals in the body of the while instead
 
 {
 parensIf :: Bool -> String -> String

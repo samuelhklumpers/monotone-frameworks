@@ -15,5 +15,8 @@ compile source = do
   putStrLn "# Program"
   putStrLn $ pretty_Syn_Program' synProgram'
 
-  putStrLn "# Put your output here!"
-  putStrLn "Include things like init, flow and analysis results"
+  putStrLn ""
+  putStrLn "# Output"
+  print $ init_Syn_Program' synProgram'
+  print $ final_Syn_Program' synProgram'
+  print $ flow_Syn_Program' synProgram'
