@@ -190,12 +190,13 @@ sem Stat
     lhs.labelled = Break' @lhs.label
 
 -- * Pretty printer
-attr Program'           [ | | pretty :: String  init :: Int  final :: { Set Int }  flow :: { Set (Int, Int) } ]
+attr Program'           [ | | pretty :: String  init :: Int  final :: { Set Int }  flow :: { Set (Int, Int) }  strongLive :: { M.Map Int (Set String -> Set String) } ]
 attr Proc' Stat'        [ dStar :: { [(String, (Int, Int))] } | | pretty :: { [String] }  init :: Int  final :: { Set Int }  flow :: { Set (Int, Int) } ]
 attr Procs'             [ dStar :: { [(String, (Int, Int))] } | | pretty :: { [String] }  flow :: { Set (Int, Int) } ]
-attr IExpr BExpr        [ | | pretty :: String  precedence :: Int ]
-attr Expr Exprs         [ | | pretty :: String ]
-attr Stat'              [ | continueLabel :: Int | isSkip :: Bool  isSingle :: Bool ]
+attr IExpr BExpr        [ | | pretty :: String  precedence :: Int  freeVars use {<>} {empty} :: { Set String } ]
+attr Expr Exprs         [ | | pretty :: String  freeVars use {<>} {empty} :: { Set String } ]
+attr Stat'              [ | continueLabel :: { Maybe Int } | isSkip :: Bool  isSingle :: Bool  breakLabels use {<>} {empty} :: { Set Int }  ]
+attr Procs' Proc' Stat'  [ | strongLive use {<>} {M.empty} :: { M.Map Int (Set String -> Set String) } | ]
 
 {
 indent :: [String] -> [String]
@@ -216,6 +217,11 @@ showLabel label = "\ESC[93m" ++ reverse (go label) ++ "\ESC[0m"
 addSemicolon :: [String] -> [String]
 addSemicolon [] = []
 addSemicolon xs = init xs ++ [last xs ++ ";"]
+
+survive :: String -> Set String -> Set String -> Set String
+survive name freeVars strongLive = if name `member` strongLive then alive <> freeVars else alive  
+  where
+    alive = delete name strongLive
 }
 
 sem Program'
@@ -224,9 +230,10 @@ sem Program'
     lhs.init = @stat.init
     lhs.final = @stat.final
     stat.dStar = @dStar
-    stat.continueLabel = -1
+    stat.continueLabel = Nothing
     procs.dStar = @dStar
-    lhs.flow = @procs.flow <> @stat.flow 
+    lhs.flow = @procs.flow <> @stat.flow
+    lhs.strongLive = @procs.strongLive <> @stat.strongLive
 
 sem Procs'
   | Nil
@@ -245,7 +252,7 @@ sem Proc'
     lhs.final = @stat.final
     lhs.flow = singleton (@labelEntry, @stat.init) <> @stat.flow <> fromList [(label, @labelExit) | label <- toList @stat.final] 
     stat.dStar = @lhs.dStar
-    stat.continueLabel = -1
+    stat.continueLabel = Nothing
 
 sem Stat'
   | Skip'
@@ -269,6 +276,7 @@ sem Stat'
     lhs.init = @labelc
     lhs.final = @stat1.final <> @stat2.final 
     lhs.flow = @stat1.flow <> @stat2.flow <> fromList [(@labelc, @stat1.init), (@labelc, @stat2.init)]
+    lhs.strongLive = @lhs.strongLive <> M.fromList [(@labelc, (<> @cond.freeVars))]
 
   | While'
     lhs.pretty   = ["while [" ++ @cond.pretty ++ "]" ++ showLabel @labelc ++ " do" ++ (if @stat.isSingle then "" else " {")]
@@ -277,9 +285,11 @@ sem Stat'
     lhs.isSkip   = False
     lhs.isSingle = False
     lhs.init = @labelc
-    lhs.final = singleton @labelc
-    lhs.flow = @stat.flow <> singleton (@labelc, @stat.init) <> fromList [(label, @labelc) | label <- toList @stat.final ]
-    lhs.continueLabel = @labelc
+    lhs.final = singleton @labelc <> @stat.breakLabels
+    lhs.flow = @stat.flow <> singleton (@labelc, @stat.init) <> fromList [(label, @labelc) | label <- toList @stat.final ] 
+    lhs.continueLabel = Just @labelc
+    lhs.breakLabels = empty
+    lhs.strongLive = @lhs.strongLive <> M.fromList [(@labelc, (<> @cond.freeVars))]
 
   | Call'
     lhs.pretty   = ["[call " ++ @name ++ "(" ++ @params.pretty ++ @out ++ ")]" ++ showLabel @labelCall ++ "₋" ++ showLabel @labelReturn]
@@ -291,6 +301,7 @@ sem Stat'
         let (l_n, l_x) = Maybe.fromJust $ lookup @name @lhs.dStar in
         fromList [(@labelCall, l_n), (l_x, @labelReturn)]
       }
+    lhs.strongLive = @lhs.strongLive <> M.fromList [(@labelCall, survive @out @params.freeVars)]
 
   | IAssign'
     lhs.pretty   = ["[" ++ @name ++ " := " ++ @val.pretty ++ "]" ++ showLabel @label]
@@ -299,6 +310,7 @@ sem Stat'
     lhs.init = @label
     lhs.final = singleton @label
     lhs.flow = empty
+    lhs.strongLive = @lhs.strongLive <> M.fromList [(@label, survive @name @val.freeVars)]
 
   | BAssign'
     lhs.pretty   = ["[" ++ @name ++ " := " ++ @val.pretty ++ "]" ++ showLabel @label]
@@ -307,6 +319,7 @@ sem Stat'
     lhs.init = @label
     lhs.final = singleton @label
     lhs.flow = empty
+    lhs.strongLive = @lhs.strongLive <> M.fromList [(@label, survive @name @val.freeVars)]
 
   | Seq'
     lhs.pretty   = addSemicolon @stat1.pretty ++ @stat2.pretty
@@ -323,6 +336,7 @@ sem Stat'
     lhs.init = @label
     lhs.final = singleton @label
     lhs.flow = empty
+    lhs.strongLive = @lhs.strongLive <> M.fromList [(@label, survive @name @size.freeVars)]
 
   | Free'
     lhs.pretty   = ["free(" ++ @ptr.pretty ++ ")" ++ showLabel @label]
@@ -331,6 +345,7 @@ sem Stat'
     lhs.init = @label
     lhs.final = singleton @label
     lhs.flow = empty
+    --lhs.strongLive = @lhs.strongLive <> M.fromList [(@label, survive @ptr @val.freeVars)]
 
   | RefAssign'
     lhs.pretty   = ["[*" ++ @ptr.pretty ++ " := " ++ @val.pretty ++ "]" ++ showLabel @label]
@@ -339,6 +354,7 @@ sem Stat'
     lhs.init = @label
     lhs.final = singleton @label
     lhs.flow = empty
+    -- TODO how do we compute strongLive here? (i.e. how do we mark *ptr as live or not)
     
   | Continue'
     lhs.pretty   = ["continue" ++ showLabel @label]
@@ -346,15 +362,16 @@ sem Stat'
     lhs.isSingle = True
     lhs.init = @label
     lhs.final = singleton @label
-    lhs.flow = singleton (@label, @lhs.continueLabel)
+    lhs.flow = singleton (@label, Maybe.fromJust @lhs.continueLabel)
     
   | Break'
-    lhs.pretty   = ["continue" ++ showLabel @label]
+    lhs.pretty   = ["break" ++ showLabel @label]
     lhs.isSkip   = False
     lhs.isSingle = True
     lhs.init = @label
-    lhs.final = singleton @label
-    lhs.flow = singleton (@label, @lhs.continueLabel) -- TODO consider if this is reasonable, or we should return all finals in the body of the while instead
+    lhs.final = empty
+    lhs.flow = empty
+    lhs.breakLabels = singleton @label
 
 {
 parensIf :: Bool -> String -> String
@@ -369,6 +386,7 @@ sem IExpr
   | Var
     lhs.pretty = @name
     lhs.precedence = 10
+    lhs.freeVars = singleton @name
   | Plus
     lhs.pretty = parensIf (@left.precedence < 6) @left.pretty ++ " + " ++ parensIf (@right.precedence <= 6) @right.pretty
     lhs.precedence = 6
@@ -384,6 +402,7 @@ sem IExpr
   | Deref
     lhs.pretty = "*" ++ parensIf (@ptr.precedence < 10) @ptr.pretty
     lhs.precedence = 10
+    --lhs.freeVars = singleton @ptr -- TODO what are the freevars here
 
 sem BExpr
   | BConst
@@ -392,6 +411,7 @@ sem BExpr
   | BVar
     lhs.pretty = @name
     lhs.precedence = 10
+    lhs.freeVars = singleton @name
   | LessThan
     lhs.pretty = parensIf (@left.precedence <= 4) @left.pretty ++ " < " ++ parensIf (@right.precedence <= 4) @right.pretty
     lhs.precedence = 4

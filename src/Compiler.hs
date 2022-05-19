@@ -20,3 +20,5 @@ compile source = do
   print $ init_Syn_Program' synProgram'
   print $ final_Syn_Program' synProgram'
   print $ flow_Syn_Program' synProgram'
+  -- print $ strongLive_Syn_Program' synProgram'
+  -- can't print :(
