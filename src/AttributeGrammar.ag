@@ -189,14 +189,19 @@ sem Stat
     lhs.label    = @lhs.label + 1
     lhs.labelled = Break' @lhs.label
 
+{
+data ConstLat = CI Int | CB Bool | NonConst deriving Eq
+}
+
 -- * Pretty printer
-attr Program'           [ | | pretty :: String  init :: Int  final :: { Set Int }  flow :: { Set (Int, Int) }  strongLive :: { M.Map Int (Set String -> Set String) } ]
+attr Program'           [ | | pretty :: String  init :: Int  final :: { Set Int }  flow :: { Set (Int, Int) }  strongLive :: { M.Map Int (Set String -> Set String) }  valSpace :: { M.Map Int (M.Map String ConstLat) } ]
 attr Proc' Stat'        [ dStar :: { [(String, (Int, Int))] } | | pretty :: { [String] }  init :: Int  final :: { Set Int }  flow :: { Set (Int, Int) } ]
 attr Procs'             [ dStar :: { [(String, (Int, Int))] } | | pretty :: { [String] }  flow :: { Set (Int, Int) } ]
-attr IExpr BExpr        [ | | pretty :: String  precedence :: Int  freeVars use {<>} {empty} :: { Set String } ]
+attr IExpr BExpr        [ | | pretty :: String  precedence :: Int  freeVars use {<>} {empty} :: { Set String }  expValSpace :: { M.Map String ConstLat -> ConstLat } ]
+attr Expr               [ | | expValSpace :: { M.Map String ConstLat -> ConstLat } ]
 attr Expr Exprs         [ | | pretty :: String  freeVars use {<>} {empty} :: { Set String } ]
 attr Stat'              [ | continueLabel :: { Maybe Int } | isSkip :: Bool  isSingle :: Bool  breakLabels use {<>} {empty} :: { Set Int }  ]
-attr Procs' Proc' Stat'  [ | strongLive use {<>} {M.empty} :: { M.Map Int (Set String -> Set String) } | ]
+attr Procs' Proc' Stat'  [ | strongLive use {<>} {M.empty} :: { M.Map Int (Set String -> Set String) }  valSpace use {<>} {M.empty} :: { M.Map Int (M.Map String ConstLat) } | ]
 
 {
 indent :: [String] -> [String]
@@ -222,6 +227,13 @@ survive :: String -> Set String -> Set String -> Set String
 survive name freeVars strongLive = if name `member` strongLive then alive <> freeVars else alive  
   where
     alive = delete name strongLive
+
+testConstant :: String -> ConstLat -> M.Map String ConstLat -> M.Map String ConstLat
+testConstant name val env = M.insert name val' env
+  where
+    val' = case M.lookup name env of
+      Just y  -> if val == y then y else NonConst
+      Nothing -> val
 }
 
 sem Program'
@@ -229,11 +241,13 @@ sem Program'
     lhs.pretty = unlines ("begin" : indent @procs.pretty ++ indent @stat.pretty ++ ["end"])
     lhs.init = @stat.init
     lhs.final = @stat.final
+    lhs.flow = @procs.flow <> @stat.flow
+    lhs.strongLive = @procs.strongLive <> @stat.strongLive
     stat.dStar = @dStar
     stat.continueLabel = Nothing
     procs.dStar = @dStar
-    lhs.flow = @procs.flow <> @stat.flow
-    lhs.strongLive = @procs.strongLive <> @stat.strongLive
+    procs.strongLive = M.empty
+    procs.valSpace = M.empty
 
 sem Procs'
   | Nil
@@ -302,6 +316,8 @@ sem Stat'
         fromList [(@labelCall, l_n), (l_x, @labelReturn)]
       }
     lhs.strongLive = @lhs.strongLive <> M.fromList [(@labelCall, survive @out @params.freeVars)]
+    -- lhs.valSpace = @lhs.valSpace <> M.fromList [(@labelCall, testConstant @out ? @lhs.valSpace )]
+    -- TODO what should ? be? it should be the value of the return variable of the Proc
 
   | IAssign'
     lhs.pretty   = ["[" ++ @name ++ " := " ++ @val.pretty ++ "]" ++ showLabel @label]
@@ -311,6 +327,7 @@ sem Stat'
     lhs.final = singleton @label
     lhs.flow = empty
     lhs.strongLive = @lhs.strongLive <> M.fromList [(@label, survive @name @val.freeVars)]
+    lhs.valSpace = @lhs.valSpace <> M.fromList [(@label, testConstant @name (@val.expValSpace (@lhs.valSpace M.! @label)) (@lhs.valSpace M.! @label))]
 
   | BAssign'
     lhs.pretty   = ["[" ++ @name ++ " := " ++ @val.pretty ++ "]" ++ showLabel @label]
@@ -320,6 +337,7 @@ sem Stat'
     lhs.final = singleton @label
     lhs.flow = empty
     lhs.strongLive = @lhs.strongLive <> M.fromList [(@label, survive @name @val.freeVars)]
+    lhs.valSpace = @lhs.valSpace <> M.fromList [(@label, testConstant @name (@val.expValSpace (@lhs.valSpace M.! @label)) (@lhs.valSpace M.! @label))]
 
   | Seq'
     lhs.pretty   = addSemicolon @stat1.pretty ++ @stat2.pretty
@@ -337,6 +355,7 @@ sem Stat'
     lhs.final = singleton @label
     lhs.flow = empty
     lhs.strongLive = @lhs.strongLive <> M.fromList [(@label, survive @name @size.freeVars)]
+    -- need CL for const prop on lists
 
   | Free'
     lhs.pretty   = ["free(" ++ @ptr.pretty ++ ")" ++ showLabel @label]
@@ -377,68 +396,105 @@ sem Stat'
 parensIf :: Bool -> String -> String
 parensIf False str = str
 parensIf True str = "(" ++ str ++ ")"
+
+cIII :: (Int -> Int -> Int) -> ConstLat -> ConstLat -> ConstLat
+cIII f (CI x) (CI y) = CI (x `f` y)
+cIII _ NonConst _    = NonConst
+cIII _ _ NonConst    = NonConst
+
+cIIB :: (Int -> Int -> Bool) -> ConstLat -> ConstLat -> ConstLat
+cIIB f (CI x) (CI y) = CB (x `f` y)
+cIIB _ NonConst _    = NonConst
+cIIB _ _ NonConst    = NonConst
+
+cBBB :: (Bool -> Bool -> Bool) -> ConstLat -> ConstLat -> ConstLat
+cBBB f (CB x) (CB y) = CB (x `f` y)
+cBBB _ NonConst _    = NonConst
+cBBB _ _ NonConst    = NonConst
+
+cBB :: (Bool -> Bool) -> ConstLat -> ConstLat
+cBB f (CB x)   = CB (f x)
+cBB _ NonConst = NonConst
 }
 
 sem IExpr
   | IConst
     lhs.pretty = show @val
     lhs.precedence = 10
+    lhs.expValSpace = \_ -> CI @val
   | Var
     lhs.pretty = @name
     lhs.precedence = 10
     lhs.freeVars = singleton @name
+    lhs.expValSpace = (M.! @name)
   | Plus
     lhs.pretty = parensIf (@left.precedence < 6) @left.pretty ++ " + " ++ parensIf (@right.precedence <= 6) @right.pretty
     lhs.precedence = 6
+    lhs.expValSpace = \env -> cIII (+) (@left.expValSpace env) (@right.expValSpace env)
   | Minus
     lhs.pretty = parensIf (@left.precedence < 6) @left.pretty ++ " - " ++ parensIf (@right.precedence <= 6) @right.pretty
     lhs.precedence = 6
+    lhs.expValSpace = \env -> cIII (-) (@left.expValSpace env) (@right.expValSpace env)
   | Times
     lhs.pretty = parensIf (@left.precedence < 7) @left.pretty ++ " * " ++ parensIf (@right.precedence <= 7) @right.pretty
     lhs.precedence = 7
+    lhs.expValSpace = \env -> cIII (*) (@left.expValSpace env) (@right.expValSpace env)
   | Divide
     lhs.pretty = parensIf (@left.precedence < 7) @left.pretty ++ " / " ++ parensIf (@right.precedence <= 7) @right.pretty
     lhs.precedence = 7
+    lhs.expValSpace = \env -> cIII div (@left.expValSpace env) (@right.expValSpace env)
   | Deref
     lhs.pretty = "*" ++ parensIf (@ptr.precedence < 10) @ptr.pretty
     lhs.precedence = 10
     --lhs.freeVars = singleton @ptr -- TODO what are the freevars here
+    -- TODO expValSpace
 
 sem BExpr
   | BConst
     lhs.pretty = show @val
     lhs.precedence = 10
+    lhs.expValSpace = \_ -> CB @val
   | BVar
     lhs.pretty = @name
     lhs.precedence = 10
     lhs.freeVars = singleton @name
+    lhs.expValSpace = (M.! @name)
   | LessThan
     lhs.pretty = parensIf (@left.precedence <= 4) @left.pretty ++ " < " ++ parensIf (@right.precedence <= 4) @right.pretty
     lhs.precedence = 4
+    lhs.expValSpace = \env -> cIIB (<) (@left.expValSpace env) (@right.expValSpace env)
   | GreaterThan
     lhs.pretty = parensIf (@left.precedence <= 4) @left.pretty ++ " > " ++ parensIf (@right.precedence <= 4) @right.pretty
     lhs.precedence = 4
+    lhs.expValSpace = \env -> cIIB (>) (@left.expValSpace env) (@right.expValSpace env)
   | LessEqual
     lhs.pretty = parensIf (@left.precedence <= 4) @left.pretty ++ " <= " ++ parensIf (@right.precedence <= 4) @right.pretty
     lhs.precedence = 4
+    lhs.expValSpace = \env -> cIIB (<=) (@left.expValSpace env) (@right.expValSpace env)
   | GreaterEqual
     lhs.pretty = parensIf (@left.precedence <= 4) @left.pretty ++ " >= " ++ parensIf (@right.precedence <= 4) @right.pretty
     lhs.precedence = 4
+    lhs.expValSpace = \env -> cIIB (>=) (@left.expValSpace env) (@right.expValSpace env)
   | IEqual
     lhs.pretty = parensIf (@left.precedence <= 4) @left.pretty ++ " == " ++ parensIf (@right.precedence <= 4) @right.pretty
     lhs.precedence = 4
+    lhs.expValSpace = \env -> cIIB (==) (@left.expValSpace env) (@right.expValSpace env)
   | BEqual
     lhs.pretty = parensIf (@left.precedence <= 4) @left.pretty ++ " == " ++ parensIf (@right.precedence <= 4) @right.pretty
     lhs.precedence = 4
+    lhs.expValSpace = \env -> cIIB (==) (@left.expValSpace env) (@right.expValSpace env)
   | And
     lhs.pretty = parensIf (@left.precedence < 3) @left.pretty ++ " && " ++ parensIf (@right.precedence < 3) @right.pretty
     lhs.precedence = 3
+    lhs.expValSpace = \env -> cBBB (&&) (@left.expValSpace env) (@right.expValSpace env)
   | Or
     lhs.pretty = parensIf (@left.precedence < 2) @left.pretty ++ " || " ++ parensIf (@right.precedence < 2) @right.pretty
     lhs.precedence = 2
+    lhs.expValSpace = \env -> cBBB (||) (@left.expValSpace env) (@right.expValSpace env)
   | Not
     lhs.pretty = "not " ++ parensIf (@val.precedence < 10) @val.pretty
     lhs.precedence = 10
+    lhs.expValSpace = \env -> cBB not (@val.expValSpace env)
 
 sem Expr
   | B
