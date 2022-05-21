@@ -36,11 +36,6 @@ build-tools:
 
 library:
   source-dirs: src
-  exposed-modules:
-    - AttributeGrammar
-    - Lexer
-    - Parser
-    - Compiler
 
 executables:
   mf-exe:
