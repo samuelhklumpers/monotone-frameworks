@@ -34,8 +34,21 @@ build-tools:
 - happy
 - uuagc
 
+ghc-options:
+- -O0
+
+default-extensions:
+- ImportQualifiedPost
+- TupleSections
+- NamedFieldPuns
+- OverloadedStrings
+- ScopedTypeVariables
+
 library:
   source-dirs: src
+  dependencies:
+  - relude
+  - safe-exceptions
 
 executables:
   mf-exe:
