@@ -201,7 +201,7 @@ attr IExpr BExpr        [ | | pretty :: String  precedence :: Int  freeVars use 
 attr Expr               [ | | expValSpace :: { M.Map String ConstLat -> ConstLat } ]
 attr Expr Exprs         [ | | pretty :: String  freeVars use {<>} {empty} :: { Set String } ]
 attr Stat'              [ | continueLabel :: { Maybe Int } | isSkip :: Bool  isSingle :: Bool  breakLabels use {<>} {empty} :: { Set Int }  ]
-attr Procs' Proc' Stat'  [ | strongLive use {<>} {M.empty} :: { M.Map Int (Set String -> Set String) }  valSpace use {<>} {M.empty} :: { M.Map Int (M.Map String ConstLat) } | ]
+attr Procs' Proc' Stat'  [ | valSpace use {<>} {M.empty} :: { M.Map Int (M.Map String ConstLat) }  | strongLive use {<>} {M.empty} :: { M.Map Int (Set String -> Set String) }  ]
 
 {
 indent :: [String] -> [String]
@@ -246,7 +246,6 @@ sem Program'
     stat.dStar = @dStar
     stat.continueLabel = Nothing
     procs.dStar = @dStar
-    procs.strongLive = M.empty
     procs.valSpace = M.empty
 
 sem Procs'
@@ -290,7 +289,7 @@ sem Stat'
     lhs.init = @labelc
     lhs.final = @stat1.final <> @stat2.final 
     lhs.flow = @stat1.flow <> @stat2.flow <> fromList [(@labelc, @stat1.init), (@labelc, @stat2.init)]
-    lhs.strongLive = @lhs.strongLive <> M.fromList [(@labelc, (<> @cond.freeVars))]
+    lhs.strongLive = @stat1.strongLive <> @stat2.strongLive <> M.fromList [(@labelc, (<> @cond.freeVars))]
 
   | While'
     lhs.pretty   = ["while [" ++ @cond.pretty ++ "]" ++ showLabel @labelc ++ " do" ++ (if @stat.isSingle then "" else " {")]
@@ -303,7 +302,7 @@ sem Stat'
     lhs.flow = @stat.flow <> singleton (@labelc, @stat.init) <> fromList [(label, @labelc) | label <- toList @stat.final ] 
     lhs.continueLabel = Just @labelc
     lhs.breakLabels = empty
-    lhs.strongLive = @lhs.strongLive <> M.fromList [(@labelc, (<> @cond.freeVars))]
+    lhs.strongLive = @stat.strongLive <> M.fromList [(@labelc, (<> @cond.freeVars))]
 
   | Call'
     lhs.pretty   = ["[call " ++ @name ++ "(" ++ @params.pretty ++ @out ++ ")]" ++ showLabel @labelCall ++ "₋" ++ showLabel @labelReturn]
@@ -315,9 +314,8 @@ sem Stat'
         let (l_n, l_x) = Maybe.fromJust $ lookup @name @lhs.dStar in
         fromList [(@labelCall, l_n), (l_x, @labelReturn)]
       }
-    lhs.strongLive = @lhs.strongLive <> M.fromList [(@labelCall, survive @out @params.freeVars)]
-    -- lhs.valSpace = @lhs.valSpace <> M.fromList [(@labelCall, testConstant @out ? @lhs.valSpace )]
-    -- TODO what should ? be? it should be the value of the return variable of the Proc
+    -- lhs.strongLive = ? <> M.fromList [(@labelCall, survive @out @params.freeVars)]
+    -- lhs.valSpace   = ? <> M.fromList [(@labelCall, testConstant @out ? @lhs.valSpace )]
 
   | IAssign'
     lhs.pretty   = ["[" ++ @name ++ " := " ++ @val.pretty ++ "]" ++ showLabel @label]
@@ -326,7 +324,7 @@ sem Stat'
     lhs.init = @label
     lhs.final = singleton @label
     lhs.flow = empty
-    lhs.strongLive = @lhs.strongLive <> M.fromList [(@label, survive @name @val.freeVars)]
+    lhs.strongLive = M.fromList [(@label, survive @name @val.freeVars)]
     lhs.valSpace = @lhs.valSpace <> M.fromList [(@label, testConstant @name (@val.expValSpace (@lhs.valSpace M.! @label)) (@lhs.valSpace M.! @label))]
 
   | BAssign'
@@ -336,7 +334,7 @@ sem Stat'
     lhs.init = @label
     lhs.final = singleton @label
     lhs.flow = empty
-    lhs.strongLive = @lhs.strongLive <> M.fromList [(@label, survive @name @val.freeVars)]
+    lhs.strongLive = M.fromList [(@label, survive @name @val.freeVars)]
     lhs.valSpace = @lhs.valSpace <> M.fromList [(@label, testConstant @name (@val.expValSpace (@lhs.valSpace M.! @label)) (@lhs.valSpace M.! @label))]
 
   | Seq'
@@ -354,8 +352,8 @@ sem Stat'
     lhs.init = @label
     lhs.final = singleton @label
     lhs.flow = empty
-    lhs.strongLive = @lhs.strongLive <> M.fromList [(@label, survive @name @size.freeVars)]
-    -- need CL for const prop on lists
+    lhs.strongLive = M.fromList [(@label, survive @name @size.freeVars)]
+    -- need CL in ConstLat for const prop on lists
 
   | Free'
     lhs.pretty   = ["free(" ++ @ptr.pretty ++ ")" ++ showLabel @label]
@@ -364,7 +362,7 @@ sem Stat'
     lhs.init = @label
     lhs.final = singleton @label
     lhs.flow = empty
-    --lhs.strongLive = @lhs.strongLive <> M.fromList [(@label, survive @ptr @val.freeVars)]
+    --lhs.strongLive = M.fromList [(@label, survive @ptr @val.freeVars)]
 
   | RefAssign'
     lhs.pretty   = ["[*" ++ @ptr.pretty ++ " := " ++ @val.pretty ++ "]" ++ showLabel @label]
