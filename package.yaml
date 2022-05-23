@@ -43,6 +43,8 @@ default-extensions:
 - NamedFieldPuns
 - OverloadedStrings
 - ScopedTypeVariables
+- TypeApplications
+- DerivingVia
 
 library:
   source-dirs: src
