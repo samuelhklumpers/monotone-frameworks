@@ -3,6 +3,22 @@ import qualified Data.Map as M
 import qualified Data.Maybe as Maybe
 import qualified Data.List as L
 import Data.Set
+
+import Std (DifTrans(..), Endo(..), insertL, insertR, singleL, singleR)
+
+data Proc'' = Proc'' { procEntry :: Int, procExit :: Int, procName :: String, procInp :: [String], procOut :: String } deriving (Show, Eq, Ord)
+type DStar = [(String, Proc'')]
+
+data Edge = Suc Int Int | Enter Int Int | Return Int Int deriving (Eq, Ord)
+data Inter = Inter Int Int Int Int deriving (Eq, Ord)
+
+instance Show Edge where
+  show (Suc a b) = show (a, b)
+  show (Enter a b) = "(" ++ show a ++ ";" ++ show b ++ ")"
+  show (Return a b) = "(" ++ show a ++ ";" ++ show b ++ ")"
+
+instance Show Inter where
+  show (Inter a b c d) = show (a, b, c, d)
 }
 
 data Program
@@ -16,7 +32,7 @@ data Program'
   | Program'
     procs :: Procs'
     stat :: Stat'
-    dStar :: { [(String, (Int, Int))] }
+    dStar :: DStar
 
   deriving Program' : Show
 
@@ -111,8 +127,8 @@ type Exprs = [Expr]
 attr Proc Procs Stat [ | label :: Int | ]
 
 attr Program [ | | labelled :: Program' ]
-attr Proc    [ | | labelled :: Proc'   jump :: { (String, (Int, Int)) } ]
-attr Procs   [ | | labelled :: Procs'  dStar :: { [(String, (Int, Int))] } ]
+attr Proc    [ | | labelled :: Proc'  dStar :: { (String, Proc'') } ]
+attr Procs   [ | | labelled :: Procs'  dStar :: DStar ]
 attr Stat    [ | | labelled :: Stat'    ]
 
 sem Program
@@ -127,14 +143,14 @@ sem Procs
     lhs.dStar = []
   | Cons
     lhs.labelled = @hd.labelled : @tl.labelled
-    lhs.dStar = @hd.jump : @tl.dStar
+    lhs.dStar = @hd.dStar : @tl.dStar
 
 sem Proc
   | Proc
     stat.label   = @lhs.label + 1
     lhs.labelled = Proc' @lhs.label @stat.label @name @inp @out @stat.labelled
-    lhs.jump = (@name, (@lhs.label, @stat.label))
     lhs.label    = @stat.label + 1
+    lhs.dStar    = (@name, Proc'' @lhs.label @stat.label @name @inp @out)
 
 sem Stat
   | Skip
@@ -191,17 +207,19 @@ sem Stat
 
 {
 data ConstLat = CI Int | CB Bool | NonConst deriving Eq
+type PtConstLat = M.Map String ConstLat
 }
 
 -- * Pretty printer
-attr Program'           [ | | pretty :: String  init :: Int  final :: { Set Int }  flow :: { Set (Int, Int) }  strongLive :: { M.Map Int (Set String -> Set String) }  valSpace :: { M.Map Int (M.Map String ConstLat) } ]
-attr Proc' Stat'        [ dStar :: { [(String, (Int, Int))] } | | pretty :: { [String] }  init :: Int  final :: { Set Int }  flow :: { Set (Int, Int) } ]
-attr Procs'             [ dStar :: { [(String, (Int, Int))] } | | pretty :: { [String] }  flow :: { Set (Int, Int) } ]
-attr IExpr BExpr        [ | | pretty :: String  precedence :: Int  freeVars use {<>} {empty} :: { Set String }  expValSpace :: { M.Map String ConstLat -> ConstLat } ]
-attr Expr               [ | | expValSpace :: { M.Map String ConstLat -> ConstLat } ]
-attr Expr Exprs         [ | | pretty :: String  freeVars use {<>} {empty} :: { Set String } ]
+attr Program'           [ | | pretty :: String  init :: Int  final :: { Set Int }  flow :: { Set Edge }  interflow :: { Set Inter }  strongLive use {<>} {mempty} :: { DifTrans (Set String) }  valSpace :: { DifTrans PtConstLat } ]
+attr Proc' Stat'        [ dStar :: DStar | | pretty :: { [String] }  init :: Int  final :: { Set Int }  flow :: { Set Edge }  interflow use {<>} {mempty} :: { Set Inter } ]
+attr Procs'             [ dStar :: DStar | | pretty :: { [String] }  flow :: { Set Edge }  interflow use {<>} {mempty} :: { Set Inter } ]
+attr IExpr BExpr        [ | | pretty :: String  precedence :: Int  freeVars use {<>} {empty} :: { Set String }  expValSpace :: { PtConstLat -> ConstLat } ]
+attr Expr               [ | | freeVars use {<>} {empty} :: { Set String }  expValSpace :: { PtConstLat -> ConstLat }  ]
+attr Exprs              [ | | freeVars use {:} {[]} :: { [Set String] }   expValSpace use {:} {[]} :: { [PtConstLat -> ConstLat] }  ]  
+attr Expr Exprs         [ | | pretty :: String   ]
 attr Stat'              [ | continueLabel :: { Maybe Int } | isSkip :: Bool  isSingle :: Bool  breakLabels use {<>} {empty} :: { Set Int }  ]
-attr Procs' Proc' Stat'  [ | valSpace use {<>} {M.empty} :: { M.Map Int (M.Map String ConstLat) }  | strongLive use {<>} {M.empty} :: { M.Map Int (Set String -> Set String) }  ]
+attr Procs' Proc' Stat'  [ | | strongLive use {<>} {mempty} :: { DifTrans (Set String) }  valSpace use {<>} {mempty} :: { DifTrans PtConstLat }  ]
 
 {
 indent :: [String] -> [String]
@@ -223,18 +241,59 @@ addSemicolon :: [String] -> [String]
 addSemicolon [] = []
 addSemicolon xs = init xs ++ [last xs ++ ";"]
 
-survive :: String -> Set String -> Set String -> Set String
-survive name freeVars strongLive = if name `member` strongLive then alive <> freeVars else alive  
-  where
-    alive = delete name strongLive
+findProc :: String -> DStar -> Proc''
+findProc = (Maybe.fromJust .) . lookup 
 
-testConstant :: String -> ConstLat -> M.Map String ConstLat -> M.Map String ConstLat
-testConstant name val env = M.insert name val' env
+surviveInto :: Set String -> String -> Set String -> Set String -> Set String
+surviveInto env name vars dst = if name `member` env then alive <> vars else alive
   where
+    alive = delete name dst
+
+survive :: String -> Set String -> Set String -> Set String
+survive name vars env = surviveInto env name vars env
+
+surviveOne :: String -> String -> Set String -> Set String
+surviveOne name var env = survive name (singleton var) env
+
+constInto :: PtConstLat -> String -> (PtConstLat -> ConstLat) -> PtConstLat -> PtConstLat
+constInto env name exp dst = M.insert name val' dst
+  where
+    val  = exp env
     val' = case M.lookup name env of
       Just y  -> if val == y then y else NonConst
       Nothing -> val
+
+updateConst :: String -> (PtConstLat -> ConstLat) -> PtConstLat -> PtConstLat
+updateConst name exp env = constInto env name exp env
 }
+
+{
+callStrong :: [String] -> [Set String] -> Set String -> Set String -> Set String
+callStrong inputs params r c = appEndo (mconcat $ Endo <$> fs) r
+ where
+  fs :: [Set String -> Set String]
+  fs = surviveInto c <$> inputs <*> params
+
+retStrong :: String -> String -> Set String -> Set String
+retStrong name var r = surviveInto r name (singleton var) mempty
+
+callConst :: [String] -> [PtConstLat -> ConstLat] -> PtConstLat -> PtConstLat
+callConst inputs params c = appEndo (mconcat $ Endo <$> fs) mempty
+  where
+    fs :: [PtConstLat -> PtConstLat]
+    fs = updateConst <$> inputs <*> params
+
+retConst :: String -> String -> PtConstLat -> PtConstLat -> PtConstLat
+retConst retName outName c r = M.insert outName (c M.! retName) r
+}
+
+{-
+    lhs.valSpace = {
+      insertL @labelCall (const $ (appEndo . mconcat $ (Endo .) . updateConst <$> (procInp @loc.proc) <*> @params) mempty) $
+      singleR @labelReturn (\c r -> M.insert @out (constInto r @out (procOut @loc.proc)) c)
+    }
+-}
+
 
 sem Program'
   | Program'
@@ -246,7 +305,6 @@ sem Program'
     stat.dStar = @dStar
     stat.continueLabel = Nothing
     procs.dStar = @dStar
-    procs.valSpace = M.empty
 
 sem Procs'
   | Nil
@@ -263,7 +321,7 @@ sem Proc'
                   ++ ["end" ++ showLabel @labelExit ++ ";"]
     lhs.init = @stat.init
     lhs.final = @stat.final
-    lhs.flow = singleton (@labelEntry, @stat.init) <> @stat.flow <> fromList [(label, @labelExit) | label <- toList @stat.final] 
+    lhs.flow = singleton (Suc @labelEntry @stat.init) <> @stat.flow <> fromList [Suc label @labelExit | label <- toList @stat.final] 
     stat.dStar = @lhs.dStar
     stat.continueLabel = Nothing
 
@@ -288,8 +346,8 @@ sem Stat'
     lhs.isSingle = False
     lhs.init = @labelc
     lhs.final = @stat1.final <> @stat2.final 
-    lhs.flow = @stat1.flow <> @stat2.flow <> fromList [(@labelc, @stat1.init), (@labelc, @stat2.init)]
-    lhs.strongLive = @stat1.strongLive <> @stat2.strongLive <> M.fromList [(@labelc, (<> @cond.freeVars))]
+    lhs.flow = @stat1.flow <> @stat2.flow <> fromList [Suc @labelc @stat1.init, Suc @labelc @stat2.init]
+    lhs.strongLive = insertL @labelc (<> @cond.freeVars) $ @stat1.strongLive <> @stat2.strongLive 
 
   | While'
     lhs.pretty   = ["while [" ++ @cond.pretty ++ "]" ++ showLabel @labelc ++ " do" ++ (if @stat.isSingle then "" else " {")]
@@ -299,10 +357,10 @@ sem Stat'
     lhs.isSingle = False
     lhs.init = @labelc
     lhs.final = singleton @labelc <> @stat.breakLabels
-    lhs.flow = @stat.flow <> singleton (@labelc, @stat.init) <> fromList [(label, @labelc) | label <- toList @stat.final ] 
+    lhs.flow = @stat.flow <> singleton (Suc @labelc @stat.init) <> fromList [Suc label @labelc | label <- toList @stat.final ] 
     lhs.continueLabel = Just @labelc
     lhs.breakLabels = empty
-    lhs.strongLive = @stat.strongLive <> M.fromList [(@labelc, (<> @cond.freeVars))]
+    lhs.strongLive = insertL @labelc (<> @cond.freeVars) $ @stat.strongLive
 
   | Call'
     lhs.pretty   = ["[call " ++ @name ++ "(" ++ @params.pretty ++ @out ++ ")]" ++ showLabel @labelCall ++ "₋" ++ showLabel @labelReturn]
@@ -310,12 +368,12 @@ sem Stat'
     lhs.isSingle = True
     lhs.init = @labelCall
     lhs.final = singleton @labelReturn
-    lhs.flow = {
-        let (l_n, l_x) = Maybe.fromJust $ lookup @name @lhs.dStar in
-        fromList [(@labelCall, l_n), (l_x, @labelReturn)]
-      }
-    -- lhs.strongLive = ? <> M.fromList [(@labelCall, survive @out @params.freeVars)]
-    -- lhs.valSpace   = ? <> M.fromList [(@labelCall, testConstant @out ? @lhs.valSpace )]
+    loc.proc = { findProc @name @lhs.dStar }
+    lhs.interflow = singleton (Inter @labelCall (procEntry @loc.proc) (procExit @loc.proc) @labelReturn)
+    lhs.flow = fromList [Enter @labelCall (procEntry @loc.proc), Return (procExit @loc.proc) @labelReturn]
+
+    lhs.strongLive = insertL @labelReturn (retStrong @out $ procOut @loc.proc)    $ singleR @labelCall (callStrong (procInp @loc.proc) @params.freeVars)
+    lhs.valSpace   = insertL @labelCall (callConst (procInp @loc.proc) $ @params.expValSpace) $ singleR @labelReturn (retConst @out $ procOut @loc.proc)
 
   | IAssign'
     lhs.pretty   = ["[" ++ @name ++ " := " ++ @val.pretty ++ "]" ++ showLabel @label]
@@ -324,8 +382,8 @@ sem Stat'
     lhs.init = @label
     lhs.final = singleton @label
     lhs.flow = empty
-    lhs.strongLive = M.fromList [(@label, survive @name @val.freeVars)]
-    lhs.valSpace = @lhs.valSpace <> M.fromList [(@label, testConstant @name (@val.expValSpace (@lhs.valSpace M.! @label)) (@lhs.valSpace M.! @label))]
+    lhs.strongLive = singleL @label (survive @name @val.freeVars)
+    lhs.valSpace = singleL @label (updateConst @name @val.expValSpace)
 
   | BAssign'
     lhs.pretty   = ["[" ++ @name ++ " := " ++ @val.pretty ++ "]" ++ showLabel @label]
@@ -334,8 +392,8 @@ sem Stat'
     lhs.init = @label
     lhs.final = singleton @label
     lhs.flow = empty
-    lhs.strongLive = M.fromList [(@label, survive @name @val.freeVars)]
-    lhs.valSpace = @lhs.valSpace <> M.fromList [(@label, testConstant @name (@val.expValSpace (@lhs.valSpace M.! @label)) (@lhs.valSpace M.! @label))]
+    lhs.strongLive = singleL @label (survive @name @val.freeVars)
+    lhs.valSpace = singleL @label (updateConst @name @val.expValSpace)
 
   | Seq'
     lhs.pretty   = addSemicolon @stat1.pretty ++ @stat2.pretty
@@ -343,7 +401,7 @@ sem Stat'
     lhs.isSingle = False
     lhs.init = @stat1.init
     lhs.final = @stat2.final
-    lhs.flow = @stat1.flow <> @stat2.flow <> fromList [(label, @stat2.init) | label <- toList @stat1.final]
+    lhs.flow = @stat1.flow <> @stat2.flow <> fromList [Suc label @stat2.init | label <- toList @stat1.final]
 
   | Malloc'
     lhs.pretty   = ["malloc(" ++ @name ++ ", " ++ @size.pretty ++ ")" ++ showLabel @label]
@@ -352,7 +410,7 @@ sem Stat'
     lhs.init = @label
     lhs.final = singleton @label
     lhs.flow = empty
-    lhs.strongLive = M.fromList [(@label, survive @name @size.freeVars)]
+    lhs.strongLive = singleL @label (survive @name @size.freeVars)
     -- need CL in ConstLat for const prop on lists
 
   | Free'
@@ -379,7 +437,7 @@ sem Stat'
     lhs.isSingle = True
     lhs.init = @label
     lhs.final = singleton @label
-    lhs.flow = singleton (@label, Maybe.fromJust @lhs.continueLabel)
+    lhs.flow = singleton $ Suc @label (Maybe.fromJust @lhs.continueLabel)
     
   | Break'
     lhs.pretty   = ["break" ++ showLabel @label]
