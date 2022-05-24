@@ -7,6 +7,9 @@ import Data.Map.Strict qualified as M
 import Data.Map.Merge.Strict qualified as MM
 import Std
 
+callStringsLimit :: Int
+callStringsLimit = 5
+
 class (Monoid m, Eq m) => BoundedSemiLattice m where
   lessOrEquals :: m -> m -> Bool
   lessOrEquals a b = a <> b == b
@@ -87,9 +90,9 @@ mfpSolution
 newtype InterproceduralFragment propertySpace =
   InterproceduralFragment
     (Map
-      Label -- call label
+      Label -- call label in the case of forward flow
       (
-        Label -- return label
+        Label -- return label in the case of forward flow
         ,
         (propertySpace -> propertySpace -> propertySpace) -- transfer function
       )
@@ -151,11 +154,24 @@ mfpSolution'
       where
         newPropertiesForL'
           | Just _ <- lookupCall l interproceduralFragment =
-            transferFunction l (analysisLookup l analysisOld) -- to-do. call string manipulation
+            coerce -- ignore
+              @(Map [Label] propertySpace -> Map [Label] propertySpace)
+              (M.mapKeysWith (<>) (take callStringsLimit . (l :))) $
+              transferFunction l (analysisLookup l analysisOld)
           | Just (callLabel, f) <- lookupReturn l interproceduralFragment =
-            zipTotalMapOnBoundedSemiLatticeWith f
+            coerce @(([Label] -> propertySpace -> propertySpace) -> Map [Label] propertySpace -> Map [Label] propertySpace) M.mapWithKey
+              (\s p ->
+                f
+                  p
+                  (
+                    fromMaybe bottom $
+                    coerce
+                      @([Label] -> Map [Label] propertySpace -> Maybe propertySpace)
+                      M.lookup (take callStringsLimit (callLabel : s)) $
+                    analysisLookup l analysisOld
+                  )
+              )
               (analysisLookup callLabel analysisOld)
-              (analysisLookup l analysisOld) -- to-do. call string manipulation
           | otherwise = transferFunction l (analysisLookup l analysisOld)
     step (analysis, []) = Left analysis -- terminate
     outgoingFlow :: Label -> [(Label, Label)]
@@ -188,26 +204,6 @@ newtype TotalMapOnBoundedSemiLattice domain codomain =
   (BoundedSemiLattice codomain, Ord domain) =>
   TotalMapOnBoundedSemiLattice domain codomain -> domain -> codomain
 ($$) (TotalMapOnBoundedSemiLattice m) = fromMaybe bottom . (`M.lookup` m)
-
--- | requires @f bottom bottom == bottom@. to-do: can we assume that?
-zipTotalMapOnBoundedSemiLatticeWith ::
-  forall a b c domain.
-  (
-    BoundedSemiLattice a,
-    BoundedSemiLattice b,
-    BoundedSemiLattice c,
-    Ord domain
-  ) =>
-  (a -> b -> c) ->
-  TotalMapOnBoundedSemiLattice domain a ->
-  TotalMapOnBoundedSemiLattice domain b ->
-  TotalMapOnBoundedSemiLattice domain c
-zipTotalMapOnBoundedSemiLatticeWith f =
-  coerce @(Map domain a -> Map domain b -> Map domain c) $
-  MM.merge
-    (MM.mapMissing (\_ a -> f a bottom))
-    (MM.mapMissing (\_ b -> f bottom b))
-    (MM.zipWithMatched (\_ a b -> f a b))
 
 instance
   (Semigroup codomain, Ord domain) =>
@@ -247,13 +243,24 @@ instance
 type ContextSensitive = TotalMapOnBoundedSemiLattice [Label]
 
 lookupCall ::
+  forall propertySpace.
   Label ->
   InterproceduralFragment propertySpace ->
   Maybe (Label, (propertySpace -> propertySpace -> propertySpace))
-lookupCall = undefined -- to-do.
+lookupCall =
+  coerce -- ignore
+    @(Label -> Map Label (Label, (propertySpace -> propertySpace -> propertySpace)) -> (Maybe (Label, (propertySpace -> propertySpace -> propertySpace))))
+    M.lookup
 
 lookupReturn ::
   Label ->
   InterproceduralFragment propertySpace ->
   Maybe (Label, (propertySpace -> propertySpace -> propertySpace))
-lookupReturn = undefined -- to-do.
+lookupReturn returnLabel (InterproceduralFragment interproceduralFragment)
+  = case
+    M.toList $ M.filter ((== returnLabel) . fst) $ interproceduralFragment
+  of
+    [] -> Nothing
+    [(callLabel, (_returnLabel, transferFunction))] ->
+      Just (callLabel, transferFunction)
+    _ -> error "impossible. smart constructor of InterproceduralFragment."
