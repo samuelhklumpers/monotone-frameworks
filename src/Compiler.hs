@@ -95,3 +95,5 @@ compile source = do
 
   putStrLn ""
   putStrLn "# Analyses"
+  putStrLn "##constantPropA"
+  print $ uncurry mfpSolution' constantPropM

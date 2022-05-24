@@ -5,7 +5,9 @@ import qualified Data.List as L
 import Data.Bifunctor
 import Data.Set
 
-import Std (Endo(..))
+import MonotoneFrameworks
+
+import Std (Endo(..), coerce)
 
 instance Semigroup Bool where
   False <> x = x
@@ -235,8 +237,19 @@ sem Stat
     lhs.labelled = Break' @lhs.label
 
 {
-data ConstLat = CI Int | CB Bool | NonConst deriving Eq
-type PtConstLat = M.Map String ConstLat
+data ConstLat = CI Int | CB Bool | NonConst deriving (Show, Eq)
+newtype PtConstLat = PtConstLat (M.Map String ConstLat)
+
+instance Semigroup ConstLat where
+  CI x <> CI y = if x == y then CI x else NonConst
+  CB x <> CB y = if x == y then CB x else NonConst
+  _    <> _       = NonConst
+
+instance Monoid ConstLat where
+  mempty = NonConst
+
+instance BoundedSemiLattice PtConstLat where
+
 }
 
 -- * Pretty printer
@@ -285,10 +298,10 @@ surviveOne :: String -> String -> Set String -> Set String
 surviveOne name var env = survive name (singleton var) env
 
 constInto :: PtConstLat -> String -> (PtConstLat -> ConstLat) -> PtConstLat -> PtConstLat
-constInto env name exp dst = M.insert name val' dst
+constInto env name exp dst = (coerce M.insert) name val' dst
   where
     val  = exp env
-    val' = case M.lookup name env of
+    val' = case (coerce M.lookup) name env of
       Just y  -> if val == y then y else NonConst
       Nothing -> val
 
@@ -313,7 +326,7 @@ callConst inputs params c = appEndo (mconcat $ Endo <$> fs) mempty
     fs = updateConst <$> inputs <*> params
 
 retConst :: String -> String -> PtConstLat -> PtConstLat -> PtConstLat
-retConst retName outName c r = M.insert outName (c M.! retName) r
+retConst retName outName c r = (coerce M.insert) outName (c (coerce M.!) retName) r
 }
 
 {-
@@ -511,7 +524,7 @@ sem IExpr
     lhs.pretty = @name
     lhs.precedence = 10
     lhs.freeVars = singleton @name
-    lhs.expValSpace = (M.! @name)
+    lhs.expValSpace = (coerce (M.!) @name)
   | Plus
     lhs.pretty = parensIf (@left.precedence < 6) @left.pretty ++ " + " ++ parensIf (@right.precedence <= 6) @right.pretty
     lhs.precedence = 6

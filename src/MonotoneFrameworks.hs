@@ -197,7 +197,7 @@ mfpSolution'
 
 newtype TotalMapOnBoundedSemiLattice domain codomain =
   TotalMapOnBoundedSemiLattice (Map domain codomain)
-  deriving (Eq)
+  deriving (Eq, Show)
   deriving (Functor) via Map domain
 
 ($$) ::
