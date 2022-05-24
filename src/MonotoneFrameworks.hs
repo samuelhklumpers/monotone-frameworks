@@ -111,14 +111,15 @@ mfpSolution' ::
   InterproceduralFragment propertySpace ->
   -- | \(\mathrm{Analysis}_\circ\) and \(\mathrm{Analysis}_\bullet\)
   (
-    Map Label (ContextSensitive propertySpace)
+    Map Label (ContextSensitive propertySpace),
+    [(Map Label (ContextSensitive propertySpace), [(Label, Label)])]
   )
 mfpSolution'
   (MonotoneFramework flow extremalLabels extremalValue transferFunctions)
   interproceduralFragment
-  = (analysisEntry)
+  = (analysisEntry, s)
   where
-    (_, analysisEntry) =
+    (s, analysisEntry) =
       iterateFinite step (initialAnalysis, initialWorkList)
     initialAnalysis =
       M.fromSet (const $ TotalMapOnBoundedSemiLattice $ M.singleton [] extremalValue) extremalLabels
