@@ -11,7 +11,6 @@ module Std
 
 import Control.Exception.Safe
 import Data.List.NonEmpty qualified as N
-import Data.Map qualified as M
 import Data.Foldable qualified
 import Relude.Extra.Foldable1 hiding (foldr1)
 import Relude hiding (intercalate, some)
