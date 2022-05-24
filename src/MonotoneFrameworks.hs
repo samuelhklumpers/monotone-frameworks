@@ -14,9 +14,7 @@ class (Monoid m, Eq m) => BoundedSemiLattice m where
 bottom :: (BoundedSemiLattice m) => m
 bottom = mempty
 
-newtype Label =
-  Label Int
-  deriving (Show, Eq, Ord) via Int
+type Label = Int
 
 data MonotoneFramework propertySpace =
   MonotoneFramework

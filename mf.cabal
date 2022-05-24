@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.5.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 
@@ -44,6 +44,8 @@ library
       NamedFieldPuns
       OverloadedStrings
       ScopedTypeVariables
+      TypeApplications
+      DerivingVia
   ghc-options: -O0
   build-tools:
       alex
@@ -71,6 +73,8 @@ executable mf-exe
       NamedFieldPuns
       OverloadedStrings
       ScopedTypeVariables
+      TypeApplications
+      DerivingVia
   ghc-options: -O0 -threaded -rtsopts -with-rtsopts=-N
   build-tools:
       alex
@@ -98,6 +102,8 @@ test-suite mf-test
       NamedFieldPuns
       OverloadedStrings
       ScopedTypeVariables
+      TypeApplications
+      DerivingVia
   ghc-options: -O0 -threaded -rtsopts -with-rtsopts=-N
   build-tools:
       alex

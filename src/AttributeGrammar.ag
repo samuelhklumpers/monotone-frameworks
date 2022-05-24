@@ -2,20 +2,49 @@
 import qualified Data.Map as M
 import qualified Data.Maybe as Maybe
 import qualified Data.List as L
+import Data.Bifunctor
 import Data.Set
 
-import Std (DifTrans(..), Endo(..), insertL, insertR, singleL, singleR)
+import Std (Endo(..))
+
+instance Semigroup Bool where
+  False <> x = x
+  x <> False = x
+
+instance Monoid Bool where
+  mappend = (<>)
+  mempty = False
+
+--                isBackward
+type DifTrans m = (Bool, (M.Map Int (m -> m), M.Map Int (m -> m -> m)))
+
+
+insertL :: Int -> (m -> m) -> DifTrans m -> DifTrans m
+insertL i f (b, m) = (b, first (M.insert i f) m)
+
+insertR :: Int -> (m -> m -> m) -> DifTrans m -> DifTrans m
+insertR i f (b, m) = (b, second (M.insert i f) m)
+
+singleL i x = insertL i x (False, mempty)
+singleR i x = insertR i x (False, mempty)
+
+lookupL :: Int -> DifTrans p -> (p -> p)
+lookupL i (_, (m, _)) = Maybe.fromJust $ M.lookup i m
+
+lookupR :: Int -> DifTrans p -> (p -> p -> p)
+lookupR i (_, (_, m)) = Maybe.fromJust $ M.lookup i m
+
+forwardAnalysis :: DifTrans m
+forwardAnalysis  = (False, mempty)
+
+backwardAnalysis :: DifTrans m
+backwardAnalysis = (True, mempty)
 
 data Proc'' = Proc'' { procEntry :: Int, procExit :: Int, procName :: String, procInp :: [String], procOut :: String } deriving (Show, Eq, Ord)
 type DStar = [(String, Proc'')]
 
-data Edge = Suc Int Int | Enter Int Int | Return Int Int deriving (Eq, Ord)
+type Edge = (Int, Int)
 data Inter = Inter Int Int Int Int deriving (Eq, Ord)
-
-instance Show Edge where
-  show (Suc a b) = show (a, b)
-  show (Enter a b) = "(" ++ show a ++ ";" ++ show b ++ ")"
-  show (Return a b) = "(" ++ show a ++ ";" ++ show b ++ ")"
 
 instance Show Inter where
   show (Inter a b c d) = show (a, b, c, d)
@@ -211,7 +240,7 @@ type PtConstLat = M.Map String ConstLat
 }
 
 -- * Pretty printer
-attr Program'           [ | | pretty :: String  init :: Int  final :: { Set Int }  flow :: { Set Edge }  interflow :: { Set Inter }  strongLive use {<>} {mempty} :: { DifTrans (Set String) }  valSpace :: { DifTrans PtConstLat } ]
+attr Program'           [ | | pretty :: String  init :: Int  final :: { Set Int }  flow :: { Set Edge }  interflow :: { Set Inter }  strongLive :: { DifTrans (Set String) }  valSpace :: { DifTrans PtConstLat } ]
 attr Proc' Stat'        [ dStar :: DStar | | pretty :: { [String] }  init :: Int  final :: { Set Int }  flow :: { Set Edge }  interflow use {<>} {mempty} :: { Set Inter } ]
 attr Procs'             [ dStar :: DStar | | pretty :: { [String] }  flow :: { Set Edge }  interflow use {<>} {mempty} :: { Set Inter } ]
 attr IExpr BExpr        [ | | pretty :: String  precedence :: Int  freeVars use {<>} {empty} :: { Set String }  expValSpace :: { PtConstLat -> ConstLat } ]
@@ -219,7 +248,7 @@ attr Expr               [ | | freeVars use {<>} {empty} :: { Set String }  expVa
 attr Exprs              [ | | freeVars use {:} {[]} :: { [Set String] }   expValSpace use {:} {[]} :: { [PtConstLat -> ConstLat] }  ]  
 attr Expr Exprs         [ | | pretty :: String   ]
 attr Stat'              [ | continueLabel :: { Maybe Int } | isSkip :: Bool  isSingle :: Bool  breakLabels use {<>} {empty} :: { Set Int }  ]
-attr Procs' Proc' Stat'  [ | | strongLive use {<>} {mempty} :: { DifTrans (Set String) }  valSpace use {<>} {mempty} :: { DifTrans PtConstLat }  ]
+attr Procs' Proc' Stat'  [ | | strongLive use {<>} {backwardAnalysis} :: { DifTrans (Set String) }  valSpace use {<>} {forwardAnalysis} :: { DifTrans PtConstLat }  ]
 
 {
 indent :: [String] -> [String]
@@ -321,7 +350,7 @@ sem Proc'
                   ++ ["end" ++ showLabel @labelExit ++ ";"]
     lhs.init = @stat.init
     lhs.final = @stat.final
-    lhs.flow = singleton (Suc @labelEntry @stat.init) <> @stat.flow <> fromList [Suc label @labelExit | label <- toList @stat.final] 
+    lhs.flow = singleton (@labelEntry, @stat.init) <> @stat.flow <> fromList [(label, @labelExit) | label <- toList @stat.final] 
     stat.dStar = @lhs.dStar
     stat.continueLabel = Nothing
 
@@ -346,7 +375,7 @@ sem Stat'
     lhs.isSingle = False
     lhs.init = @labelc
     lhs.final = @stat1.final <> @stat2.final 
-    lhs.flow = @stat1.flow <> @stat2.flow <> fromList [Suc @labelc @stat1.init, Suc @labelc @stat2.init]
+    lhs.flow = @stat1.flow <> @stat2.flow <> fromList [(@labelc, @stat1.init), (@labelc, @stat2.init)]
     lhs.strongLive = insertL @labelc (<> @cond.freeVars) $ @stat1.strongLive <> @stat2.strongLive 
 
   | While'
@@ -357,7 +386,7 @@ sem Stat'
     lhs.isSingle = False
     lhs.init = @labelc
     lhs.final = singleton @labelc <> @stat.breakLabels
-    lhs.flow = @stat.flow <> singleton (Suc @labelc @stat.init) <> fromList [Suc label @labelc | label <- toList @stat.final ] 
+    lhs.flow = @stat.flow <> singleton (@labelc, @stat.init) <> fromList [(label, @labelc) | label <- toList @stat.final ] 
     lhs.continueLabel = Just @labelc
     lhs.breakLabels = empty
     lhs.strongLive = insertL @labelc (<> @cond.freeVars) $ @stat.strongLive
@@ -370,7 +399,7 @@ sem Stat'
     lhs.final = singleton @labelReturn
     loc.proc = { findProc @name @lhs.dStar }
     lhs.interflow = singleton (Inter @labelCall (procEntry @loc.proc) (procExit @loc.proc) @labelReturn)
-    lhs.flow = fromList [Enter @labelCall (procEntry @loc.proc), Return (procExit @loc.proc) @labelReturn]
+    lhs.flow = fromList [(@labelCall, (procEntry @loc.proc)), ((procExit @loc.proc), @labelReturn)]
 
     lhs.strongLive = insertL @labelReturn (retStrong @out $ procOut @loc.proc)    $ singleR @labelCall (callStrong (procInp @loc.proc) @params.freeVars)
     lhs.valSpace   = insertL @labelCall (callConst (procInp @loc.proc) $ @params.expValSpace) $ singleR @labelReturn (retConst @out $ procOut @loc.proc)
@@ -401,7 +430,7 @@ sem Stat'
     lhs.isSingle = False
     lhs.init = @stat1.init
     lhs.final = @stat2.final
-    lhs.flow = @stat1.flow <> @stat2.flow <> fromList [Suc label @stat2.init | label <- toList @stat1.final]
+    lhs.flow = @stat1.flow <> @stat2.flow <> fromList [(label, @stat2.init) | label <- toList @stat1.final]
 
   | Malloc'
     lhs.pretty   = ["malloc(" ++ @name ++ ", " ++ @size.pretty ++ ")" ++ showLabel @label]
@@ -437,7 +466,7 @@ sem Stat'
     lhs.isSingle = True
     lhs.init = @label
     lhs.final = singleton @label
-    lhs.flow = singleton $ Suc @label (Maybe.fromJust @lhs.continueLabel)
+    lhs.flow = singleton (@label, (Maybe.fromJust @lhs.continueLabel))
     
   | Break'
     lhs.pretty   = ["break" ++ showLabel @label]

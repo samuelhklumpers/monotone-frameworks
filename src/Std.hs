@@ -13,7 +13,6 @@ import Control.Exception.Safe
 import Data.List.NonEmpty qualified as N
 import Data.Map qualified as M
 import Data.Foldable qualified
-import Data.Bifunctor
 import Relude.Extra.Foldable1 hiding (foldr1)
 import Relude hiding (intercalate, some)
 
@@ -58,16 +57,3 @@ sortNonEmptyOn f =
 -- | fails if the second argument is 'minBound'
 fromToUnsafe :: (Enum a) => a -> a -> [a]
 fromToUnsafe lower upper = enumFromTo lower (pred upper)
-
-
-type DifTrans m = (M.Map Int (m -> m), M.Map Int (m -> m -> m))
-
-
-insertL :: Int -> (m -> m) -> DifTrans m -> DifTrans m
-insertL = (first .) . M.insert
-
-insertR :: Int -> (m -> m -> m) -> DifTrans m -> DifTrans m
-insertR = (second .) . M.insert
-
-singleL i x = insertL i x mempty
-singleR i x = insertR i x mempty 
