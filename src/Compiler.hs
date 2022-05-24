@@ -7,7 +7,7 @@ import Parser
 import Lexer
 import AttributeGrammar
 import MonotoneFrameworks
-
+import Text.Pretty.Simple (pPrintLightBg)
 
 data Flow = Flow {
   initial   :: Int,
@@ -96,6 +96,6 @@ compile source = do
   putStrLn ""
   putStrLn "# Analyses"
   putStrLn "## Constant Propagation"
-  print $ uncurry mfpSolution' constantPropM
+  pPrintLightBg $ uncurry mfpSolution' constantPropM
 
 

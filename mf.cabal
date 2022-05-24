@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.34.5.
 --
 -- see: https://github.com/sol/hpack
 
@@ -56,6 +56,7 @@ library
       array
     , base >=4.7 && <5
     , containers
+    , pretty-simple
     , relude
     , safe-exceptions
     , uuagc >=0.9.53.1 && <0.9.54

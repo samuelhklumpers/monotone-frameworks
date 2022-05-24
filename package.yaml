@@ -51,6 +51,7 @@ library:
   dependencies:
   - relude
   - safe-exceptions
+  - pretty-simple
 
 executables:
   mf-exe:

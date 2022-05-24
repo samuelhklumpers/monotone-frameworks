@@ -403,7 +403,8 @@ sem Stat'
     lhs.init = @labelc
     lhs.final = @stat1.final <> @stat2.final 
     lhs.flow = @stat1.flow <> @stat2.flow <> fromList [(@labelc, @stat1.init), (@labelc, @stat2.init)]
-    lhs.strongLive = insertL @labelc (<> @cond.freeVars) $ @stat1.strongLive <> @stat2.strongLive 
+    lhs.strongLive = insertL @labelc (<> @cond.freeVars) $ @stat1.strongLive <> @stat2.strongLive
+    lhs.valSpace = insertL @labelc id $ @stat1.valSpace <> @stat2.valSpace
 
   | While'
     lhs.pretty   = ["while [" ++ @cond.pretty ++ "]" ++ showLabel @labelc ++ " do" ++ (if @stat.isSingle then "" else " {")]
