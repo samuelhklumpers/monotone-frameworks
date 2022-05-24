@@ -357,6 +357,7 @@ sem Program'
     lhs.init = @stat.init
     lhs.final = @stat.final
     lhs.flow = @procs.flow <> @stat.flow
+    lhs.interflow = @procs.interflow <> @stat.interflow
     lhs.strongLive = @procs.strongLive <> @stat.strongLive
     lhs.valSpace = @procs.valSpace <> @stat.valSpace
     stat.dStar = @dStar
@@ -367,9 +368,11 @@ sem Procs'
   | Nil
     lhs.pretty = []
     lhs.flow = empty
+    lhs.interflow = empty
   | Cons
     lhs.pretty = @hd.pretty ++ @tl.pretty
     lhs.flow = @hd.flow <> @tl.flow
+    lhs.interflow = @hd.interflow <> @tl.interflow
 
 sem Proc'
   | Proc'
@@ -381,6 +384,7 @@ sem Proc'
     lhs.flow = singleton (@labelEntry, @stat.init) <> @stat.flow <> fromList [(label, @labelExit) | label <- toList @stat.final] 
     stat.dStar = @lhs.dStar
     stat.continueLabel = Nothing
+    lhs.interflow = @stat.interflow
     lhs.strongLive = insertL @labelEntry id $ insertL @labelExit id @stat.strongLive
     lhs.valSpace = insertL @labelEntry id $ insertL @labelExit id @stat.valSpace
 
