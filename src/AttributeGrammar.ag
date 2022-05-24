@@ -2,8 +2,13 @@
 import qualified Data.Map as M
 import qualified Data.Maybe as Maybe
 import qualified Data.List as L
+import qualified Data.Map.Merge.Strict as MM
+
 import Data.Bifunctor
+
 import Data.Set
+
+import MonotoneFrameworks
 
 import Std (Endo(..))
 
@@ -235,8 +240,34 @@ sem Stat
     lhs.labelled = Break' @lhs.label
 
 {
-data ConstLat = CI Int | CB Bool | NonConst deriving Eq
-type PtConstLat = M.Map String ConstLat
+data ConstLat = CI Int | CB Bool | NonConst deriving (Show, Eq)
+newtype PtConstLat = PtConstLat (M.Map String ConstLat) deriving (Show, Eq)
+
+(!) :: PtConstLat -> String -> ConstLat
+(PtConstLat m) ! k = m M.! k
+
+ptInsert :: String -> ConstLat -> PtConstLat -> PtConstLat
+ptInsert k v (PtConstLat m) = PtConstLat (M.insert k v m)
+
+ptLookup :: String -> PtConstLat -> Maybe ConstLat
+ptLookup k (PtConstLat m) = M.lookup k m
+
+instance Semigroup ConstLat where
+  CI x <> CI y = if x == y then CI x else NonConst
+  CB x <> CB y = if x == y then CB x else NonConst
+  _    <> _       = NonConst
+
+instance Semigroup PtConstLat where
+  (PtConstLat x) <> (PtConstLat y) = PtConstLat $ MM.merge MM.preserveMissing MM.preserveMissing (MM.zipWithMatched (const (<>))) x y
+
+instance Monoid PtConstLat where
+  mempty = PtConstLat mempty
+
+
+instance Monoid ConstLat where
+  mempty = NonConst
+
+instance BoundedSemiLattice PtConstLat where
 }
 
 -- * Pretty printer
@@ -285,10 +316,10 @@ surviveOne :: String -> String -> Set String -> Set String
 surviveOne name var env = survive name (singleton var) env
 
 constInto :: PtConstLat -> String -> (PtConstLat -> ConstLat) -> PtConstLat -> PtConstLat
-constInto env name exp dst = M.insert name val' dst
+constInto env name exp dst = ptInsert name val' dst
   where
     val  = exp env
-    val' = case M.lookup name env of
+    val' = case ptLookup name env of
       Just y  -> if val == y then y else NonConst
       Nothing -> val
 
@@ -313,15 +344,8 @@ callConst inputs params c = appEndo (mconcat $ Endo <$> fs) mempty
     fs = updateConst <$> inputs <*> params
 
 retConst :: String -> String -> PtConstLat -> PtConstLat -> PtConstLat
-retConst retName outName c r = M.insert outName (c M.! retName) r
+retConst retName outName c r = ptInsert outName (c ! retName) r
 }
-
-{-
-    lhs.valSpace = {
-      insertL @labelCall (const $ (appEndo . mconcat $ (Endo .) . updateConst <$> (procInp @loc.proc) <*> @params) mempty) $
-      singleR @labelReturn (\c r -> M.insert @out (constInto r @out (procOut @loc.proc)) c)
-    }
--}
 
 
 sem Program'
@@ -390,6 +414,7 @@ sem Stat'
     lhs.continueLabel = Just @labelc
     lhs.breakLabels = empty
     lhs.strongLive = insertL @labelc (<> @cond.freeVars) $ @stat.strongLive
+    lhs.valSpace = insertL @labelc id forwardAnalysis <> @stat.valSpace
 
   | Call'
     lhs.pretty   = ["[call " ++ @name ++ "(" ++ @params.pretty ++ @out ++ ")]" ++ showLabel @labelCall ++ "₋" ++ showLabel @labelReturn]
@@ -511,7 +536,7 @@ sem IExpr
     lhs.pretty = @name
     lhs.precedence = 10
     lhs.freeVars = singleton @name
-    lhs.expValSpace = (M.! @name)
+    lhs.expValSpace = (! @name)
   | Plus
     lhs.pretty = parensIf (@left.precedence < 6) @left.pretty ++ " + " ++ parensIf (@right.precedence <= 6) @right.pretty
     lhs.precedence = 6
@@ -543,7 +568,7 @@ sem BExpr
     lhs.pretty = @name
     lhs.precedence = 10
     lhs.freeVars = singleton @name
-    lhs.expValSpace = (M.! @name)
+    lhs.expValSpace = (! @name)
   | LessThan
     lhs.pretty = parensIf (@left.precedence <= 4) @left.pretty ++ " < " ++ parensIf (@right.precedence <= 4) @right.pretty
     lhs.precedence = 4
