@@ -159,19 +159,15 @@ mfpSolution'
               (M.mapKeysWith (<>) (take callStringsLimit . (l :))) $
               transferFunction l (analysisLookup l analysisOld)
           | Just (callLabel, f) <- lookupReturn l interproceduralFragment =
-            coerce @(([Label] -> propertySpace -> propertySpace) -> Map [Label] propertySpace -> Map [Label] propertySpace) M.mapWithKey
-              (\s p ->
-                f
-                  p
-                  (
-                    fromMaybe bottom $
-                    coerce
-                      @([Label] -> Map [Label] propertySpace -> Maybe propertySpace)
-                      M.lookup (take callStringsLimit (callLabel : s)) $
-                    analysisLookup l analysisOld
-                  )
-              )
-              (analysisLookup callLabel analysisOld)
+            coerce -- ignore
+              @(([Label] -> propertySpace -> propertySpace) -> Map [Label] propertySpace -> Map [Label] propertySpace)
+              M.mapWithKey
+                (\s p ->
+                  f
+                    p
+                    (analysisLookup l analysisOld $$ take callStringsLimit (callLabel : s))
+                )
+                (analysisLookup callLabel analysisOld)
           | otherwise = transferFunction l (analysisLookup l analysisOld)
     step (analysis, []) = Left analysis -- terminate
     outgoingFlow :: Label -> [(Label, Label)]
