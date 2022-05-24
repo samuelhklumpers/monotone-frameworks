@@ -244,13 +244,16 @@ data ConstLat = CI Int | CB Bool | NonConst deriving (Show, Eq)
 newtype PtConstLat = PtConstLat (M.Map String ConstLat) deriving (Show, Eq)
 
 (!) :: PtConstLat -> String -> ConstLat
-(PtConstLat m) ! k = m M.! k
+(PtConstLat m) ! k = Maybe.fromMaybe (error $ (show k) ++ " is not in " ++ (show m)) $ M.lookup k m
 
 ptInsert :: String -> ConstLat -> PtConstLat -> PtConstLat
 ptInsert k v (PtConstLat m) = PtConstLat (M.insert k v m)
 
 ptLookup :: String -> PtConstLat -> Maybe ConstLat
 ptLookup k (PtConstLat m) = M.lookup k m
+
+ptLookupBot :: String -> PtConstLat -> ConstLat
+ptLookupBot k (PtConstLat m) = M.findWithDefault NonConst k m
 
 instance Semigroup ConstLat where
   CI x <> CI y = if x == y then CI x else NonConst
@@ -344,7 +347,7 @@ callConst inputs params c = appEndo (mconcat $ Endo <$> fs) mempty
     fs = updateConst <$> inputs <*> params
 
 retConst :: String -> String -> PtConstLat -> PtConstLat -> PtConstLat
-retConst retName outName c r = ptInsert outName (c ! retName) r
+retConst retName outName c r = ptInsert outName (ptLookupBot retName c) r
 }
 
 
@@ -536,7 +539,7 @@ sem IExpr
     lhs.pretty = @name
     lhs.precedence = 10
     lhs.freeVars = singleton @name
-    lhs.expValSpace = (! @name)
+    lhs.expValSpace = ptLookupBot @name
   | Plus
     lhs.pretty = parensIf (@left.precedence < 6) @left.pretty ++ " + " ++ parensIf (@right.precedence <= 6) @right.pretty
     lhs.precedence = 6
@@ -568,7 +571,7 @@ sem BExpr
     lhs.pretty = @name
     lhs.precedence = 10
     lhs.freeVars = singleton @name
-    lhs.expValSpace = (! @name)
+    lhs.expValSpace = ptLookupBot @name
   | LessThan
     lhs.pretty = parensIf (@left.precedence <= 4) @left.pretty ++ " < " ++ parensIf (@right.precedence <= 4) @right.pretty
     lhs.precedence = 4
