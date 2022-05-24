@@ -111,13 +111,12 @@ mfpSolution' ::
   InterproceduralFragment propertySpace ->
   -- | \(\mathrm{Analysis}_\circ\) and \(\mathrm{Analysis}_\bullet\)
   (
-    Map Label (ContextSensitive propertySpace),
     Map Label (ContextSensitive propertySpace)
   )
 mfpSolution'
   (MonotoneFramework flow extremalLabels extremalValue transferFunctions)
   interproceduralFragment
-  = (analysisEntry, M.mapWithKey transferFunction analysisEntry)
+  = (analysisEntry)
   where
     (_, analysisEntry) =
       iterateFinite step (initialAnalysis, initialWorkList)

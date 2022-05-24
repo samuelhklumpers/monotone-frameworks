@@ -93,6 +93,9 @@ compile source = do
   let strongLiveA = Analysis (strongLive_Syn_Program' synProgram') mempty
   let strongLiveM = prepare strongLiveA flow
 
+  let ((MonotoneFramework _ _ _ m), _) = constantPropM
+  print $ M.keys m
+
   putStrLn ""
   putStrLn "# Analyses"
   putStrLn "## Constant Propagation"

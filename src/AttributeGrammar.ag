@@ -358,6 +358,7 @@ sem Program'
     lhs.final = @stat.final
     lhs.flow = @procs.flow <> @stat.flow
     lhs.strongLive = @procs.strongLive <> @stat.strongLive
+    lhs.valSpace = @procs.valSpace <> @stat.valSpace
     stat.dStar = @dStar
     stat.continueLabel = Nothing
     procs.dStar = @dStar
@@ -380,6 +381,8 @@ sem Proc'
     lhs.flow = singleton (@labelEntry, @stat.init) <> @stat.flow <> fromList [(label, @labelExit) | label <- toList @stat.final] 
     stat.dStar = @lhs.dStar
     stat.continueLabel = Nothing
+    lhs.strongLive = insertL @labelEntry id $ insertL @labelExit id @stat.strongLive
+    lhs.valSpace = insertL @labelEntry id $ insertL @labelExit id @stat.valSpace
 
 sem Stat'
   | Skip'
@@ -403,8 +406,8 @@ sem Stat'
     lhs.init = @labelc
     lhs.final = @stat1.final <> @stat2.final 
     lhs.flow = @stat1.flow <> @stat2.flow <> fromList [(@labelc, @stat1.init), (@labelc, @stat2.init)]
-    lhs.strongLive = insertL @labelc (<> @cond.freeVars) $ @stat1.strongLive <> @stat2.strongLive
-    lhs.valSpace = insertL @labelc id $ @stat1.valSpace <> @stat2.valSpace
+    lhs.strongLive = insertL @labelc (<> @cond.freeVars) $ @stat1.strongLive <> @stat2.strongLive 
+    lhs.valSpace = insertL @labelc id $ @stat1.valSpace <> @stat2.valSpace 
 
   | While'
     lhs.pretty   = ["while [" ++ @cond.pretty ++ "]" ++ showLabel @labelc ++ " do" ++ (if @stat.isSingle then "" else " {")]
@@ -429,7 +432,6 @@ sem Stat'
     loc.proc = { findProc @name @lhs.dStar }
     lhs.interflow = singleton (Inter @labelCall (procEntry @loc.proc) (procExit @loc.proc) @labelReturn)
     lhs.flow = fromList [(@labelCall, (procEntry @loc.proc)), ((procExit @loc.proc), @labelReturn)]
-
     lhs.strongLive = insertL @labelReturn (retStrong @out $ procOut @loc.proc)    $ singleR @labelCall (callStrong (procInp @loc.proc) @params.freeVars)
     lhs.valSpace   = insertL @labelCall (callConst (procInp @loc.proc) $ @params.expValSpace) $ singleR @labelReturn (retConst @out $ procOut @loc.proc)
 
@@ -470,6 +472,8 @@ sem Stat'
     lhs.flow = empty
     lhs.strongLive = singleL @label (survive @name @size.freeVars)
     -- need CL in ConstLat for const prop on lists
+    lhs.valSpace = insertL @label id forwardAnalysis
+
 
   | Free'
     lhs.pretty   = ["free(" ++ @ptr.pretty ++ ")" ++ showLabel @label]
@@ -478,7 +482,8 @@ sem Stat'
     lhs.init = @label
     lhs.final = singleton @label
     lhs.flow = empty
-    --lhs.strongLive = M.fromList [(@label, survive @ptr @val.freeVars)]
+    lhs.strongLive = insertL @label id backwardAnalysis
+    lhs.valSpace = insertL @label id forwardAnalysis
 
   | RefAssign'
     lhs.pretty   = ["[*" ++ @ptr.pretty ++ " := " ++ @val.pretty ++ "]" ++ showLabel @label]
@@ -488,7 +493,9 @@ sem Stat'
     lhs.final = singleton @label
     lhs.flow = empty
     -- TODO how do we compute strongLive here? (i.e. how do we mark *ptr as live or not)
-    
+    lhs.strongLive = insertL @label id backwardAnalysis
+    lhs.valSpace = insertL @label id forwardAnalysis
+
   | Continue'
     lhs.pretty   = ["continue" ++ showLabel @label]
     lhs.isSkip   = False
@@ -496,7 +503,9 @@ sem Stat'
     lhs.init = @label
     lhs.final = singleton @label
     lhs.flow = singleton (@label, (Maybe.fromJust @lhs.continueLabel))
-    
+    lhs.strongLive = insertL @label id backwardAnalysis
+    lhs.valSpace = insertL @label id forwardAnalysis
+
   | Break'
     lhs.pretty   = ["break" ++ showLabel @label]
     lhs.isSkip   = False
@@ -505,6 +514,8 @@ sem Stat'
     lhs.final = empty
     lhs.flow = empty
     lhs.breakLabels = singleton @label
+    lhs.strongLive = insertL @label id backwardAnalysis
+    lhs.valSpace = insertL @label id forwardAnalysis
 
 {
 parensIf :: Bool -> String -> String
