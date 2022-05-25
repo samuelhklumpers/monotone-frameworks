@@ -101,6 +101,6 @@ compile source = do
   putStrLn ""
   putStrLn "# Analyses"
   putStrLn "## Constant Propagation"
-  pPrintLightBg $ id $ uncurry mfpSolution' constantPropM
+  pPrintLightBg $ fst $ uncurry mfpSolution' constantPropM
 
 

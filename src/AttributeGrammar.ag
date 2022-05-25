@@ -119,6 +119,7 @@ attr Proc    [ | | labelled :: Proc'  dStar :: { (String, Proc'') } ]
 attr Procs   [ | | labelled :: Procs'  dStar :: DStar ]
 attr Stat    [ | | labelled :: Stat'    ]
 
+
 sem Program
   | Program
     procs.label  = 1

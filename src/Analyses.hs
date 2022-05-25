@@ -124,7 +124,7 @@ callConst :: [String] -> [PtConstLat -> ConstLat] -> PtConstLat -> PtConstLat
 callConst inputs params c = appEndo (mconcat $ Endo <$> fs) mempty
   where
     fs :: [PtConstLat -> PtConstLat]
-    fs = updateConst <$> inputs <*> params
+    fs = uncurry updateConst <$> zip inputs params
 
 retConst :: String -> String -> PtConstLat -> PtConstLat -> PtConstLat
 retConst retName outName c r = ptInsert outName (ptLookupBot retName c) r
