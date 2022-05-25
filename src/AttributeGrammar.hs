@@ -9,10 +9,12 @@ import qualified Data.Maybe as Maybe
 import qualified Data.List as L
 import Data.Set
 
-import Analyses
-{-# LINE 14 "AttributeGrammar.hs" #-}
+import Debug.Trace
 
-{-# LINE 227 "AttributeGrammar.ag" #-}
+import Analyses
+{-# LINE 16 "AttributeGrammar.hs" #-}
+
+{-# LINE 229 "AttributeGrammar.ag" #-}
 
 indent :: [String] -> [String]
 indent = fmap ("  " ++)
@@ -32,14 +34,14 @@ showLabel label = "\ESC[93m" ++ reverse (go label) ++ "\ESC[0m"
 addSemicolon :: [String] -> [String]
 addSemicolon [] = []
 addSemicolon xs = init xs ++ [last xs ++ ";"]
-{-# LINE 36 "AttributeGrammar.hs" #-}
+{-# LINE 38 "AttributeGrammar.hs" #-}
 
-{-# LINE 434 "AttributeGrammar.ag" #-}
+{-# LINE 436 "AttributeGrammar.ag" #-}
 
 parensIf :: Bool -> String -> String
 parensIf False str = str
 parensIf True str = "(" ++ str ++ ")"
-{-# LINE 43 "AttributeGrammar.hs" #-}
+{-# LINE 45 "AttributeGrammar.hs" #-}
 -- BExpr -------------------------------------------------------
 data BExpr = BConst (Bool)
            | BVar (String)
@@ -97,24 +99,24 @@ sem_BExpr_BConst val_ =
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: BExpr
          _lhsOpretty =
-             ({-# LINE 474 "AttributeGrammar.ag" #-}
+             ({-# LINE 476 "AttributeGrammar.ag" #-}
               show val_
-              {-# LINE 103 "AttributeGrammar.hs" #-}
+              {-# LINE 105 "AttributeGrammar.hs" #-}
               )
          _lhsOprecedence =
-             ({-# LINE 475 "AttributeGrammar.ag" #-}
+             ({-# LINE 477 "AttributeGrammar.ag" #-}
               10
-              {-# LINE 108 "AttributeGrammar.hs" #-}
+              {-# LINE 110 "AttributeGrammar.hs" #-}
               )
          _lhsOexpValSpace =
-             ({-# LINE 476 "AttributeGrammar.ag" #-}
+             ({-# LINE 478 "AttributeGrammar.ag" #-}
               \_ -> CB val_
-              {-# LINE 113 "AttributeGrammar.hs" #-}
+              {-# LINE 115 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
-             ({-# LINE 210 "AttributeGrammar.ag" #-}
+             ({-# LINE 212 "AttributeGrammar.ag" #-}
               empty
-              {-# LINE 118 "AttributeGrammar.hs" #-}
+              {-# LINE 120 "AttributeGrammar.hs" #-}
               )
          _self =
              BConst val_
@@ -130,24 +132,24 @@ sem_BExpr_BVar name_ =
          _lhsOexpValSpace :: ( PtConstLat -> ConstLat )
          _lhsOself :: BExpr
          _lhsOpretty =
-             ({-# LINE 478 "AttributeGrammar.ag" #-}
+             ({-# LINE 480 "AttributeGrammar.ag" #-}
               name_
-              {-# LINE 136 "AttributeGrammar.hs" #-}
+              {-# LINE 138 "AttributeGrammar.hs" #-}
               )
          _lhsOprecedence =
-             ({-# LINE 479 "AttributeGrammar.ag" #-}
+             ({-# LINE 481 "AttributeGrammar.ag" #-}
               10
-              {-# LINE 141 "AttributeGrammar.hs" #-}
+              {-# LINE 143 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
-             ({-# LINE 480 "AttributeGrammar.ag" #-}
+             ({-# LINE 482 "AttributeGrammar.ag" #-}
               singleton name_
-              {-# LINE 146 "AttributeGrammar.hs" #-}
+              {-# LINE 148 "AttributeGrammar.hs" #-}
               )
          _lhsOexpValSpace =
-             ({-# LINE 481 "AttributeGrammar.ag" #-}
+             ({-# LINE 483 "AttributeGrammar.ag" #-}
               ptLookupBot name_
-              {-# LINE 151 "AttributeGrammar.hs" #-}
+              {-# LINE 153 "AttributeGrammar.hs" #-}
               )
          _self =
              BVar name_
@@ -174,24 +176,24 @@ sem_BExpr_LessThan left_ right_ =
          _rightIpretty :: String
          _rightIself :: IExpr
          _lhsOpretty =
-             ({-# LINE 483 "AttributeGrammar.ag" #-}
+             ({-# LINE 485 "AttributeGrammar.ag" #-}
               parensIf (_leftIprecedence <= 4) _leftIpretty ++ " < " ++ parensIf (_rightIprecedence <= 4) _rightIpretty
-              {-# LINE 180 "AttributeGrammar.hs" #-}
+              {-# LINE 182 "AttributeGrammar.hs" #-}
               )
          _lhsOprecedence =
-             ({-# LINE 484 "AttributeGrammar.ag" #-}
+             ({-# LINE 486 "AttributeGrammar.ag" #-}
               4
-              {-# LINE 185 "AttributeGrammar.hs" #-}
+              {-# LINE 187 "AttributeGrammar.hs" #-}
               )
          _lhsOexpValSpace =
-             ({-# LINE 485 "AttributeGrammar.ag" #-}
+             ({-# LINE 487 "AttributeGrammar.ag" #-}
               \env -> cIIB (<) (_leftIexpValSpace env) (_rightIexpValSpace env)
-              {-# LINE 190 "AttributeGrammar.hs" #-}
+              {-# LINE 192 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
-             ({-# LINE 210 "AttributeGrammar.ag" #-}
+             ({-# LINE 212 "AttributeGrammar.ag" #-}
               _leftIfreeVars <> _rightIfreeVars
-              {-# LINE 195 "AttributeGrammar.hs" #-}
+              {-# LINE 197 "AttributeGrammar.hs" #-}
               )
          _self =
              LessThan _leftIself _rightIself
@@ -222,24 +224,24 @@ sem_BExpr_GreaterThan left_ right_ =
          _rightIpretty :: String
          _rightIself :: IExpr
          _lhsOpretty =
-             ({-# LINE 487 "AttributeGrammar.ag" #-}
+             ({-# LINE 489 "AttributeGrammar.ag" #-}
               parensIf (_leftIprecedence <= 4) _leftIpretty ++ " > " ++ parensIf (_rightIprecedence <= 4) _rightIpretty
-              {-# LINE 228 "AttributeGrammar.hs" #-}
+              {-# LINE 230 "AttributeGrammar.hs" #-}
               )
          _lhsOprecedence =
-             ({-# LINE 488 "AttributeGrammar.ag" #-}
+             ({-# LINE 490 "AttributeGrammar.ag" #-}
               4
-              {-# LINE 233 "AttributeGrammar.hs" #-}
+              {-# LINE 235 "AttributeGrammar.hs" #-}
               )
          _lhsOexpValSpace =
-             ({-# LINE 489 "AttributeGrammar.ag" #-}
+             ({-# LINE 491 "AttributeGrammar.ag" #-}
               \env -> cIIB (>) (_leftIexpValSpace env) (_rightIexpValSpace env)
-              {-# LINE 238 "AttributeGrammar.hs" #-}
+              {-# LINE 240 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
-             ({-# LINE 210 "AttributeGrammar.ag" #-}
+             ({-# LINE 212 "AttributeGrammar.ag" #-}
               _leftIfreeVars <> _rightIfreeVars
-              {-# LINE 243 "AttributeGrammar.hs" #-}
+              {-# LINE 245 "AttributeGrammar.hs" #-}
               )
          _self =
              GreaterThan _leftIself _rightIself
@@ -270,24 +272,24 @@ sem_BExpr_LessEqual left_ right_ =
          _rightIpretty :: String
          _rightIself :: IExpr
          _lhsOpretty =
-             ({-# LINE 491 "AttributeGrammar.ag" #-}
+             ({-# LINE 493 "AttributeGrammar.ag" #-}
               parensIf (_leftIprecedence <= 4) _leftIpretty ++ " <= " ++ parensIf (_rightIprecedence <= 4) _rightIpretty
-              {-# LINE 276 "AttributeGrammar.hs" #-}
+              {-# LINE 278 "AttributeGrammar.hs" #-}
               )
          _lhsOprecedence =
-             ({-# LINE 492 "AttributeGrammar.ag" #-}
+             ({-# LINE 494 "AttributeGrammar.ag" #-}
               4
-              {-# LINE 281 "AttributeGrammar.hs" #-}
+              {-# LINE 283 "AttributeGrammar.hs" #-}
               )
          _lhsOexpValSpace =
-             ({-# LINE 493 "AttributeGrammar.ag" #-}
+             ({-# LINE 495 "AttributeGrammar.ag" #-}
               \env -> cIIB (<=) (_leftIexpValSpace env) (_rightIexpValSpace env)
-              {-# LINE 286 "AttributeGrammar.hs" #-}
+              {-# LINE 288 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
-             ({-# LINE 210 "AttributeGrammar.ag" #-}
+             ({-# LINE 212 "AttributeGrammar.ag" #-}
               _leftIfreeVars <> _rightIfreeVars
-              {-# LINE 291 "AttributeGrammar.hs" #-}
+              {-# LINE 293 "AttributeGrammar.hs" #-}
               )
          _self =
              LessEqual _leftIself _rightIself
@@ -318,24 +320,24 @@ sem_BExpr_GreaterEqual left_ right_ =
          _rightIpretty :: String
          _rightIself :: IExpr
          _lhsOpretty =
-             ({-# LINE 495 "AttributeGrammar.ag" #-}
+             ({-# LINE 497 "AttributeGrammar.ag" #-}
               parensIf (_leftIprecedence <= 4) _leftIpretty ++ " >= " ++ parensIf (_rightIprecedence <= 4) _rightIpretty
-              {-# LINE 324 "AttributeGrammar.hs" #-}
+              {-# LINE 326 "AttributeGrammar.hs" #-}
               )
          _lhsOprecedence =
-             ({-# LINE 496 "AttributeGrammar.ag" #-}
+             ({-# LINE 498 "AttributeGrammar.ag" #-}
               4
-              {-# LINE 329 "AttributeGrammar.hs" #-}
+              {-# LINE 331 "AttributeGrammar.hs" #-}
               )
          _lhsOexpValSpace =
-             ({-# LINE 497 "AttributeGrammar.ag" #-}
+             ({-# LINE 499 "AttributeGrammar.ag" #-}
               \env -> cIIB (>=) (_leftIexpValSpace env) (_rightIexpValSpace env)
-              {-# LINE 334 "AttributeGrammar.hs" #-}
+              {-# LINE 336 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
-             ({-# LINE 210 "AttributeGrammar.ag" #-}
+             ({-# LINE 212 "AttributeGrammar.ag" #-}
               _leftIfreeVars <> _rightIfreeVars
-              {-# LINE 339 "AttributeGrammar.hs" #-}
+              {-# LINE 341 "AttributeGrammar.hs" #-}
               )
          _self =
              GreaterEqual _leftIself _rightIself
@@ -366,24 +368,24 @@ sem_BExpr_IEqual left_ right_ =
          _rightIpretty :: String
          _rightIself :: IExpr
          _lhsOpretty =
-             ({-# LINE 499 "AttributeGrammar.ag" #-}
+             ({-# LINE 501 "AttributeGrammar.ag" #-}
               parensIf (_leftIprecedence <= 4) _leftIpretty ++ " == " ++ parensIf (_rightIprecedence <= 4) _rightIpretty
-              {-# LINE 372 "AttributeGrammar.hs" #-}
+              {-# LINE 374 "AttributeGrammar.hs" #-}
               )
          _lhsOprecedence =
-             ({-# LINE 500 "AttributeGrammar.ag" #-}
+             ({-# LINE 502 "AttributeGrammar.ag" #-}
               4
-              {-# LINE 377 "AttributeGrammar.hs" #-}
+              {-# LINE 379 "AttributeGrammar.hs" #-}
               )
          _lhsOexpValSpace =
-             ({-# LINE 501 "AttributeGrammar.ag" #-}
+             ({-# LINE 503 "AttributeGrammar.ag" #-}
               \env -> cIIB (==) (_leftIexpValSpace env) (_rightIexpValSpace env)
-              {-# LINE 382 "AttributeGrammar.hs" #-}
+              {-# LINE 384 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
-             ({-# LINE 210 "AttributeGrammar.ag" #-}
+             ({-# LINE 212 "AttributeGrammar.ag" #-}
               _leftIfreeVars <> _rightIfreeVars
-              {-# LINE 387 "AttributeGrammar.hs" #-}
+              {-# LINE 389 "AttributeGrammar.hs" #-}
               )
          _self =
              IEqual _leftIself _rightIself
@@ -414,24 +416,24 @@ sem_BExpr_BEqual left_ right_ =
          _rightIpretty :: String
          _rightIself :: BExpr
          _lhsOpretty =
-             ({-# LINE 503 "AttributeGrammar.ag" #-}
+             ({-# LINE 505 "AttributeGrammar.ag" #-}
               parensIf (_leftIprecedence <= 4) _leftIpretty ++ " == " ++ parensIf (_rightIprecedence <= 4) _rightIpretty
-              {-# LINE 420 "AttributeGrammar.hs" #-}
+              {-# LINE 422 "AttributeGrammar.hs" #-}
               )
          _lhsOprecedence =
-             ({-# LINE 504 "AttributeGrammar.ag" #-}
+             ({-# LINE 506 "AttributeGrammar.ag" #-}
               4
-              {-# LINE 425 "AttributeGrammar.hs" #-}
+              {-# LINE 427 "AttributeGrammar.hs" #-}
               )
          _lhsOexpValSpace =
-             ({-# LINE 505 "AttributeGrammar.ag" #-}
+             ({-# LINE 507 "AttributeGrammar.ag" #-}
               \env -> cIIB (==) (_leftIexpValSpace env) (_rightIexpValSpace env)
-              {-# LINE 430 "AttributeGrammar.hs" #-}
+              {-# LINE 432 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
-             ({-# LINE 210 "AttributeGrammar.ag" #-}
+             ({-# LINE 212 "AttributeGrammar.ag" #-}
               _leftIfreeVars <> _rightIfreeVars
-              {-# LINE 435 "AttributeGrammar.hs" #-}
+              {-# LINE 437 "AttributeGrammar.hs" #-}
               )
          _self =
              BEqual _leftIself _rightIself
@@ -462,24 +464,24 @@ sem_BExpr_And left_ right_ =
          _rightIpretty :: String
          _rightIself :: BExpr
          _lhsOpretty =
-             ({-# LINE 507 "AttributeGrammar.ag" #-}
+             ({-# LINE 509 "AttributeGrammar.ag" #-}
               parensIf (_leftIprecedence < 3) _leftIpretty ++ " && " ++ parensIf (_rightIprecedence < 3) _rightIpretty
-              {-# LINE 468 "AttributeGrammar.hs" #-}
+              {-# LINE 470 "AttributeGrammar.hs" #-}
               )
          _lhsOprecedence =
-             ({-# LINE 508 "AttributeGrammar.ag" #-}
+             ({-# LINE 510 "AttributeGrammar.ag" #-}
               3
-              {-# LINE 473 "AttributeGrammar.hs" #-}
+              {-# LINE 475 "AttributeGrammar.hs" #-}
               )
          _lhsOexpValSpace =
-             ({-# LINE 509 "AttributeGrammar.ag" #-}
+             ({-# LINE 511 "AttributeGrammar.ag" #-}
               \env -> cBBB (&&) (_leftIexpValSpace env) (_rightIexpValSpace env)
-              {-# LINE 478 "AttributeGrammar.hs" #-}
+              {-# LINE 480 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
-             ({-# LINE 210 "AttributeGrammar.ag" #-}
+             ({-# LINE 212 "AttributeGrammar.ag" #-}
               _leftIfreeVars <> _rightIfreeVars
-              {-# LINE 483 "AttributeGrammar.hs" #-}
+              {-# LINE 485 "AttributeGrammar.hs" #-}
               )
          _self =
              And _leftIself _rightIself
@@ -510,24 +512,24 @@ sem_BExpr_Or left_ right_ =
          _rightIpretty :: String
          _rightIself :: BExpr
          _lhsOpretty =
-             ({-# LINE 511 "AttributeGrammar.ag" #-}
+             ({-# LINE 513 "AttributeGrammar.ag" #-}
               parensIf (_leftIprecedence < 2) _leftIpretty ++ " || " ++ parensIf (_rightIprecedence < 2) _rightIpretty
-              {-# LINE 516 "AttributeGrammar.hs" #-}
+              {-# LINE 518 "AttributeGrammar.hs" #-}
               )
          _lhsOprecedence =
-             ({-# LINE 512 "AttributeGrammar.ag" #-}
+             ({-# LINE 514 "AttributeGrammar.ag" #-}
               2
-              {-# LINE 521 "AttributeGrammar.hs" #-}
+              {-# LINE 523 "AttributeGrammar.hs" #-}
               )
          _lhsOexpValSpace =
-             ({-# LINE 513 "AttributeGrammar.ag" #-}
+             ({-# LINE 515 "AttributeGrammar.ag" #-}
               \env -> cBBB (||) (_leftIexpValSpace env) (_rightIexpValSpace env)
-              {-# LINE 526 "AttributeGrammar.hs" #-}
+              {-# LINE 528 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
-             ({-# LINE 210 "AttributeGrammar.ag" #-}
+             ({-# LINE 212 "AttributeGrammar.ag" #-}
               _leftIfreeVars <> _rightIfreeVars
-              {-# LINE 531 "AttributeGrammar.hs" #-}
+              {-# LINE 533 "AttributeGrammar.hs" #-}
               )
          _self =
              Or _leftIself _rightIself
@@ -552,24 +554,24 @@ sem_BExpr_Not val_ =
          _valIpretty :: String
          _valIself :: BExpr
          _lhsOpretty =
-             ({-# LINE 515 "AttributeGrammar.ag" #-}
+             ({-# LINE 517 "AttributeGrammar.ag" #-}
               "not " ++ parensIf (_valIprecedence < 10) _valIpretty
-              {-# LINE 558 "AttributeGrammar.hs" #-}
+              {-# LINE 560 "AttributeGrammar.hs" #-}
               )
          _lhsOprecedence =
-             ({-# LINE 516 "AttributeGrammar.ag" #-}
+             ({-# LINE 518 "AttributeGrammar.ag" #-}
               10
-              {-# LINE 563 "AttributeGrammar.hs" #-}
+              {-# LINE 565 "AttributeGrammar.hs" #-}
               )
          _lhsOexpValSpace =
-             ({-# LINE 517 "AttributeGrammar.ag" #-}
+             ({-# LINE 519 "AttributeGrammar.ag" #-}
               \env -> cBB not (_valIexpValSpace env)
-              {-# LINE 568 "AttributeGrammar.hs" #-}
+              {-# LINE 570 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
-             ({-# LINE 210 "AttributeGrammar.ag" #-}
+             ({-# LINE 212 "AttributeGrammar.ag" #-}
               _valIfreeVars
-              {-# LINE 573 "AttributeGrammar.hs" #-}
+              {-# LINE 575 "AttributeGrammar.hs" #-}
               )
          _self =
              Not _valIself
@@ -612,23 +614,23 @@ sem_Expr_B expr_ =
          _exprIpretty :: String
          _exprIself :: BExpr
          _lhsOpretty =
-             ({-# LINE 521 "AttributeGrammar.ag" #-}
+             ({-# LINE 523 "AttributeGrammar.ag" #-}
               _exprIpretty
-              {-# LINE 618 "AttributeGrammar.hs" #-}
+              {-# LINE 620 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
-             ({-# LINE 214 "AttributeGrammar.ag" #-}
+             ({-# LINE 216 "AttributeGrammar.ag" #-}
               _exprIfreeVars
-              {-# LINE 623 "AttributeGrammar.hs" #-}
+              {-# LINE 625 "AttributeGrammar.hs" #-}
               )
          _self =
              B _exprIself
          _lhsOself =
              _self
          _lhsOexpValSpace =
-             ({-# LINE 215 "AttributeGrammar.ag" #-}
+             ({-# LINE 217 "AttributeGrammar.ag" #-}
               _exprIexpValSpace
-              {-# LINE 632 "AttributeGrammar.hs" #-}
+              {-# LINE 634 "AttributeGrammar.hs" #-}
               )
          ( _exprIexpValSpace,_exprIfreeVars,_exprIprecedence,_exprIpretty,_exprIself) =
              expr_
@@ -646,23 +648,23 @@ sem_Expr_I expr_ =
          _exprIpretty :: String
          _exprIself :: IExpr
          _lhsOpretty =
-             ({-# LINE 523 "AttributeGrammar.ag" #-}
+             ({-# LINE 525 "AttributeGrammar.ag" #-}
               _exprIpretty
-              {-# LINE 652 "AttributeGrammar.hs" #-}
+              {-# LINE 654 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
-             ({-# LINE 214 "AttributeGrammar.ag" #-}
+             ({-# LINE 216 "AttributeGrammar.ag" #-}
               _exprIfreeVars
-              {-# LINE 657 "AttributeGrammar.hs" #-}
+              {-# LINE 659 "AttributeGrammar.hs" #-}
               )
          _self =
              I _exprIself
          _lhsOself =
              _self
          _lhsOexpValSpace =
-             ({-# LINE 215 "AttributeGrammar.ag" #-}
+             ({-# LINE 217 "AttributeGrammar.ag" #-}
               _exprIexpValSpace
-              {-# LINE 666 "AttributeGrammar.hs" #-}
+              {-# LINE 668 "AttributeGrammar.hs" #-}
               )
          ( _exprIexpValSpace,_exprIfreeVars,_exprIprecedence,_exprIpretty,_exprIself) =
              expr_
@@ -701,19 +703,19 @@ sem_Exprs_Cons hd_ tl_ =
          _tlIpretty :: String
          _tlIself :: Exprs
          _lhsOpretty =
-             ({-# LINE 529 "AttributeGrammar.ag" #-}
+             ({-# LINE 531 "AttributeGrammar.ag" #-}
               _hdIpretty ++ ", " ++ _tlIpretty
-              {-# LINE 707 "AttributeGrammar.hs" #-}
+              {-# LINE 709 "AttributeGrammar.hs" #-}
               )
          _lhsOexpValSpace =
-             ({-# LINE 219 "AttributeGrammar.ag" #-}
+             ({-# LINE 221 "AttributeGrammar.ag" #-}
               _hdIexpValSpace : _tlIexpValSpace
-              {-# LINE 712 "AttributeGrammar.hs" #-}
+              {-# LINE 714 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
-             ({-# LINE 218 "AttributeGrammar.ag" #-}
+             ({-# LINE 220 "AttributeGrammar.ag" #-}
               _hdIfreeVars : _tlIfreeVars
-              {-# LINE 717 "AttributeGrammar.hs" #-}
+              {-# LINE 719 "AttributeGrammar.hs" #-}
               )
          _self =
              (:) _hdIself _tlIself
@@ -731,19 +733,19 @@ sem_Exprs_Nil =
          _lhsOfreeVars :: ( [Set String] )
          _lhsOself :: Exprs
          _lhsOpretty =
-             ({-# LINE 527 "AttributeGrammar.ag" #-}
+             ({-# LINE 529 "AttributeGrammar.ag" #-}
               ""
-              {-# LINE 737 "AttributeGrammar.hs" #-}
+              {-# LINE 739 "AttributeGrammar.hs" #-}
               )
          _lhsOexpValSpace =
-             ({-# LINE 219 "AttributeGrammar.ag" #-}
+             ({-# LINE 221 "AttributeGrammar.ag" #-}
               []
-              {-# LINE 742 "AttributeGrammar.hs" #-}
+              {-# LINE 744 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
-             ({-# LINE 218 "AttributeGrammar.ag" #-}
+             ({-# LINE 220 "AttributeGrammar.ag" #-}
               []
-              {-# LINE 747 "AttributeGrammar.hs" #-}
+              {-# LINE 749 "AttributeGrammar.hs" #-}
               )
          _self =
              []
@@ -795,24 +797,24 @@ sem_IExpr_IConst val_ =
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: IExpr
          _lhsOpretty =
-             ({-# LINE 442 "AttributeGrammar.ag" #-}
+             ({-# LINE 444 "AttributeGrammar.ag" #-}
               show val_
-              {-# LINE 801 "AttributeGrammar.hs" #-}
+              {-# LINE 803 "AttributeGrammar.hs" #-}
               )
          _lhsOprecedence =
-             ({-# LINE 443 "AttributeGrammar.ag" #-}
+             ({-# LINE 445 "AttributeGrammar.ag" #-}
               10
-              {-# LINE 806 "AttributeGrammar.hs" #-}
+              {-# LINE 808 "AttributeGrammar.hs" #-}
               )
          _lhsOexpValSpace =
-             ({-# LINE 444 "AttributeGrammar.ag" #-}
+             ({-# LINE 446 "AttributeGrammar.ag" #-}
               \_ -> CI val_
-              {-# LINE 811 "AttributeGrammar.hs" #-}
+              {-# LINE 813 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
-             ({-# LINE 210 "AttributeGrammar.ag" #-}
+             ({-# LINE 212 "AttributeGrammar.ag" #-}
               empty
-              {-# LINE 816 "AttributeGrammar.hs" #-}
+              {-# LINE 818 "AttributeGrammar.hs" #-}
               )
          _self =
              IConst val_
@@ -828,24 +830,24 @@ sem_IExpr_Var name_ =
          _lhsOexpValSpace :: ( PtConstLat -> ConstLat )
          _lhsOself :: IExpr
          _lhsOpretty =
-             ({-# LINE 446 "AttributeGrammar.ag" #-}
+             ({-# LINE 448 "AttributeGrammar.ag" #-}
               name_
-              {-# LINE 834 "AttributeGrammar.hs" #-}
+              {-# LINE 836 "AttributeGrammar.hs" #-}
               )
          _lhsOprecedence =
-             ({-# LINE 447 "AttributeGrammar.ag" #-}
+             ({-# LINE 449 "AttributeGrammar.ag" #-}
               10
-              {-# LINE 839 "AttributeGrammar.hs" #-}
+              {-# LINE 841 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
-             ({-# LINE 448 "AttributeGrammar.ag" #-}
+             ({-# LINE 450 "AttributeGrammar.ag" #-}
               singleton name_
-              {-# LINE 844 "AttributeGrammar.hs" #-}
+              {-# LINE 846 "AttributeGrammar.hs" #-}
               )
          _lhsOexpValSpace =
-             ({-# LINE 449 "AttributeGrammar.ag" #-}
+             ({-# LINE 451 "AttributeGrammar.ag" #-}
               ptLookupBot name_
-              {-# LINE 849 "AttributeGrammar.hs" #-}
+              {-# LINE 851 "AttributeGrammar.hs" #-}
               )
          _self =
              Var name_
@@ -872,24 +874,24 @@ sem_IExpr_Plus left_ right_ =
          _rightIpretty :: String
          _rightIself :: IExpr
          _lhsOpretty =
-             ({-# LINE 451 "AttributeGrammar.ag" #-}
+             ({-# LINE 453 "AttributeGrammar.ag" #-}
               parensIf (_leftIprecedence < 6) _leftIpretty ++ " + " ++ parensIf (_rightIprecedence <= 6) _rightIpretty
-              {-# LINE 878 "AttributeGrammar.hs" #-}
+              {-# LINE 880 "AttributeGrammar.hs" #-}
               )
          _lhsOprecedence =
-             ({-# LINE 452 "AttributeGrammar.ag" #-}
+             ({-# LINE 454 "AttributeGrammar.ag" #-}
               6
-              {-# LINE 883 "AttributeGrammar.hs" #-}
+              {-# LINE 885 "AttributeGrammar.hs" #-}
               )
          _lhsOexpValSpace =
-             ({-# LINE 453 "AttributeGrammar.ag" #-}
+             ({-# LINE 455 "AttributeGrammar.ag" #-}
               \env -> cIII (+) (_leftIexpValSpace env) (_rightIexpValSpace env)
-              {-# LINE 888 "AttributeGrammar.hs" #-}
+              {-# LINE 890 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
-             ({-# LINE 210 "AttributeGrammar.ag" #-}
+             ({-# LINE 212 "AttributeGrammar.ag" #-}
               _leftIfreeVars <> _rightIfreeVars
-              {-# LINE 893 "AttributeGrammar.hs" #-}
+              {-# LINE 895 "AttributeGrammar.hs" #-}
               )
          _self =
              Plus _leftIself _rightIself
@@ -920,24 +922,24 @@ sem_IExpr_Minus left_ right_ =
          _rightIpretty :: String
          _rightIself :: IExpr
          _lhsOpretty =
-             ({-# LINE 455 "AttributeGrammar.ag" #-}
+             ({-# LINE 457 "AttributeGrammar.ag" #-}
               parensIf (_leftIprecedence < 6) _leftIpretty ++ " - " ++ parensIf (_rightIprecedence <= 6) _rightIpretty
-              {-# LINE 926 "AttributeGrammar.hs" #-}
+              {-# LINE 928 "AttributeGrammar.hs" #-}
               )
          _lhsOprecedence =
-             ({-# LINE 456 "AttributeGrammar.ag" #-}
+             ({-# LINE 458 "AttributeGrammar.ag" #-}
               6
-              {-# LINE 931 "AttributeGrammar.hs" #-}
+              {-# LINE 933 "AttributeGrammar.hs" #-}
               )
          _lhsOexpValSpace =
-             ({-# LINE 457 "AttributeGrammar.ag" #-}
+             ({-# LINE 459 "AttributeGrammar.ag" #-}
               \env -> cIII (-) (_leftIexpValSpace env) (_rightIexpValSpace env)
-              {-# LINE 936 "AttributeGrammar.hs" #-}
+              {-# LINE 938 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
-             ({-# LINE 210 "AttributeGrammar.ag" #-}
+             ({-# LINE 212 "AttributeGrammar.ag" #-}
               _leftIfreeVars <> _rightIfreeVars
-              {-# LINE 941 "AttributeGrammar.hs" #-}
+              {-# LINE 943 "AttributeGrammar.hs" #-}
               )
          _self =
              Minus _leftIself _rightIself
@@ -968,24 +970,24 @@ sem_IExpr_Times left_ right_ =
          _rightIpretty :: String
          _rightIself :: IExpr
          _lhsOpretty =
-             ({-# LINE 459 "AttributeGrammar.ag" #-}
+             ({-# LINE 461 "AttributeGrammar.ag" #-}
               parensIf (_leftIprecedence < 7) _leftIpretty ++ " * " ++ parensIf (_rightIprecedence <= 7) _rightIpretty
-              {-# LINE 974 "AttributeGrammar.hs" #-}
+              {-# LINE 976 "AttributeGrammar.hs" #-}
               )
          _lhsOprecedence =
-             ({-# LINE 460 "AttributeGrammar.ag" #-}
+             ({-# LINE 462 "AttributeGrammar.ag" #-}
               7
-              {-# LINE 979 "AttributeGrammar.hs" #-}
+              {-# LINE 981 "AttributeGrammar.hs" #-}
               )
          _lhsOexpValSpace =
-             ({-# LINE 461 "AttributeGrammar.ag" #-}
+             ({-# LINE 463 "AttributeGrammar.ag" #-}
               \env -> cIII (*) (_leftIexpValSpace env) (_rightIexpValSpace env)
-              {-# LINE 984 "AttributeGrammar.hs" #-}
+              {-# LINE 986 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
-             ({-# LINE 210 "AttributeGrammar.ag" #-}
+             ({-# LINE 212 "AttributeGrammar.ag" #-}
               _leftIfreeVars <> _rightIfreeVars
-              {-# LINE 989 "AttributeGrammar.hs" #-}
+              {-# LINE 991 "AttributeGrammar.hs" #-}
               )
          _self =
              Times _leftIself _rightIself
@@ -1016,24 +1018,24 @@ sem_IExpr_Divide left_ right_ =
          _rightIpretty :: String
          _rightIself :: IExpr
          _lhsOpretty =
-             ({-# LINE 463 "AttributeGrammar.ag" #-}
+             ({-# LINE 465 "AttributeGrammar.ag" #-}
               parensIf (_leftIprecedence < 7) _leftIpretty ++ " / " ++ parensIf (_rightIprecedence <= 7) _rightIpretty
-              {-# LINE 1022 "AttributeGrammar.hs" #-}
+              {-# LINE 1024 "AttributeGrammar.hs" #-}
               )
          _lhsOprecedence =
-             ({-# LINE 464 "AttributeGrammar.ag" #-}
+             ({-# LINE 466 "AttributeGrammar.ag" #-}
               7
-              {-# LINE 1027 "AttributeGrammar.hs" #-}
+              {-# LINE 1029 "AttributeGrammar.hs" #-}
               )
          _lhsOexpValSpace =
-             ({-# LINE 465 "AttributeGrammar.ag" #-}
+             ({-# LINE 467 "AttributeGrammar.ag" #-}
               \env -> cIII div (_leftIexpValSpace env) (_rightIexpValSpace env)
-              {-# LINE 1032 "AttributeGrammar.hs" #-}
+              {-# LINE 1034 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
-             ({-# LINE 210 "AttributeGrammar.ag" #-}
+             ({-# LINE 212 "AttributeGrammar.ag" #-}
               _leftIfreeVars <> _rightIfreeVars
-              {-# LINE 1037 "AttributeGrammar.hs" #-}
+              {-# LINE 1039 "AttributeGrammar.hs" #-}
               )
          _self =
              Divide _leftIself _rightIself
@@ -1058,28 +1060,28 @@ sem_IExpr_Deref ptr_ =
          _ptrIpretty :: String
          _ptrIself :: IExpr
          _lhsOpretty =
-             ({-# LINE 467 "AttributeGrammar.ag" #-}
+             ({-# LINE 469 "AttributeGrammar.ag" #-}
               "*" ++ parensIf (_ptrIprecedence < 10) _ptrIpretty
-              {-# LINE 1064 "AttributeGrammar.hs" #-}
+              {-# LINE 1066 "AttributeGrammar.hs" #-}
               )
          _lhsOprecedence =
-             ({-# LINE 468 "AttributeGrammar.ag" #-}
+             ({-# LINE 470 "AttributeGrammar.ag" #-}
               10
-              {-# LINE 1069 "AttributeGrammar.hs" #-}
+              {-# LINE 1071 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
-             ({-# LINE 210 "AttributeGrammar.ag" #-}
+             ({-# LINE 212 "AttributeGrammar.ag" #-}
               _ptrIfreeVars
-              {-# LINE 1074 "AttributeGrammar.hs" #-}
+              {-# LINE 1076 "AttributeGrammar.hs" #-}
               )
          _self =
              Deref _ptrIself
          _lhsOself =
              _self
          _lhsOexpValSpace =
-             ({-# LINE 211 "AttributeGrammar.ag" #-}
+             ({-# LINE 213 "AttributeGrammar.ag" #-}
               _ptrIexpValSpace
-              {-# LINE 1083 "AttributeGrammar.hs" #-}
+              {-# LINE 1085 "AttributeGrammar.hs" #-}
               )
          ( _ptrIexpValSpace,_ptrIfreeVars,_ptrIprecedence,_ptrIpretty,_ptrIself) =
              ptr_
@@ -1119,24 +1121,24 @@ sem_Proc_Proc name_ inp_ out_ stat_ =
               _statIlabelled :: Stat'
               _statIself :: Stat
               _statOlabel =
-                  ({-# LINE 136 "AttributeGrammar.ag" #-}
+                  ({-# LINE 138 "AttributeGrammar.ag" #-}
                    _lhsIlabel + 1
-                   {-# LINE 1125 "AttributeGrammar.hs" #-}
+                   {-# LINE 1127 "AttributeGrammar.hs" #-}
                    )
               _lhsOlabelled =
-                  ({-# LINE 137 "AttributeGrammar.ag" #-}
+                  ({-# LINE 139 "AttributeGrammar.ag" #-}
                    Proc' _lhsIlabel _statIlabel name_ inp_ out_ _statIlabelled
-                   {-# LINE 1130 "AttributeGrammar.hs" #-}
+                   {-# LINE 1132 "AttributeGrammar.hs" #-}
                    )
               _lhsOlabel =
-                  ({-# LINE 138 "AttributeGrammar.ag" #-}
+                  ({-# LINE 140 "AttributeGrammar.ag" #-}
                    _statIlabel + 1
-                   {-# LINE 1135 "AttributeGrammar.hs" #-}
+                   {-# LINE 1137 "AttributeGrammar.hs" #-}
                    )
               _lhsOdStar =
-                  ({-# LINE 139 "AttributeGrammar.ag" #-}
+                  ({-# LINE 141 "AttributeGrammar.ag" #-}
                    (name_, Proc'' _lhsIlabel _statIlabel name_ inp_ out_)
-                   {-# LINE 1140 "AttributeGrammar.hs" #-}
+                   {-# LINE 1142 "AttributeGrammar.hs" #-}
                    )
               _self =
                   Proc name_ inp_ out_ _statIself
@@ -1196,51 +1198,51 @@ sem_Proc'_Proc' labelEntry_ labelExit_ name_ inp_ out_ stat_ =
               _statIstrongLive :: ( DifTrans (Set String) )
               _statIvalSpace :: ( DifTrans PtConstLat )
               _lhsOpretty =
-                  ({-# LINE 284 "AttributeGrammar.ag" #-}
+                  ({-# LINE 286 "AttributeGrammar.ag" #-}
                    ["proc " ++ name_ ++ "(val " ++ (inp_ >>= (++ ", ")) ++ "out " ++ out_ ++ ") is" ++ showLabel labelEntry_]
                     ++ indent _statIpretty
                     ++ ["end" ++ showLabel labelExit_ ++ ";"]
-                   {-# LINE 1204 "AttributeGrammar.hs" #-}
+                   {-# LINE 1206 "AttributeGrammar.hs" #-}
                    )
               _lhsOinit =
-                  ({-# LINE 287 "AttributeGrammar.ag" #-}
+                  ({-# LINE 289 "AttributeGrammar.ag" #-}
                    _statIinit
-                   {-# LINE 1209 "AttributeGrammar.hs" #-}
+                   {-# LINE 1211 "AttributeGrammar.hs" #-}
                    )
               _lhsOfinal =
-                  ({-# LINE 288 "AttributeGrammar.ag" #-}
+                  ({-# LINE 290 "AttributeGrammar.ag" #-}
                    _statIfinal
-                   {-# LINE 1214 "AttributeGrammar.hs" #-}
+                   {-# LINE 1216 "AttributeGrammar.hs" #-}
                    )
               _lhsOflow =
-                  ({-# LINE 289 "AttributeGrammar.ag" #-}
+                  ({-# LINE 291 "AttributeGrammar.ag" #-}
                    singleton (labelEntry_, _statIinit) <> _statIflow <> fromList [(label, labelExit_) | label <- toList _statIfinal]
-                   {-# LINE 1219 "AttributeGrammar.hs" #-}
+                   {-# LINE 1221 "AttributeGrammar.hs" #-}
                    )
               _statOdStar =
-                  ({-# LINE 290 "AttributeGrammar.ag" #-}
+                  ({-# LINE 292 "AttributeGrammar.ag" #-}
                    _lhsIdStar
-                   {-# LINE 1224 "AttributeGrammar.hs" #-}
+                   {-# LINE 1226 "AttributeGrammar.hs" #-}
                    )
               _statOcontinueLabel =
-                  ({-# LINE 291 "AttributeGrammar.ag" #-}
+                  ({-# LINE 293 "AttributeGrammar.ag" #-}
                    Nothing
-                   {-# LINE 1229 "AttributeGrammar.hs" #-}
+                   {-# LINE 1231 "AttributeGrammar.hs" #-}
                    )
               _lhsOinterflow =
-                  ({-# LINE 292 "AttributeGrammar.ag" #-}
+                  ({-# LINE 294 "AttributeGrammar.ag" #-}
                    _statIinterflow
-                   {-# LINE 1234 "AttributeGrammar.hs" #-}
+                   {-# LINE 1236 "AttributeGrammar.hs" #-}
                    )
               _lhsOstrongLive =
-                  ({-# LINE 294 "AttributeGrammar.ag" #-}
+                  ({-# LINE 296 "AttributeGrammar.ag" #-}
                    insertL labelEntry_ id $ insertL labelExit_ id _statIstrongLive
-                   {-# LINE 1239 "AttributeGrammar.hs" #-}
+                   {-# LINE 1241 "AttributeGrammar.hs" #-}
                    )
               _lhsOvalSpace =
-                  ({-# LINE 295 "AttributeGrammar.ag" #-}
+                  ({-# LINE 297 "AttributeGrammar.ag" #-}
                    insertL labelEntry_ id $ insertL labelExit_ id _statIvalSpace
-                   {-# LINE 1244 "AttributeGrammar.hs" #-}
+                   {-# LINE 1246 "AttributeGrammar.hs" #-}
                    )
               _self =
                   Proc' labelEntry_ labelExit_ name_ inp_ out_ _statIself
@@ -1287,33 +1289,33 @@ sem_Procs_Cons hd_ tl_ =
               _tlIlabelled :: Procs'
               _tlIself :: Procs
               _lhsOlabelled =
-                  ({-# LINE 131 "AttributeGrammar.ag" #-}
+                  ({-# LINE 133 "AttributeGrammar.ag" #-}
                    _hdIlabelled : _tlIlabelled
-                   {-# LINE 1293 "AttributeGrammar.hs" #-}
+                   {-# LINE 1295 "AttributeGrammar.hs" #-}
                    )
               _lhsOdStar =
-                  ({-# LINE 132 "AttributeGrammar.ag" #-}
+                  ({-# LINE 134 "AttributeGrammar.ag" #-}
                    _hdIdStar : _tlIdStar
-                   {-# LINE 1298 "AttributeGrammar.hs" #-}
+                   {-# LINE 1300 "AttributeGrammar.hs" #-}
                    )
               _self =
                   (:) _hdIself _tlIself
               _lhsOself =
                   _self
               _lhsOlabel =
-                  ({-# LINE 113 "AttributeGrammar.ag" #-}
+                  ({-# LINE 115 "AttributeGrammar.ag" #-}
                    _tlIlabel
-                   {-# LINE 1307 "AttributeGrammar.hs" #-}
+                   {-# LINE 1309 "AttributeGrammar.hs" #-}
                    )
               _hdOlabel =
-                  ({-# LINE 113 "AttributeGrammar.ag" #-}
+                  ({-# LINE 115 "AttributeGrammar.ag" #-}
                    _lhsIlabel
-                   {-# LINE 1312 "AttributeGrammar.hs" #-}
+                   {-# LINE 1314 "AttributeGrammar.hs" #-}
                    )
               _tlOlabel =
-                  ({-# LINE 113 "AttributeGrammar.ag" #-}
+                  ({-# LINE 115 "AttributeGrammar.ag" #-}
                    _hdIlabel
-                   {-# LINE 1317 "AttributeGrammar.hs" #-}
+                   {-# LINE 1319 "AttributeGrammar.hs" #-}
                    )
               ( _hdIdStar,_hdIlabel,_hdIlabelled,_hdIself) =
                   hd_ _hdOlabel
@@ -1328,23 +1330,23 @@ sem_Procs_Nil =
               _lhsOself :: Procs
               _lhsOlabel :: Int
               _lhsOlabelled =
-                  ({-# LINE 128 "AttributeGrammar.ag" #-}
+                  ({-# LINE 130 "AttributeGrammar.ag" #-}
                    []
-                   {-# LINE 1334 "AttributeGrammar.hs" #-}
+                   {-# LINE 1336 "AttributeGrammar.hs" #-}
                    )
               _lhsOdStar =
-                  ({-# LINE 129 "AttributeGrammar.ag" #-}
+                  ({-# LINE 131 "AttributeGrammar.ag" #-}
                    []
-                   {-# LINE 1339 "AttributeGrammar.hs" #-}
+                   {-# LINE 1341 "AttributeGrammar.hs" #-}
                    )
               _self =
                   []
               _lhsOself =
                   _self
               _lhsOlabel =
-                  ({-# LINE 113 "AttributeGrammar.ag" #-}
+                  ({-# LINE 115 "AttributeGrammar.ag" #-}
                    _lhsIlabel
-                   {-# LINE 1348 "AttributeGrammar.hs" #-}
+                   {-# LINE 1350 "AttributeGrammar.hs" #-}
                    )
           in  ( _lhsOdStar,_lhsOlabel,_lhsOlabelled,_lhsOself)))
 -- Procs' ------------------------------------------------------
@@ -1393,43 +1395,43 @@ sem_Procs'_Cons hd_ tl_ =
               _tlIstrongLive :: ( DifTrans (Set String) )
               _tlIvalSpace :: ( DifTrans PtConstLat )
               _lhsOpretty =
-                  ({-# LINE 276 "AttributeGrammar.ag" #-}
+                  ({-# LINE 278 "AttributeGrammar.ag" #-}
                    _hdIpretty ++ _tlIpretty
-                   {-# LINE 1399 "AttributeGrammar.hs" #-}
+                   {-# LINE 1401 "AttributeGrammar.hs" #-}
                    )
               _lhsOflow =
-                  ({-# LINE 277 "AttributeGrammar.ag" #-}
+                  ({-# LINE 279 "AttributeGrammar.ag" #-}
                    _hdIflow <> _tlIflow
-                   {-# LINE 1404 "AttributeGrammar.hs" #-}
+                   {-# LINE 1406 "AttributeGrammar.hs" #-}
                    )
               _lhsOinterflow =
-                  ({-# LINE 278 "AttributeGrammar.ag" #-}
+                  ({-# LINE 280 "AttributeGrammar.ag" #-}
                    _hdIinterflow <> _tlIinterflow
-                   {-# LINE 1409 "AttributeGrammar.hs" #-}
+                   {-# LINE 1411 "AttributeGrammar.hs" #-}
                    )
               _lhsOstrongLive =
-                  ({-# LINE 279 "AttributeGrammar.ag" #-}
+                  ({-# LINE 281 "AttributeGrammar.ag" #-}
                    _hdIstrongLive <> _tlIstrongLive
-                   {-# LINE 1414 "AttributeGrammar.hs" #-}
+                   {-# LINE 1416 "AttributeGrammar.hs" #-}
                    )
               _lhsOvalSpace =
-                  ({-# LINE 280 "AttributeGrammar.ag" #-}
+                  ({-# LINE 282 "AttributeGrammar.ag" #-}
                    _hdIvalSpace <> _tlIvalSpace
-                   {-# LINE 1419 "AttributeGrammar.hs" #-}
+                   {-# LINE 1421 "AttributeGrammar.hs" #-}
                    )
               _self =
                   (:) _hdIself _tlIself
               _lhsOself =
                   _self
               _hdOdStar =
-                  ({-# LINE 200 "AttributeGrammar.ag" #-}
+                  ({-# LINE 202 "AttributeGrammar.ag" #-}
                    _lhsIdStar
-                   {-# LINE 1428 "AttributeGrammar.hs" #-}
+                   {-# LINE 1430 "AttributeGrammar.hs" #-}
                    )
               _tlOdStar =
-                  ({-# LINE 204 "AttributeGrammar.ag" #-}
+                  ({-# LINE 206 "AttributeGrammar.ag" #-}
                    _lhsIdStar
-                   {-# LINE 1433 "AttributeGrammar.hs" #-}
+                   {-# LINE 1435 "AttributeGrammar.hs" #-}
                    )
               ( _hdIfinal,_hdIflow,_hdIinit,_hdIinterflow,_hdIpretty,_hdIself,_hdIstrongLive,_hdIvalSpace) =
                   hd_ _hdOdStar
@@ -1446,29 +1448,29 @@ sem_Procs'_Nil =
               _lhsOvalSpace :: ( DifTrans PtConstLat )
               _lhsOself :: Procs'
               _lhsOpretty =
-                  ({-# LINE 270 "AttributeGrammar.ag" #-}
+                  ({-# LINE 272 "AttributeGrammar.ag" #-}
                    []
-                   {-# LINE 1452 "AttributeGrammar.hs" #-}
+                   {-# LINE 1454 "AttributeGrammar.hs" #-}
                    )
               _lhsOflow =
-                  ({-# LINE 271 "AttributeGrammar.ag" #-}
+                  ({-# LINE 273 "AttributeGrammar.ag" #-}
                    empty
-                   {-# LINE 1457 "AttributeGrammar.hs" #-}
+                   {-# LINE 1459 "AttributeGrammar.hs" #-}
                    )
               _lhsOinterflow =
-                  ({-# LINE 272 "AttributeGrammar.ag" #-}
+                  ({-# LINE 274 "AttributeGrammar.ag" #-}
                    empty
-                   {-# LINE 1462 "AttributeGrammar.hs" #-}
+                   {-# LINE 1464 "AttributeGrammar.hs" #-}
                    )
               _lhsOstrongLive =
-                  ({-# LINE 273 "AttributeGrammar.ag" #-}
+                  ({-# LINE 275 "AttributeGrammar.ag" #-}
                    mempty
-                   {-# LINE 1467 "AttributeGrammar.hs" #-}
+                   {-# LINE 1469 "AttributeGrammar.hs" #-}
                    )
               _lhsOvalSpace =
-                  ({-# LINE 274 "AttributeGrammar.ag" #-}
+                  ({-# LINE 276 "AttributeGrammar.ag" #-}
                    mempty
-                   {-# LINE 1472 "AttributeGrammar.hs" #-}
+                   {-# LINE 1474 "AttributeGrammar.hs" #-}
                    )
               _self =
                   []
@@ -1509,19 +1511,19 @@ sem_Program_Program procs_ stat_ =
          _statIlabelled :: Stat'
          _statIself :: Stat
          _procsOlabel =
-             ({-# LINE 122 "AttributeGrammar.ag" #-}
+             ({-# LINE 124 "AttributeGrammar.ag" #-}
               1
-              {-# LINE 1515 "AttributeGrammar.hs" #-}
+              {-# LINE 1517 "AttributeGrammar.hs" #-}
               )
          _statOlabel =
-             ({-# LINE 123 "AttributeGrammar.ag" #-}
+             ({-# LINE 125 "AttributeGrammar.ag" #-}
               _procsIlabel
-              {-# LINE 1520 "AttributeGrammar.hs" #-}
+              {-# LINE 1522 "AttributeGrammar.hs" #-}
               )
          _lhsOlabelled =
-             ({-# LINE 124 "AttributeGrammar.ag" #-}
+             ({-# LINE 126 "AttributeGrammar.ag" #-}
               Program' _procsIlabelled _statIlabelled _procsIdStar
-              {-# LINE 1525 "AttributeGrammar.hs" #-}
+              {-# LINE 1527 "AttributeGrammar.hs" #-}
               )
          _self =
              Program _procsIself _statIself
@@ -1585,54 +1587,54 @@ sem_Program'_Program' procs_ stat_ dStar_ =
          _statIstrongLive :: ( DifTrans (Set String) )
          _statIvalSpace :: ( DifTrans PtConstLat )
          _lhsOpretty =
-             ({-# LINE 251 "AttributeGrammar.ag" #-}
+             ({-# LINE 253 "AttributeGrammar.ag" #-}
               unlines ("begin" : indent _procsIpretty ++ indent _statIpretty ++ ["end"])
-              {-# LINE 1591 "AttributeGrammar.hs" #-}
+              {-# LINE 1593 "AttributeGrammar.hs" #-}
               )
          _lhsOinit =
-             ({-# LINE 254 "AttributeGrammar.ag" #-}
+             ({-# LINE 256 "AttributeGrammar.ag" #-}
               _statIinit
-              {-# LINE 1596 "AttributeGrammar.hs" #-}
+              {-# LINE 1598 "AttributeGrammar.hs" #-}
               )
          _lhsOfinal =
-             ({-# LINE 255 "AttributeGrammar.ag" #-}
+             ({-# LINE 257 "AttributeGrammar.ag" #-}
               _statIfinal
-              {-# LINE 1601 "AttributeGrammar.hs" #-}
+              {-# LINE 1603 "AttributeGrammar.hs" #-}
               )
          _lhsOflow =
-             ({-# LINE 256 "AttributeGrammar.ag" #-}
+             ({-# LINE 258 "AttributeGrammar.ag" #-}
               _procsIflow <> _statIflow
-              {-# LINE 1606 "AttributeGrammar.hs" #-}
+              {-# LINE 1608 "AttributeGrammar.hs" #-}
               )
          _lhsOinterflow =
-             ({-# LINE 257 "AttributeGrammar.ag" #-}
+             ({-# LINE 259 "AttributeGrammar.ag" #-}
               _procsIinterflow <> _statIinterflow
-              {-# LINE 1611 "AttributeGrammar.hs" #-}
+              {-# LINE 1613 "AttributeGrammar.hs" #-}
               )
          _statOdStar =
-             ({-# LINE 260 "AttributeGrammar.ag" #-}
+             ({-# LINE 262 "AttributeGrammar.ag" #-}
               dStar_
-              {-# LINE 1616 "AttributeGrammar.hs" #-}
+              {-# LINE 1618 "AttributeGrammar.hs" #-}
               )
          _procsOdStar =
-             ({-# LINE 261 "AttributeGrammar.ag" #-}
+             ({-# LINE 263 "AttributeGrammar.ag" #-}
               dStar_
-              {-# LINE 1621 "AttributeGrammar.hs" #-}
+              {-# LINE 1623 "AttributeGrammar.hs" #-}
               )
          _statOcontinueLabel =
-             ({-# LINE 262 "AttributeGrammar.ag" #-}
+             ({-# LINE 264 "AttributeGrammar.ag" #-}
               Nothing
-              {-# LINE 1626 "AttributeGrammar.hs" #-}
+              {-# LINE 1628 "AttributeGrammar.hs" #-}
               )
          _lhsOstrongLive =
-             ({-# LINE 265 "AttributeGrammar.ag" #-}
+             ({-# LINE 267 "AttributeGrammar.ag" #-}
               _procsIstrongLive <> _statIstrongLive
-              {-# LINE 1631 "AttributeGrammar.hs" #-}
+              {-# LINE 1633 "AttributeGrammar.hs" #-}
               )
          _lhsOvalSpace =
-             ({-# LINE 266 "AttributeGrammar.ag" #-}
+             ({-# LINE 268 "AttributeGrammar.ag" #-}
               _procsIvalSpace <> _statIvalSpace
-              {-# LINE 1636 "AttributeGrammar.hs" #-}
+              {-# LINE 1638 "AttributeGrammar.hs" #-}
               )
          _self =
              Program' _procsIself _statIself dStar_
@@ -1702,14 +1704,14 @@ sem_Stat_Skip =
               _lhsOlabelled :: Stat'
               _lhsOself :: Stat
               _lhsOlabel =
-                  ({-# LINE 143 "AttributeGrammar.ag" #-}
+                  ({-# LINE 145 "AttributeGrammar.ag" #-}
                    _lhsIlabel + 1
-                   {-# LINE 1708 "AttributeGrammar.hs" #-}
+                   {-# LINE 1710 "AttributeGrammar.hs" #-}
                    )
               _lhsOlabelled =
-                  ({-# LINE 144 "AttributeGrammar.ag" #-}
+                  ({-# LINE 146 "AttributeGrammar.ag" #-}
                    Skip' _lhsIlabel
-                   {-# LINE 1713 "AttributeGrammar.hs" #-}
+                   {-# LINE 1715 "AttributeGrammar.hs" #-}
                    )
               _self =
                   Skip
@@ -1734,24 +1736,24 @@ sem_Stat_IfThenElse cond_ stat1_ stat2_ =
               _stat2Ilabelled :: Stat'
               _stat2Iself :: Stat
               _stat1Olabel =
-                  ({-# LINE 147 "AttributeGrammar.ag" #-}
+                  ({-# LINE 149 "AttributeGrammar.ag" #-}
                    _lhsIlabel + 1
-                   {-# LINE 1740 "AttributeGrammar.hs" #-}
+                   {-# LINE 1742 "AttributeGrammar.hs" #-}
                    )
               _stat2Olabel =
-                  ({-# LINE 148 "AttributeGrammar.ag" #-}
+                  ({-# LINE 150 "AttributeGrammar.ag" #-}
                    _stat1Ilabel
-                   {-# LINE 1745 "AttributeGrammar.hs" #-}
+                   {-# LINE 1747 "AttributeGrammar.hs" #-}
                    )
               _lhsOlabel =
-                  ({-# LINE 149 "AttributeGrammar.ag" #-}
+                  ({-# LINE 151 "AttributeGrammar.ag" #-}
                    _stat2Ilabel
-                   {-# LINE 1750 "AttributeGrammar.hs" #-}
+                   {-# LINE 1752 "AttributeGrammar.hs" #-}
                    )
               _lhsOlabelled =
-                  ({-# LINE 150 "AttributeGrammar.ag" #-}
+                  ({-# LINE 152 "AttributeGrammar.ag" #-}
                    IfThenElse' _lhsIlabel cond_ _stat1Ilabelled _stat2Ilabelled
-                   {-# LINE 1755 "AttributeGrammar.hs" #-}
+                   {-# LINE 1757 "AttributeGrammar.hs" #-}
                    )
               _self =
                   IfThenElse cond_ _stat1Iself _stat2Iself
@@ -1775,19 +1777,19 @@ sem_Stat_While cond_ stat_ =
               _statIlabelled :: Stat'
               _statIself :: Stat
               _statOlabel =
-                  ({-# LINE 153 "AttributeGrammar.ag" #-}
+                  ({-# LINE 155 "AttributeGrammar.ag" #-}
                    _lhsIlabel + 1
-                   {-# LINE 1781 "AttributeGrammar.hs" #-}
+                   {-# LINE 1783 "AttributeGrammar.hs" #-}
                    )
               _lhsOlabel =
-                  ({-# LINE 154 "AttributeGrammar.ag" #-}
+                  ({-# LINE 156 "AttributeGrammar.ag" #-}
                    _statIlabel
-                   {-# LINE 1786 "AttributeGrammar.hs" #-}
+                   {-# LINE 1788 "AttributeGrammar.hs" #-}
                    )
               _lhsOlabelled =
-                  ({-# LINE 155 "AttributeGrammar.ag" #-}
+                  ({-# LINE 157 "AttributeGrammar.ag" #-}
                    While' _lhsIlabel cond_ _statIlabelled
-                   {-# LINE 1791 "AttributeGrammar.hs" #-}
+                   {-# LINE 1793 "AttributeGrammar.hs" #-}
                    )
               _self =
                   While cond_ _statIself
@@ -1806,14 +1808,14 @@ sem_Stat_Call name_ params_ out_ =
               _lhsOlabelled :: Stat'
               _lhsOself :: Stat
               _lhsOlabel =
-                  ({-# LINE 158 "AttributeGrammar.ag" #-}
+                  ({-# LINE 160 "AttributeGrammar.ag" #-}
                    _lhsIlabel + 2
-                   {-# LINE 1812 "AttributeGrammar.hs" #-}
+                   {-# LINE 1814 "AttributeGrammar.hs" #-}
                    )
               _lhsOlabelled =
-                  ({-# LINE 159 "AttributeGrammar.ag" #-}
+                  ({-# LINE 161 "AttributeGrammar.ag" #-}
                    Call' _lhsIlabel (_lhsIlabel + 1) name_ params_ out_
-                   {-# LINE 1817 "AttributeGrammar.hs" #-}
+                   {-# LINE 1819 "AttributeGrammar.hs" #-}
                    )
               _self =
                   Call name_ params_ out_
@@ -1829,14 +1831,14 @@ sem_Stat_IAssign name_ val_ =
               _lhsOlabelled :: Stat'
               _lhsOself :: Stat
               _lhsOlabel =
-                  ({-# LINE 162 "AttributeGrammar.ag" #-}
+                  ({-# LINE 164 "AttributeGrammar.ag" #-}
                    _lhsIlabel + 1
-                   {-# LINE 1835 "AttributeGrammar.hs" #-}
+                   {-# LINE 1837 "AttributeGrammar.hs" #-}
                    )
               _lhsOlabelled =
-                  ({-# LINE 163 "AttributeGrammar.ag" #-}
+                  ({-# LINE 165 "AttributeGrammar.ag" #-}
                    IAssign' _lhsIlabel name_ val_
-                   {-# LINE 1840 "AttributeGrammar.hs" #-}
+                   {-# LINE 1842 "AttributeGrammar.hs" #-}
                    )
               _self =
                   IAssign name_ val_
@@ -1852,14 +1854,14 @@ sem_Stat_BAssign name_ val_ =
               _lhsOlabelled :: Stat'
               _lhsOself :: Stat
               _lhsOlabel =
-                  ({-# LINE 166 "AttributeGrammar.ag" #-}
+                  ({-# LINE 168 "AttributeGrammar.ag" #-}
                    _lhsIlabel + 1
-                   {-# LINE 1858 "AttributeGrammar.hs" #-}
+                   {-# LINE 1860 "AttributeGrammar.hs" #-}
                    )
               _lhsOlabelled =
-                  ({-# LINE 167 "AttributeGrammar.ag" #-}
+                  ({-# LINE 169 "AttributeGrammar.ag" #-}
                    BAssign' _lhsIlabel name_ val_
-                   {-# LINE 1863 "AttributeGrammar.hs" #-}
+                   {-# LINE 1865 "AttributeGrammar.hs" #-}
                    )
               _self =
                   BAssign name_ val_
@@ -1883,28 +1885,28 @@ sem_Stat_Seq stat1_ stat2_ =
               _stat2Ilabelled :: Stat'
               _stat2Iself :: Stat
               _stat1Olabel =
-                  ({-# LINE 170 "AttributeGrammar.ag" #-}
+                  ({-# LINE 172 "AttributeGrammar.ag" #-}
                    _lhsIlabel
-                   {-# LINE 1889 "AttributeGrammar.hs" #-}
+                   {-# LINE 1891 "AttributeGrammar.hs" #-}
                    )
               _stat2Olabel =
-                  ({-# LINE 171 "AttributeGrammar.ag" #-}
+                  ({-# LINE 173 "AttributeGrammar.ag" #-}
                    _stat1Ilabel
-                   {-# LINE 1894 "AttributeGrammar.hs" #-}
+                   {-# LINE 1896 "AttributeGrammar.hs" #-}
                    )
               _lhsOlabelled =
-                  ({-# LINE 172 "AttributeGrammar.ag" #-}
+                  ({-# LINE 174 "AttributeGrammar.ag" #-}
                    Seq' _stat1Ilabelled _stat2Ilabelled
-                   {-# LINE 1899 "AttributeGrammar.hs" #-}
+                   {-# LINE 1901 "AttributeGrammar.hs" #-}
                    )
               _self =
                   Seq _stat1Iself _stat2Iself
               _lhsOself =
                   _self
               _lhsOlabel =
-                  ({-# LINE 113 "AttributeGrammar.ag" #-}
+                  ({-# LINE 115 "AttributeGrammar.ag" #-}
                    _stat2Ilabel
-                   {-# LINE 1908 "AttributeGrammar.hs" #-}
+                   {-# LINE 1910 "AttributeGrammar.hs" #-}
                    )
               ( _stat1Ilabel,_stat1Ilabelled,_stat1Iself) =
                   stat1_ _stat1Olabel
@@ -1920,14 +1922,14 @@ sem_Stat_Malloc name_ size_ =
               _lhsOlabelled :: Stat'
               _lhsOself :: Stat
               _lhsOlabel =
-                  ({-# LINE 175 "AttributeGrammar.ag" #-}
+                  ({-# LINE 177 "AttributeGrammar.ag" #-}
                    _lhsIlabel + 1
-                   {-# LINE 1926 "AttributeGrammar.hs" #-}
+                   {-# LINE 1928 "AttributeGrammar.hs" #-}
                    )
               _lhsOlabelled =
-                  ({-# LINE 176 "AttributeGrammar.ag" #-}
+                  ({-# LINE 178 "AttributeGrammar.ag" #-}
                    Malloc' _lhsIlabel name_ size_
-                   {-# LINE 1931 "AttributeGrammar.hs" #-}
+                   {-# LINE 1933 "AttributeGrammar.hs" #-}
                    )
               _self =
                   Malloc name_ size_
@@ -1942,14 +1944,14 @@ sem_Stat_Free ptr_ =
               _lhsOlabelled :: Stat'
               _lhsOself :: Stat
               _lhsOlabel =
-                  ({-# LINE 179 "AttributeGrammar.ag" #-}
+                  ({-# LINE 181 "AttributeGrammar.ag" #-}
                    _lhsIlabel + 1
-                   {-# LINE 1948 "AttributeGrammar.hs" #-}
+                   {-# LINE 1950 "AttributeGrammar.hs" #-}
                    )
               _lhsOlabelled =
-                  ({-# LINE 180 "AttributeGrammar.ag" #-}
+                  ({-# LINE 182 "AttributeGrammar.ag" #-}
                    Free' _lhsIlabel ptr_
-                   {-# LINE 1953 "AttributeGrammar.hs" #-}
+                   {-# LINE 1955 "AttributeGrammar.hs" #-}
                    )
               _self =
                   Free ptr_
@@ -1965,14 +1967,14 @@ sem_Stat_RefAssign ptr_ val_ =
               _lhsOlabelled :: Stat'
               _lhsOself :: Stat
               _lhsOlabel =
-                  ({-# LINE 183 "AttributeGrammar.ag" #-}
+                  ({-# LINE 185 "AttributeGrammar.ag" #-}
                    _lhsIlabel + 1
-                   {-# LINE 1971 "AttributeGrammar.hs" #-}
+                   {-# LINE 1973 "AttributeGrammar.hs" #-}
                    )
               _lhsOlabelled =
-                  ({-# LINE 184 "AttributeGrammar.ag" #-}
+                  ({-# LINE 186 "AttributeGrammar.ag" #-}
                    RefAssign' _lhsIlabel ptr_ val_
-                   {-# LINE 1976 "AttributeGrammar.hs" #-}
+                   {-# LINE 1978 "AttributeGrammar.hs" #-}
                    )
               _self =
                   RefAssign ptr_ val_
@@ -1986,14 +1988,14 @@ sem_Stat_Continue =
               _lhsOlabelled :: Stat'
               _lhsOself :: Stat
               _lhsOlabel =
-                  ({-# LINE 187 "AttributeGrammar.ag" #-}
+                  ({-# LINE 189 "AttributeGrammar.ag" #-}
                    _lhsIlabel + 1
-                   {-# LINE 1992 "AttributeGrammar.hs" #-}
+                   {-# LINE 1994 "AttributeGrammar.hs" #-}
                    )
               _lhsOlabelled =
-                  ({-# LINE 188 "AttributeGrammar.ag" #-}
+                  ({-# LINE 190 "AttributeGrammar.ag" #-}
                    Continue' _lhsIlabel
-                   {-# LINE 1997 "AttributeGrammar.hs" #-}
+                   {-# LINE 1999 "AttributeGrammar.hs" #-}
                    )
               _self =
                   Continue
@@ -2007,14 +2009,14 @@ sem_Stat_Break =
               _lhsOlabelled :: Stat'
               _lhsOself :: Stat
               _lhsOlabel =
-                  ({-# LINE 191 "AttributeGrammar.ag" #-}
+                  ({-# LINE 193 "AttributeGrammar.ag" #-}
                    _lhsIlabel + 1
-                   {-# LINE 2013 "AttributeGrammar.hs" #-}
+                   {-# LINE 2015 "AttributeGrammar.hs" #-}
                    )
               _lhsOlabelled =
-                  ({-# LINE 192 "AttributeGrammar.ag" #-}
+                  ({-# LINE 194 "AttributeGrammar.ag" #-}
                    Break' _lhsIlabel
-                   {-# LINE 2018 "AttributeGrammar.hs" #-}
+                   {-# LINE 2020 "AttributeGrammar.hs" #-}
                    )
               _self =
                   Break
@@ -2092,63 +2094,63 @@ sem_Stat'_Skip' label_ =
               _lhsOself :: Stat'
               _lhsOcontinueLabel :: ( Maybe Int )
               _lhsOpretty =
-                  ({-# LINE 299 "AttributeGrammar.ag" #-}
+                  ({-# LINE 301 "AttributeGrammar.ag" #-}
                    ["skip" ++ showLabel label_]
-                   {-# LINE 2098 "AttributeGrammar.hs" #-}
+                   {-# LINE 2100 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSkip =
-                  ({-# LINE 300 "AttributeGrammar.ag" #-}
+                  ({-# LINE 302 "AttributeGrammar.ag" #-}
                    True
-                   {-# LINE 2103 "AttributeGrammar.hs" #-}
+                   {-# LINE 2105 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSingle =
-                  ({-# LINE 301 "AttributeGrammar.ag" #-}
+                  ({-# LINE 303 "AttributeGrammar.ag" #-}
                    True
-                   {-# LINE 2108 "AttributeGrammar.hs" #-}
+                   {-# LINE 2110 "AttributeGrammar.hs" #-}
                    )
               _lhsOinit =
-                  ({-# LINE 302 "AttributeGrammar.ag" #-}
+                  ({-# LINE 304 "AttributeGrammar.ag" #-}
                    label_
-                   {-# LINE 2113 "AttributeGrammar.hs" #-}
+                   {-# LINE 2115 "AttributeGrammar.hs" #-}
                    )
               _lhsOfinal =
-                  ({-# LINE 303 "AttributeGrammar.ag" #-}
+                  ({-# LINE 305 "AttributeGrammar.ag" #-}
                    singleton label_
-                   {-# LINE 2118 "AttributeGrammar.hs" #-}
+                   {-# LINE 2120 "AttributeGrammar.hs" #-}
                    )
               _lhsOflow =
-                  ({-# LINE 304 "AttributeGrammar.ag" #-}
+                  ({-# LINE 306 "AttributeGrammar.ag" #-}
                    empty
-                   {-# LINE 2123 "AttributeGrammar.hs" #-}
+                   {-# LINE 2125 "AttributeGrammar.hs" #-}
                    )
               _lhsOstrongLive =
-                  ({-# LINE 305 "AttributeGrammar.ag" #-}
+                  ({-# LINE 307 "AttributeGrammar.ag" #-}
                    singleL label_ id
-                   {-# LINE 2128 "AttributeGrammar.hs" #-}
+                   {-# LINE 2130 "AttributeGrammar.hs" #-}
                    )
               _lhsOvalSpace =
-                  ({-# LINE 306 "AttributeGrammar.ag" #-}
+                  ({-# LINE 308 "AttributeGrammar.ag" #-}
                    singleL label_ id
-                   {-# LINE 2133 "AttributeGrammar.hs" #-}
+                   {-# LINE 2135 "AttributeGrammar.hs" #-}
                    )
               _lhsObreakLabels =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    empty
-                   {-# LINE 2138 "AttributeGrammar.hs" #-}
+                   {-# LINE 2140 "AttributeGrammar.hs" #-}
                    )
               _lhsOinterflow =
-                  ({-# LINE 202 "AttributeGrammar.ag" #-}
+                  ({-# LINE 204 "AttributeGrammar.ag" #-}
                    mempty
-                   {-# LINE 2143 "AttributeGrammar.hs" #-}
+                   {-# LINE 2145 "AttributeGrammar.hs" #-}
                    )
               _self =
                   Skip' label_
               _lhsOself =
                   _self
               _lhsOcontinueLabel =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    _lhsIcontinueLabel
-                   {-# LINE 2152 "AttributeGrammar.hs" #-}
+                   {-# LINE 2154 "AttributeGrammar.hs" #-}
                    )
           in  ( _lhsObreakLabels,_lhsOcontinueLabel,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive,_lhsOvalSpace)))
 sem_Stat'_IfThenElse' :: Int ->
@@ -2205,7 +2207,7 @@ sem_Stat'_IfThenElse' labelc_ cond_ stat1_ stat2_ =
               _stat2IstrongLive :: ( DifTrans (Set String) )
               _stat2IvalSpace :: ( DifTrans PtConstLat )
               _lhsOpretty =
-                  ({-# LINE 309 "AttributeGrammar.ag" #-}
+                  ({-# LINE 311 "AttributeGrammar.ag" #-}
                    ["if [" ++ _condIpretty ++ "]" ++ showLabel labelc_ ++ " then" ++ (if _stat1IisSingle then "" else " {")]
                     ++ indent _stat1Ipretty
                     ++ (if _stat2IisSkip then (if _stat1IisSingle then [] else ["}"]) else
@@ -2213,81 +2215,81 @@ sem_Stat'_IfThenElse' labelc_ cond_ stat1_ stat2_ =
                         ++ indent _stat2Ipretty
                         ++ (if _stat2IisSingle then [] else ["}"])
                       )
-                   {-# LINE 2217 "AttributeGrammar.hs" #-}
+                   {-# LINE 2219 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSkip =
-                  ({-# LINE 316 "AttributeGrammar.ag" #-}
+                  ({-# LINE 318 "AttributeGrammar.ag" #-}
                    False
-                   {-# LINE 2222 "AttributeGrammar.hs" #-}
+                   {-# LINE 2224 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSingle =
-                  ({-# LINE 317 "AttributeGrammar.ag" #-}
+                  ({-# LINE 319 "AttributeGrammar.ag" #-}
                    False
-                   {-# LINE 2227 "AttributeGrammar.hs" #-}
+                   {-# LINE 2229 "AttributeGrammar.hs" #-}
                    )
               _lhsOinit =
-                  ({-# LINE 318 "AttributeGrammar.ag" #-}
+                  ({-# LINE 320 "AttributeGrammar.ag" #-}
                    labelc_
-                   {-# LINE 2232 "AttributeGrammar.hs" #-}
+                   {-# LINE 2234 "AttributeGrammar.hs" #-}
                    )
               _lhsOfinal =
-                  ({-# LINE 319 "AttributeGrammar.ag" #-}
+                  ({-# LINE 321 "AttributeGrammar.ag" #-}
                    _stat1Ifinal <> _stat2Ifinal
-                   {-# LINE 2237 "AttributeGrammar.hs" #-}
+                   {-# LINE 2239 "AttributeGrammar.hs" #-}
                    )
               _lhsOflow =
-                  ({-# LINE 320 "AttributeGrammar.ag" #-}
+                  ({-# LINE 322 "AttributeGrammar.ag" #-}
                    _stat1Iflow <> _stat2Iflow <> fromList [(labelc_, _stat1Iinit), (labelc_, _stat2Iinit)]
-                   {-# LINE 2242 "AttributeGrammar.hs" #-}
+                   {-# LINE 2244 "AttributeGrammar.hs" #-}
                    )
               _lhsOstrongLive =
-                  ({-# LINE 321 "AttributeGrammar.ag" #-}
+                  ({-# LINE 323 "AttributeGrammar.ag" #-}
                    insertL labelc_ (<> _condIfreeVars) $ _stat1IstrongLive <> _stat2IstrongLive
-                   {-# LINE 2247 "AttributeGrammar.hs" #-}
+                   {-# LINE 2249 "AttributeGrammar.hs" #-}
                    )
               _lhsOvalSpace =
-                  ({-# LINE 322 "AttributeGrammar.ag" #-}
+                  ({-# LINE 324 "AttributeGrammar.ag" #-}
                    insertL labelc_ id $ _stat1IvalSpace <> _stat2IvalSpace
-                   {-# LINE 2252 "AttributeGrammar.hs" #-}
+                   {-# LINE 2254 "AttributeGrammar.hs" #-}
                    )
               _lhsObreakLabels =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    _stat1IbreakLabels <> _stat2IbreakLabels
-                   {-# LINE 2257 "AttributeGrammar.hs" #-}
+                   {-# LINE 2259 "AttributeGrammar.hs" #-}
                    )
               _lhsOinterflow =
-                  ({-# LINE 202 "AttributeGrammar.ag" #-}
+                  ({-# LINE 204 "AttributeGrammar.ag" #-}
                    _stat1Iinterflow <> _stat2Iinterflow
-                   {-# LINE 2262 "AttributeGrammar.hs" #-}
+                   {-# LINE 2264 "AttributeGrammar.hs" #-}
                    )
               _self =
                   IfThenElse' labelc_ _condIself _stat1Iself _stat2Iself
               _lhsOself =
                   _self
               _lhsOcontinueLabel =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    _stat2IcontinueLabel
-                   {-# LINE 2271 "AttributeGrammar.hs" #-}
+                   {-# LINE 2273 "AttributeGrammar.hs" #-}
                    )
               _stat1OcontinueLabel =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    _lhsIcontinueLabel
-                   {-# LINE 2276 "AttributeGrammar.hs" #-}
+                   {-# LINE 2278 "AttributeGrammar.hs" #-}
                    )
               _stat1OdStar =
-                  ({-# LINE 200 "AttributeGrammar.ag" #-}
+                  ({-# LINE 202 "AttributeGrammar.ag" #-}
                    _lhsIdStar
-                   {-# LINE 2281 "AttributeGrammar.hs" #-}
+                   {-# LINE 2283 "AttributeGrammar.hs" #-}
                    )
               _stat2OcontinueLabel =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    _stat1IcontinueLabel
-                   {-# LINE 2286 "AttributeGrammar.hs" #-}
+                   {-# LINE 2288 "AttributeGrammar.hs" #-}
                    )
               _stat2OdStar =
-                  ({-# LINE 200 "AttributeGrammar.ag" #-}
+                  ({-# LINE 202 "AttributeGrammar.ag" #-}
                    _lhsIdStar
-                   {-# LINE 2291 "AttributeGrammar.hs" #-}
+                   {-# LINE 2293 "AttributeGrammar.hs" #-}
                    )
               ( _condIexpValSpace,_condIfreeVars,_condIprecedence,_condIpretty,_condIself) =
                   cond_
@@ -2335,75 +2337,75 @@ sem_Stat'_While' labelc_ cond_ stat_ =
               _statIstrongLive :: ( DifTrans (Set String) )
               _statIvalSpace :: ( DifTrans PtConstLat )
               _lhsOpretty =
-                  ({-# LINE 325 "AttributeGrammar.ag" #-}
+                  ({-# LINE 327 "AttributeGrammar.ag" #-}
                    ["while [" ++ _condIpretty ++ "]" ++ showLabel labelc_ ++ " do" ++ (if _statIisSingle then "" else " {")]
                     ++ indent _statIpretty
                     ++ (if _statIisSingle then [] else ["}"])
-                   {-# LINE 2343 "AttributeGrammar.hs" #-}
+                   {-# LINE 2345 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSkip =
-                  ({-# LINE 328 "AttributeGrammar.ag" #-}
+                  ({-# LINE 330 "AttributeGrammar.ag" #-}
                    False
-                   {-# LINE 2348 "AttributeGrammar.hs" #-}
+                   {-# LINE 2350 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSingle =
-                  ({-# LINE 329 "AttributeGrammar.ag" #-}
+                  ({-# LINE 331 "AttributeGrammar.ag" #-}
                    False
-                   {-# LINE 2353 "AttributeGrammar.hs" #-}
+                   {-# LINE 2355 "AttributeGrammar.hs" #-}
                    )
               _lhsOinit =
-                  ({-# LINE 330 "AttributeGrammar.ag" #-}
+                  ({-# LINE 332 "AttributeGrammar.ag" #-}
                    labelc_
-                   {-# LINE 2358 "AttributeGrammar.hs" #-}
+                   {-# LINE 2360 "AttributeGrammar.hs" #-}
                    )
               _lhsOfinal =
-                  ({-# LINE 331 "AttributeGrammar.ag" #-}
+                  ({-# LINE 333 "AttributeGrammar.ag" #-}
                    singleton labelc_ <> _statIbreakLabels
-                   {-# LINE 2363 "AttributeGrammar.hs" #-}
+                   {-# LINE 2365 "AttributeGrammar.hs" #-}
                    )
               _lhsOflow =
-                  ({-# LINE 332 "AttributeGrammar.ag" #-}
+                  ({-# LINE 334 "AttributeGrammar.ag" #-}
                    _statIflow <> singleton (labelc_, _statIinit) <> fromList [(label, labelc_) | label <- toList _statIfinal ]
-                   {-# LINE 2368 "AttributeGrammar.hs" #-}
+                   {-# LINE 2370 "AttributeGrammar.hs" #-}
                    )
               _lhsOcontinueLabel =
-                  ({-# LINE 333 "AttributeGrammar.ag" #-}
+                  ({-# LINE 335 "AttributeGrammar.ag" #-}
                    Just labelc_
-                   {-# LINE 2373 "AttributeGrammar.hs" #-}
+                   {-# LINE 2375 "AttributeGrammar.hs" #-}
                    )
               _lhsObreakLabels =
-                  ({-# LINE 334 "AttributeGrammar.ag" #-}
+                  ({-# LINE 336 "AttributeGrammar.ag" #-}
                    empty
-                   {-# LINE 2378 "AttributeGrammar.hs" #-}
+                   {-# LINE 2380 "AttributeGrammar.hs" #-}
                    )
               _lhsOstrongLive =
-                  ({-# LINE 335 "AttributeGrammar.ag" #-}
+                  ({-# LINE 337 "AttributeGrammar.ag" #-}
                    insertL labelc_ (<> _condIfreeVars) $ _statIstrongLive
-                   {-# LINE 2383 "AttributeGrammar.hs" #-}
+                   {-# LINE 2385 "AttributeGrammar.hs" #-}
                    )
               _lhsOvalSpace =
-                  ({-# LINE 336 "AttributeGrammar.ag" #-}
+                  ({-# LINE 338 "AttributeGrammar.ag" #-}
                    insertL labelc_ id _statIvalSpace
-                   {-# LINE 2388 "AttributeGrammar.hs" #-}
+                   {-# LINE 2390 "AttributeGrammar.hs" #-}
                    )
               _lhsOinterflow =
-                  ({-# LINE 202 "AttributeGrammar.ag" #-}
+                  ({-# LINE 204 "AttributeGrammar.ag" #-}
                    _statIinterflow
-                   {-# LINE 2393 "AttributeGrammar.hs" #-}
+                   {-# LINE 2395 "AttributeGrammar.hs" #-}
                    )
               _self =
                   While' labelc_ _condIself _statIself
               _lhsOself =
                   _self
               _statOcontinueLabel =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    _lhsIcontinueLabel
-                   {-# LINE 2402 "AttributeGrammar.hs" #-}
+                   {-# LINE 2404 "AttributeGrammar.hs" #-}
                    )
               _statOdStar =
-                  ({-# LINE 200 "AttributeGrammar.ag" #-}
+                  ({-# LINE 202 "AttributeGrammar.ag" #-}
                    _lhsIdStar
-                   {-# LINE 2407 "AttributeGrammar.hs" #-}
+                   {-# LINE 2409 "AttributeGrammar.hs" #-}
                    )
               ( _condIexpValSpace,_condIfreeVars,_condIprecedence,_condIpretty,_condIself) =
                   cond_
@@ -2436,68 +2438,68 @@ sem_Stat'_Call' labelCall_ labelReturn_ name_ params_ out_ =
               _paramsIpretty :: String
               _paramsIself :: Exprs
               _lhsOpretty =
-                  ({-# LINE 339 "AttributeGrammar.ag" #-}
+                  ({-# LINE 341 "AttributeGrammar.ag" #-}
                    ["[call " ++ name_ ++ "(" ++ _paramsIpretty ++ out_ ++ ")]" ++ showLabel labelCall_ ++ "₋" ++ showLabel labelReturn_]
-                   {-# LINE 2442 "AttributeGrammar.hs" #-}
+                   {-# LINE 2444 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSkip =
-                  ({-# LINE 340 "AttributeGrammar.ag" #-}
+                  ({-# LINE 342 "AttributeGrammar.ag" #-}
                    False
-                   {-# LINE 2447 "AttributeGrammar.hs" #-}
+                   {-# LINE 2449 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSingle =
-                  ({-# LINE 341 "AttributeGrammar.ag" #-}
+                  ({-# LINE 343 "AttributeGrammar.ag" #-}
                    True
-                   {-# LINE 2452 "AttributeGrammar.hs" #-}
+                   {-# LINE 2454 "AttributeGrammar.hs" #-}
                    )
               _lhsOinit =
-                  ({-# LINE 342 "AttributeGrammar.ag" #-}
+                  ({-# LINE 344 "AttributeGrammar.ag" #-}
                    labelCall_
-                   {-# LINE 2457 "AttributeGrammar.hs" #-}
+                   {-# LINE 2459 "AttributeGrammar.hs" #-}
                    )
               _lhsOfinal =
-                  ({-# LINE 343 "AttributeGrammar.ag" #-}
+                  ({-# LINE 345 "AttributeGrammar.ag" #-}
                    singleton labelReturn_
-                   {-# LINE 2462 "AttributeGrammar.hs" #-}
+                   {-# LINE 2464 "AttributeGrammar.hs" #-}
                    )
               _proc =
-                  ({-# LINE 344 "AttributeGrammar.ag" #-}
+                  ({-# LINE 346 "AttributeGrammar.ag" #-}
                    findProc name_ _lhsIdStar
-                   {-# LINE 2467 "AttributeGrammar.hs" #-}
+                   {-# LINE 2469 "AttributeGrammar.hs" #-}
                    )
               _lhsOinterflow =
-                  ({-# LINE 345 "AttributeGrammar.ag" #-}
+                  ({-# LINE 347 "AttributeGrammar.ag" #-}
                    singleton (Inter labelCall_ (procEntry _proc    ) (procExit _proc    ) labelReturn_)
-                   {-# LINE 2472 "AttributeGrammar.hs" #-}
+                   {-# LINE 2474 "AttributeGrammar.hs" #-}
                    )
               _lhsOflow =
-                  ({-# LINE 346 "AttributeGrammar.ag" #-}
+                  ({-# LINE 348 "AttributeGrammar.ag" #-}
                    fromList [(labelCall_, (procEntry _proc    )), ((procExit _proc    ), labelReturn_)]
-                   {-# LINE 2477 "AttributeGrammar.hs" #-}
+                   {-# LINE 2479 "AttributeGrammar.hs" #-}
                    )
               _lhsOstrongLive =
-                  ({-# LINE 347 "AttributeGrammar.ag" #-}
+                  ({-# LINE 349 "AttributeGrammar.ag" #-}
                    insertL labelReturn_ (retStrong out_ $ procOut _proc    )    $ singleR labelCall_ (callStrong (procInp _proc    ) _paramsIfreeVars)
-                   {-# LINE 2482 "AttributeGrammar.hs" #-}
+                   {-# LINE 2484 "AttributeGrammar.hs" #-}
                    )
               _lhsOvalSpace =
-                  ({-# LINE 348 "AttributeGrammar.ag" #-}
+                  ({-# LINE 350 "AttributeGrammar.ag" #-}
                    insertL labelCall_ (callConst (procInp _proc    ) $ _paramsIexpValSpace) $ singleR labelReturn_ (retConst out_ $ procOut _proc    )
-                   {-# LINE 2487 "AttributeGrammar.hs" #-}
+                   {-# LINE 2489 "AttributeGrammar.hs" #-}
                    )
               _lhsObreakLabels =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    empty
-                   {-# LINE 2492 "AttributeGrammar.hs" #-}
+                   {-# LINE 2494 "AttributeGrammar.hs" #-}
                    )
               _self =
                   Call' labelCall_ labelReturn_ name_ _paramsIself out_
               _lhsOself =
                   _self
               _lhsOcontinueLabel =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    _lhsIcontinueLabel
-                   {-# LINE 2501 "AttributeGrammar.hs" #-}
+                   {-# LINE 2503 "AttributeGrammar.hs" #-}
                    )
               ( _paramsIexpValSpace,_paramsIfreeVars,_paramsIpretty,_paramsIself) =
                   params_
@@ -2527,63 +2529,63 @@ sem_Stat'_IAssign' label_ name_ val_ =
               _valIpretty :: String
               _valIself :: IExpr
               _lhsOpretty =
-                  ({-# LINE 351 "AttributeGrammar.ag" #-}
+                  ({-# LINE 353 "AttributeGrammar.ag" #-}
                    ["[" ++ name_ ++ " := " ++ _valIpretty ++ "]" ++ showLabel label_]
-                   {-# LINE 2533 "AttributeGrammar.hs" #-}
+                   {-# LINE 2535 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSkip =
-                  ({-# LINE 352 "AttributeGrammar.ag" #-}
+                  ({-# LINE 354 "AttributeGrammar.ag" #-}
                    False
-                   {-# LINE 2538 "AttributeGrammar.hs" #-}
+                   {-# LINE 2540 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSingle =
-                  ({-# LINE 353 "AttributeGrammar.ag" #-}
+                  ({-# LINE 355 "AttributeGrammar.ag" #-}
                    True
-                   {-# LINE 2543 "AttributeGrammar.hs" #-}
+                   {-# LINE 2545 "AttributeGrammar.hs" #-}
                    )
               _lhsOinit =
-                  ({-# LINE 354 "AttributeGrammar.ag" #-}
+                  ({-# LINE 356 "AttributeGrammar.ag" #-}
                    label_
-                   {-# LINE 2548 "AttributeGrammar.hs" #-}
+                   {-# LINE 2550 "AttributeGrammar.hs" #-}
                    )
               _lhsOfinal =
-                  ({-# LINE 355 "AttributeGrammar.ag" #-}
+                  ({-# LINE 357 "AttributeGrammar.ag" #-}
                    singleton label_
-                   {-# LINE 2553 "AttributeGrammar.hs" #-}
+                   {-# LINE 2555 "AttributeGrammar.hs" #-}
                    )
               _lhsOflow =
-                  ({-# LINE 356 "AttributeGrammar.ag" #-}
+                  ({-# LINE 358 "AttributeGrammar.ag" #-}
                    empty
-                   {-# LINE 2558 "AttributeGrammar.hs" #-}
+                   {-# LINE 2560 "AttributeGrammar.hs" #-}
                    )
               _lhsOstrongLive =
-                  ({-# LINE 357 "AttributeGrammar.ag" #-}
+                  ({-# LINE 359 "AttributeGrammar.ag" #-}
                    singleL label_ (survive name_ _valIfreeVars)
-                   {-# LINE 2563 "AttributeGrammar.hs" #-}
+                   {-# LINE 2565 "AttributeGrammar.hs" #-}
                    )
               _lhsOvalSpace =
-                  ({-# LINE 358 "AttributeGrammar.ag" #-}
+                  ({-# LINE 360 "AttributeGrammar.ag" #-}
                    singleL label_ (updateConst name_ _valIexpValSpace)
-                   {-# LINE 2568 "AttributeGrammar.hs" #-}
+                   {-# LINE 2570 "AttributeGrammar.hs" #-}
                    )
               _lhsObreakLabels =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    empty
-                   {-# LINE 2573 "AttributeGrammar.hs" #-}
+                   {-# LINE 2575 "AttributeGrammar.hs" #-}
                    )
               _lhsOinterflow =
-                  ({-# LINE 202 "AttributeGrammar.ag" #-}
+                  ({-# LINE 204 "AttributeGrammar.ag" #-}
                    mempty
-                   {-# LINE 2578 "AttributeGrammar.hs" #-}
+                   {-# LINE 2580 "AttributeGrammar.hs" #-}
                    )
               _self =
                   IAssign' label_ name_ _valIself
               _lhsOself =
                   _self
               _lhsOcontinueLabel =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    _lhsIcontinueLabel
-                   {-# LINE 2587 "AttributeGrammar.hs" #-}
+                   {-# LINE 2589 "AttributeGrammar.hs" #-}
                    )
               ( _valIexpValSpace,_valIfreeVars,_valIprecedence,_valIpretty,_valIself) =
                   val_
@@ -2613,63 +2615,63 @@ sem_Stat'_BAssign' label_ name_ val_ =
               _valIpretty :: String
               _valIself :: BExpr
               _lhsOpretty =
-                  ({-# LINE 361 "AttributeGrammar.ag" #-}
+                  ({-# LINE 363 "AttributeGrammar.ag" #-}
                    ["[" ++ name_ ++ " := " ++ _valIpretty ++ "]" ++ showLabel label_]
-                   {-# LINE 2619 "AttributeGrammar.hs" #-}
+                   {-# LINE 2621 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSkip =
-                  ({-# LINE 362 "AttributeGrammar.ag" #-}
+                  ({-# LINE 364 "AttributeGrammar.ag" #-}
                    False
-                   {-# LINE 2624 "AttributeGrammar.hs" #-}
+                   {-# LINE 2626 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSingle =
-                  ({-# LINE 363 "AttributeGrammar.ag" #-}
+                  ({-# LINE 365 "AttributeGrammar.ag" #-}
                    True
-                   {-# LINE 2629 "AttributeGrammar.hs" #-}
+                   {-# LINE 2631 "AttributeGrammar.hs" #-}
                    )
               _lhsOinit =
-                  ({-# LINE 364 "AttributeGrammar.ag" #-}
+                  ({-# LINE 366 "AttributeGrammar.ag" #-}
                    label_
-                   {-# LINE 2634 "AttributeGrammar.hs" #-}
+                   {-# LINE 2636 "AttributeGrammar.hs" #-}
                    )
               _lhsOfinal =
-                  ({-# LINE 365 "AttributeGrammar.ag" #-}
+                  ({-# LINE 367 "AttributeGrammar.ag" #-}
                    singleton label_
-                   {-# LINE 2639 "AttributeGrammar.hs" #-}
+                   {-# LINE 2641 "AttributeGrammar.hs" #-}
                    )
               _lhsOflow =
-                  ({-# LINE 366 "AttributeGrammar.ag" #-}
+                  ({-# LINE 368 "AttributeGrammar.ag" #-}
                    empty
-                   {-# LINE 2644 "AttributeGrammar.hs" #-}
+                   {-# LINE 2646 "AttributeGrammar.hs" #-}
                    )
               _lhsOstrongLive =
-                  ({-# LINE 367 "AttributeGrammar.ag" #-}
+                  ({-# LINE 369 "AttributeGrammar.ag" #-}
                    singleL label_ (survive name_ _valIfreeVars)
-                   {-# LINE 2649 "AttributeGrammar.hs" #-}
+                   {-# LINE 2651 "AttributeGrammar.hs" #-}
                    )
               _lhsOvalSpace =
-                  ({-# LINE 368 "AttributeGrammar.ag" #-}
+                  ({-# LINE 370 "AttributeGrammar.ag" #-}
                    singleL label_ (updateConst name_ _valIexpValSpace)
-                   {-# LINE 2654 "AttributeGrammar.hs" #-}
+                   {-# LINE 2656 "AttributeGrammar.hs" #-}
                    )
               _lhsObreakLabels =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    empty
-                   {-# LINE 2659 "AttributeGrammar.hs" #-}
+                   {-# LINE 2661 "AttributeGrammar.hs" #-}
                    )
               _lhsOinterflow =
-                  ({-# LINE 202 "AttributeGrammar.ag" #-}
+                  ({-# LINE 204 "AttributeGrammar.ag" #-}
                    mempty
-                   {-# LINE 2664 "AttributeGrammar.hs" #-}
+                   {-# LINE 2666 "AttributeGrammar.hs" #-}
                    )
               _self =
                   BAssign' label_ name_ _valIself
               _lhsOself =
                   _self
               _lhsOcontinueLabel =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    _lhsIcontinueLabel
-                   {-# LINE 2673 "AttributeGrammar.hs" #-}
+                   {-# LINE 2675 "AttributeGrammar.hs" #-}
                    )
               ( _valIexpValSpace,_valIfreeVars,_valIprecedence,_valIpretty,_valIself) =
                   val_
@@ -2721,83 +2723,83 @@ sem_Stat'_Seq' stat1_ stat2_ =
               _stat2IstrongLive :: ( DifTrans (Set String) )
               _stat2IvalSpace :: ( DifTrans PtConstLat )
               _lhsOpretty =
-                  ({-# LINE 371 "AttributeGrammar.ag" #-}
+                  ({-# LINE 373 "AttributeGrammar.ag" #-}
                    addSemicolon _stat1Ipretty ++ _stat2Ipretty
-                   {-# LINE 2727 "AttributeGrammar.hs" #-}
+                   {-# LINE 2729 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSkip =
-                  ({-# LINE 372 "AttributeGrammar.ag" #-}
+                  ({-# LINE 374 "AttributeGrammar.ag" #-}
                    False
-                   {-# LINE 2732 "AttributeGrammar.hs" #-}
+                   {-# LINE 2734 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSingle =
-                  ({-# LINE 373 "AttributeGrammar.ag" #-}
+                  ({-# LINE 375 "AttributeGrammar.ag" #-}
                    False
-                   {-# LINE 2737 "AttributeGrammar.hs" #-}
+                   {-# LINE 2739 "AttributeGrammar.hs" #-}
                    )
               _lhsOinit =
-                  ({-# LINE 374 "AttributeGrammar.ag" #-}
+                  ({-# LINE 376 "AttributeGrammar.ag" #-}
                    _stat1Iinit
-                   {-# LINE 2742 "AttributeGrammar.hs" #-}
+                   {-# LINE 2744 "AttributeGrammar.hs" #-}
                    )
               _lhsOfinal =
-                  ({-# LINE 375 "AttributeGrammar.ag" #-}
+                  ({-# LINE 377 "AttributeGrammar.ag" #-}
                    _stat2Ifinal
-                   {-# LINE 2747 "AttributeGrammar.hs" #-}
+                   {-# LINE 2749 "AttributeGrammar.hs" #-}
                    )
               _lhsOflow =
-                  ({-# LINE 376 "AttributeGrammar.ag" #-}
+                  ({-# LINE 378 "AttributeGrammar.ag" #-}
                    _stat1Iflow <> _stat2Iflow <> fromList [(label, _stat2Iinit) | label <- toList _stat1Ifinal]
-                   {-# LINE 2752 "AttributeGrammar.hs" #-}
+                   {-# LINE 2754 "AttributeGrammar.hs" #-}
                    )
               _lhsOstrongLive =
-                  ({-# LINE 377 "AttributeGrammar.ag" #-}
+                  ({-# LINE 379 "AttributeGrammar.ag" #-}
                    _stat1IstrongLive <> _stat2IstrongLive
-                   {-# LINE 2757 "AttributeGrammar.hs" #-}
+                   {-# LINE 2759 "AttributeGrammar.hs" #-}
                    )
               _lhsOvalSpace =
-                  ({-# LINE 378 "AttributeGrammar.ag" #-}
+                  ({-# LINE 380 "AttributeGrammar.ag" #-}
                    _stat1IvalSpace <> _stat2IvalSpace
-                   {-# LINE 2762 "AttributeGrammar.hs" #-}
+                   {-# LINE 2764 "AttributeGrammar.hs" #-}
                    )
               _lhsObreakLabels =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    _stat1IbreakLabels <> _stat2IbreakLabels
-                   {-# LINE 2767 "AttributeGrammar.hs" #-}
+                   {-# LINE 2769 "AttributeGrammar.hs" #-}
                    )
               _lhsOinterflow =
-                  ({-# LINE 202 "AttributeGrammar.ag" #-}
+                  ({-# LINE 204 "AttributeGrammar.ag" #-}
                    _stat1Iinterflow <> _stat2Iinterflow
-                   {-# LINE 2772 "AttributeGrammar.hs" #-}
+                   {-# LINE 2774 "AttributeGrammar.hs" #-}
                    )
               _self =
                   Seq' _stat1Iself _stat2Iself
               _lhsOself =
                   _self
               _lhsOcontinueLabel =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    _stat2IcontinueLabel
-                   {-# LINE 2781 "AttributeGrammar.hs" #-}
+                   {-# LINE 2783 "AttributeGrammar.hs" #-}
                    )
               _stat1OcontinueLabel =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    _lhsIcontinueLabel
-                   {-# LINE 2786 "AttributeGrammar.hs" #-}
+                   {-# LINE 2788 "AttributeGrammar.hs" #-}
                    )
               _stat1OdStar =
-                  ({-# LINE 200 "AttributeGrammar.ag" #-}
+                  ({-# LINE 202 "AttributeGrammar.ag" #-}
                    _lhsIdStar
-                   {-# LINE 2791 "AttributeGrammar.hs" #-}
+                   {-# LINE 2793 "AttributeGrammar.hs" #-}
                    )
               _stat2OcontinueLabel =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    _stat1IcontinueLabel
-                   {-# LINE 2796 "AttributeGrammar.hs" #-}
+                   {-# LINE 2798 "AttributeGrammar.hs" #-}
                    )
               _stat2OdStar =
-                  ({-# LINE 200 "AttributeGrammar.ag" #-}
+                  ({-# LINE 202 "AttributeGrammar.ag" #-}
                    _lhsIdStar
-                   {-# LINE 2801 "AttributeGrammar.hs" #-}
+                   {-# LINE 2803 "AttributeGrammar.hs" #-}
                    )
               ( _stat1IbreakLabels,_stat1IcontinueLabel,_stat1Ifinal,_stat1Iflow,_stat1Iinit,_stat1Iinterflow,_stat1IisSingle,_stat1IisSkip,_stat1Ipretty,_stat1Iself,_stat1IstrongLive,_stat1IvalSpace) =
                   stat1_ _stat1OcontinueLabel _stat1OdStar
@@ -2829,63 +2831,63 @@ sem_Stat'_Malloc' label_ name_ size_ =
               _sizeIpretty :: String
               _sizeIself :: IExpr
               _lhsOpretty =
-                  ({-# LINE 381 "AttributeGrammar.ag" #-}
+                  ({-# LINE 383 "AttributeGrammar.ag" #-}
                    ["malloc(" ++ name_ ++ ", " ++ _sizeIpretty ++ ")" ++ showLabel label_]
-                   {-# LINE 2835 "AttributeGrammar.hs" #-}
+                   {-# LINE 2837 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSkip =
-                  ({-# LINE 382 "AttributeGrammar.ag" #-}
+                  ({-# LINE 384 "AttributeGrammar.ag" #-}
                    False
-                   {-# LINE 2840 "AttributeGrammar.hs" #-}
+                   {-# LINE 2842 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSingle =
-                  ({-# LINE 383 "AttributeGrammar.ag" #-}
+                  ({-# LINE 385 "AttributeGrammar.ag" #-}
                    True
-                   {-# LINE 2845 "AttributeGrammar.hs" #-}
+                   {-# LINE 2847 "AttributeGrammar.hs" #-}
                    )
               _lhsOinit =
-                  ({-# LINE 384 "AttributeGrammar.ag" #-}
+                  ({-# LINE 386 "AttributeGrammar.ag" #-}
                    label_
-                   {-# LINE 2850 "AttributeGrammar.hs" #-}
+                   {-# LINE 2852 "AttributeGrammar.hs" #-}
                    )
               _lhsOfinal =
-                  ({-# LINE 385 "AttributeGrammar.ag" #-}
+                  ({-# LINE 387 "AttributeGrammar.ag" #-}
                    singleton label_
-                   {-# LINE 2855 "AttributeGrammar.hs" #-}
+                   {-# LINE 2857 "AttributeGrammar.hs" #-}
                    )
               _lhsOflow =
-                  ({-# LINE 386 "AttributeGrammar.ag" #-}
+                  ({-# LINE 388 "AttributeGrammar.ag" #-}
                    empty
-                   {-# LINE 2860 "AttributeGrammar.hs" #-}
+                   {-# LINE 2862 "AttributeGrammar.hs" #-}
                    )
               _lhsOstrongLive =
-                  ({-# LINE 387 "AttributeGrammar.ag" #-}
+                  ({-# LINE 389 "AttributeGrammar.ag" #-}
                    singleL label_ (survive name_ _sizeIfreeVars)
-                   {-# LINE 2865 "AttributeGrammar.hs" #-}
+                   {-# LINE 2867 "AttributeGrammar.hs" #-}
                    )
               _lhsOvalSpace =
-                  ({-# LINE 389 "AttributeGrammar.ag" #-}
+                  ({-# LINE 391 "AttributeGrammar.ag" #-}
                    singleL label_ id
-                   {-# LINE 2870 "AttributeGrammar.hs" #-}
+                   {-# LINE 2872 "AttributeGrammar.hs" #-}
                    )
               _lhsObreakLabels =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    empty
-                   {-# LINE 2875 "AttributeGrammar.hs" #-}
+                   {-# LINE 2877 "AttributeGrammar.hs" #-}
                    )
               _lhsOinterflow =
-                  ({-# LINE 202 "AttributeGrammar.ag" #-}
+                  ({-# LINE 204 "AttributeGrammar.ag" #-}
                    mempty
-                   {-# LINE 2880 "AttributeGrammar.hs" #-}
+                   {-# LINE 2882 "AttributeGrammar.hs" #-}
                    )
               _self =
                   Malloc' label_ name_ _sizeIself
               _lhsOself =
                   _self
               _lhsOcontinueLabel =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    _lhsIcontinueLabel
-                   {-# LINE 2889 "AttributeGrammar.hs" #-}
+                   {-# LINE 2891 "AttributeGrammar.hs" #-}
                    )
               ( _sizeIexpValSpace,_sizeIfreeVars,_sizeIprecedence,_sizeIpretty,_sizeIself) =
                   size_
@@ -2914,63 +2916,63 @@ sem_Stat'_Free' label_ ptr_ =
               _ptrIpretty :: String
               _ptrIself :: IExpr
               _lhsOpretty =
-                  ({-# LINE 393 "AttributeGrammar.ag" #-}
+                  ({-# LINE 395 "AttributeGrammar.ag" #-}
                    ["free(" ++ _ptrIpretty ++ ")" ++ showLabel label_]
-                   {-# LINE 2920 "AttributeGrammar.hs" #-}
+                   {-# LINE 2922 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSkip =
-                  ({-# LINE 394 "AttributeGrammar.ag" #-}
+                  ({-# LINE 396 "AttributeGrammar.ag" #-}
                    False
-                   {-# LINE 2925 "AttributeGrammar.hs" #-}
+                   {-# LINE 2927 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSingle =
-                  ({-# LINE 395 "AttributeGrammar.ag" #-}
+                  ({-# LINE 397 "AttributeGrammar.ag" #-}
                    True
-                   {-# LINE 2930 "AttributeGrammar.hs" #-}
+                   {-# LINE 2932 "AttributeGrammar.hs" #-}
                    )
               _lhsOinit =
-                  ({-# LINE 396 "AttributeGrammar.ag" #-}
+                  ({-# LINE 398 "AttributeGrammar.ag" #-}
                    label_
-                   {-# LINE 2935 "AttributeGrammar.hs" #-}
+                   {-# LINE 2937 "AttributeGrammar.hs" #-}
                    )
               _lhsOfinal =
-                  ({-# LINE 397 "AttributeGrammar.ag" #-}
+                  ({-# LINE 399 "AttributeGrammar.ag" #-}
                    singleton label_
-                   {-# LINE 2940 "AttributeGrammar.hs" #-}
+                   {-# LINE 2942 "AttributeGrammar.hs" #-}
                    )
               _lhsOflow =
-                  ({-# LINE 398 "AttributeGrammar.ag" #-}
+                  ({-# LINE 400 "AttributeGrammar.ag" #-}
                    empty
-                   {-# LINE 2945 "AttributeGrammar.hs" #-}
+                   {-# LINE 2947 "AttributeGrammar.hs" #-}
                    )
               _lhsOstrongLive =
-                  ({-# LINE 399 "AttributeGrammar.ag" #-}
+                  ({-# LINE 401 "AttributeGrammar.ag" #-}
                    singleL label_ id
-                   {-# LINE 2950 "AttributeGrammar.hs" #-}
+                   {-# LINE 2952 "AttributeGrammar.hs" #-}
                    )
               _lhsOvalSpace =
-                  ({-# LINE 400 "AttributeGrammar.ag" #-}
+                  ({-# LINE 402 "AttributeGrammar.ag" #-}
                    singleL label_ id
-                   {-# LINE 2955 "AttributeGrammar.hs" #-}
+                   {-# LINE 2957 "AttributeGrammar.hs" #-}
                    )
               _lhsObreakLabels =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    empty
-                   {-# LINE 2960 "AttributeGrammar.hs" #-}
+                   {-# LINE 2962 "AttributeGrammar.hs" #-}
                    )
               _lhsOinterflow =
-                  ({-# LINE 202 "AttributeGrammar.ag" #-}
+                  ({-# LINE 204 "AttributeGrammar.ag" #-}
                    mempty
-                   {-# LINE 2965 "AttributeGrammar.hs" #-}
+                   {-# LINE 2967 "AttributeGrammar.hs" #-}
                    )
               _self =
                   Free' label_ _ptrIself
               _lhsOself =
                   _self
               _lhsOcontinueLabel =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    _lhsIcontinueLabel
-                   {-# LINE 2974 "AttributeGrammar.hs" #-}
+                   {-# LINE 2976 "AttributeGrammar.hs" #-}
                    )
               ( _ptrIexpValSpace,_ptrIfreeVars,_ptrIprecedence,_ptrIpretty,_ptrIself) =
                   ptr_
@@ -3005,63 +3007,63 @@ sem_Stat'_RefAssign' label_ ptr_ val_ =
               _valIpretty :: String
               _valIself :: IExpr
               _lhsOpretty =
-                  ({-# LINE 403 "AttributeGrammar.ag" #-}
+                  ({-# LINE 405 "AttributeGrammar.ag" #-}
                    ["[*" ++ _ptrIpretty ++ " := " ++ _valIpretty ++ "]" ++ showLabel label_]
-                   {-# LINE 3011 "AttributeGrammar.hs" #-}
+                   {-# LINE 3013 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSkip =
-                  ({-# LINE 404 "AttributeGrammar.ag" #-}
+                  ({-# LINE 406 "AttributeGrammar.ag" #-}
                    False
-                   {-# LINE 3016 "AttributeGrammar.hs" #-}
+                   {-# LINE 3018 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSingle =
-                  ({-# LINE 405 "AttributeGrammar.ag" #-}
+                  ({-# LINE 407 "AttributeGrammar.ag" #-}
                    True
-                   {-# LINE 3021 "AttributeGrammar.hs" #-}
+                   {-# LINE 3023 "AttributeGrammar.hs" #-}
                    )
               _lhsOinit =
-                  ({-# LINE 406 "AttributeGrammar.ag" #-}
+                  ({-# LINE 408 "AttributeGrammar.ag" #-}
                    label_
-                   {-# LINE 3026 "AttributeGrammar.hs" #-}
+                   {-# LINE 3028 "AttributeGrammar.hs" #-}
                    )
               _lhsOfinal =
-                  ({-# LINE 407 "AttributeGrammar.ag" #-}
+                  ({-# LINE 409 "AttributeGrammar.ag" #-}
                    singleton label_
-                   {-# LINE 3031 "AttributeGrammar.hs" #-}
+                   {-# LINE 3033 "AttributeGrammar.hs" #-}
                    )
               _lhsOflow =
-                  ({-# LINE 408 "AttributeGrammar.ag" #-}
+                  ({-# LINE 410 "AttributeGrammar.ag" #-}
                    empty
-                   {-# LINE 3036 "AttributeGrammar.hs" #-}
+                   {-# LINE 3038 "AttributeGrammar.hs" #-}
                    )
               _lhsOstrongLive =
-                  ({-# LINE 410 "AttributeGrammar.ag" #-}
+                  ({-# LINE 412 "AttributeGrammar.ag" #-}
                    singleL label_ id
-                   {-# LINE 3041 "AttributeGrammar.hs" #-}
+                   {-# LINE 3043 "AttributeGrammar.hs" #-}
                    )
               _lhsOvalSpace =
-                  ({-# LINE 411 "AttributeGrammar.ag" #-}
+                  ({-# LINE 413 "AttributeGrammar.ag" #-}
                    singleL label_ id
-                   {-# LINE 3046 "AttributeGrammar.hs" #-}
+                   {-# LINE 3048 "AttributeGrammar.hs" #-}
                    )
               _lhsObreakLabels =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    empty
-                   {-# LINE 3051 "AttributeGrammar.hs" #-}
+                   {-# LINE 3053 "AttributeGrammar.hs" #-}
                    )
               _lhsOinterflow =
-                  ({-# LINE 202 "AttributeGrammar.ag" #-}
+                  ({-# LINE 204 "AttributeGrammar.ag" #-}
                    mempty
-                   {-# LINE 3056 "AttributeGrammar.hs" #-}
+                   {-# LINE 3058 "AttributeGrammar.hs" #-}
                    )
               _self =
                   RefAssign' label_ _ptrIself _valIself
               _lhsOself =
                   _self
               _lhsOcontinueLabel =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    _lhsIcontinueLabel
-                   {-# LINE 3065 "AttributeGrammar.hs" #-}
+                   {-# LINE 3067 "AttributeGrammar.hs" #-}
                    )
               ( _ptrIexpValSpace,_ptrIfreeVars,_ptrIprecedence,_ptrIpretty,_ptrIself) =
                   ptr_
@@ -3086,63 +3088,63 @@ sem_Stat'_Continue' label_ =
               _lhsOself :: Stat'
               _lhsOcontinueLabel :: ( Maybe Int )
               _lhsOpretty =
-                  ({-# LINE 414 "AttributeGrammar.ag" #-}
+                  ({-# LINE 416 "AttributeGrammar.ag" #-}
                    ["continue" ++ showLabel label_]
-                   {-# LINE 3092 "AttributeGrammar.hs" #-}
+                   {-# LINE 3094 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSkip =
-                  ({-# LINE 415 "AttributeGrammar.ag" #-}
+                  ({-# LINE 417 "AttributeGrammar.ag" #-}
                    False
-                   {-# LINE 3097 "AttributeGrammar.hs" #-}
+                   {-# LINE 3099 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSingle =
-                  ({-# LINE 416 "AttributeGrammar.ag" #-}
+                  ({-# LINE 418 "AttributeGrammar.ag" #-}
                    True
-                   {-# LINE 3102 "AttributeGrammar.hs" #-}
+                   {-# LINE 3104 "AttributeGrammar.hs" #-}
                    )
               _lhsOinit =
-                  ({-# LINE 417 "AttributeGrammar.ag" #-}
+                  ({-# LINE 419 "AttributeGrammar.ag" #-}
                    label_
-                   {-# LINE 3107 "AttributeGrammar.hs" #-}
+                   {-# LINE 3109 "AttributeGrammar.hs" #-}
                    )
               _lhsOfinal =
-                  ({-# LINE 418 "AttributeGrammar.ag" #-}
+                  ({-# LINE 420 "AttributeGrammar.ag" #-}
                    singleton label_
-                   {-# LINE 3112 "AttributeGrammar.hs" #-}
+                   {-# LINE 3114 "AttributeGrammar.hs" #-}
                    )
               _lhsOflow =
-                  ({-# LINE 419 "AttributeGrammar.ag" #-}
+                  ({-# LINE 421 "AttributeGrammar.ag" #-}
                    singleton (label_, (Maybe.fromJust _lhsIcontinueLabel))
-                   {-# LINE 3117 "AttributeGrammar.hs" #-}
+                   {-# LINE 3119 "AttributeGrammar.hs" #-}
                    )
               _lhsOstrongLive =
-                  ({-# LINE 420 "AttributeGrammar.ag" #-}
+                  ({-# LINE 422 "AttributeGrammar.ag" #-}
                    singleL label_ id
-                   {-# LINE 3122 "AttributeGrammar.hs" #-}
+                   {-# LINE 3124 "AttributeGrammar.hs" #-}
                    )
               _lhsOvalSpace =
-                  ({-# LINE 421 "AttributeGrammar.ag" #-}
+                  ({-# LINE 423 "AttributeGrammar.ag" #-}
                    singleL label_ id
-                   {-# LINE 3127 "AttributeGrammar.hs" #-}
+                   {-# LINE 3129 "AttributeGrammar.hs" #-}
                    )
               _lhsObreakLabels =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    empty
-                   {-# LINE 3132 "AttributeGrammar.hs" #-}
+                   {-# LINE 3134 "AttributeGrammar.hs" #-}
                    )
               _lhsOinterflow =
-                  ({-# LINE 202 "AttributeGrammar.ag" #-}
+                  ({-# LINE 204 "AttributeGrammar.ag" #-}
                    mempty
-                   {-# LINE 3137 "AttributeGrammar.hs" #-}
+                   {-# LINE 3139 "AttributeGrammar.hs" #-}
                    )
               _self =
                   Continue' label_
               _lhsOself =
                   _self
               _lhsOcontinueLabel =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    _lhsIcontinueLabel
-                   {-# LINE 3146 "AttributeGrammar.hs" #-}
+                   {-# LINE 3148 "AttributeGrammar.hs" #-}
                    )
           in  ( _lhsObreakLabels,_lhsOcontinueLabel,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive,_lhsOvalSpace)))
 sem_Stat'_Break' :: Int ->
@@ -3163,62 +3165,62 @@ sem_Stat'_Break' label_ =
               _lhsOself :: Stat'
               _lhsOcontinueLabel :: ( Maybe Int )
               _lhsOpretty =
-                  ({-# LINE 424 "AttributeGrammar.ag" #-}
+                  ({-# LINE 426 "AttributeGrammar.ag" #-}
                    ["break" ++ showLabel label_]
-                   {-# LINE 3169 "AttributeGrammar.hs" #-}
+                   {-# LINE 3171 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSkip =
-                  ({-# LINE 425 "AttributeGrammar.ag" #-}
+                  ({-# LINE 427 "AttributeGrammar.ag" #-}
                    False
-                   {-# LINE 3174 "AttributeGrammar.hs" #-}
+                   {-# LINE 3176 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSingle =
-                  ({-# LINE 426 "AttributeGrammar.ag" #-}
+                  ({-# LINE 428 "AttributeGrammar.ag" #-}
                    True
-                   {-# LINE 3179 "AttributeGrammar.hs" #-}
+                   {-# LINE 3181 "AttributeGrammar.hs" #-}
                    )
               _lhsOinit =
-                  ({-# LINE 427 "AttributeGrammar.ag" #-}
+                  ({-# LINE 429 "AttributeGrammar.ag" #-}
                    label_
-                   {-# LINE 3184 "AttributeGrammar.hs" #-}
+                   {-# LINE 3186 "AttributeGrammar.hs" #-}
                    )
               _lhsOfinal =
-                  ({-# LINE 428 "AttributeGrammar.ag" #-}
+                  ({-# LINE 430 "AttributeGrammar.ag" #-}
                    empty
-                   {-# LINE 3189 "AttributeGrammar.hs" #-}
+                   {-# LINE 3191 "AttributeGrammar.hs" #-}
                    )
               _lhsOflow =
-                  ({-# LINE 429 "AttributeGrammar.ag" #-}
+                  ({-# LINE 431 "AttributeGrammar.ag" #-}
                    empty
-                   {-# LINE 3194 "AttributeGrammar.hs" #-}
+                   {-# LINE 3196 "AttributeGrammar.hs" #-}
                    )
               _lhsObreakLabels =
-                  ({-# LINE 430 "AttributeGrammar.ag" #-}
+                  ({-# LINE 432 "AttributeGrammar.ag" #-}
                    singleton label_
-                   {-# LINE 3199 "AttributeGrammar.hs" #-}
+                   {-# LINE 3201 "AttributeGrammar.hs" #-}
                    )
               _lhsOstrongLive =
-                  ({-# LINE 431 "AttributeGrammar.ag" #-}
+                  ({-# LINE 433 "AttributeGrammar.ag" #-}
                    singleL label_ id
-                   {-# LINE 3204 "AttributeGrammar.hs" #-}
+                   {-# LINE 3206 "AttributeGrammar.hs" #-}
                    )
               _lhsOvalSpace =
-                  ({-# LINE 432 "AttributeGrammar.ag" #-}
+                  ({-# LINE 434 "AttributeGrammar.ag" #-}
                    singleL label_ id
-                   {-# LINE 3209 "AttributeGrammar.hs" #-}
+                   {-# LINE 3211 "AttributeGrammar.hs" #-}
                    )
               _lhsOinterflow =
-                  ({-# LINE 202 "AttributeGrammar.ag" #-}
+                  ({-# LINE 204 "AttributeGrammar.ag" #-}
                    mempty
-                   {-# LINE 3214 "AttributeGrammar.hs" #-}
+                   {-# LINE 3216 "AttributeGrammar.hs" #-}
                    )
               _self =
                   Break' label_
               _lhsOself =
                   _self
               _lhsOcontinueLabel =
-                  ({-# LINE 223 "AttributeGrammar.ag" #-}
+                  ({-# LINE 225 "AttributeGrammar.ag" #-}
                    _lhsIcontinueLabel
-                   {-# LINE 3223 "AttributeGrammar.hs" #-}
+                   {-# LINE 3225 "AttributeGrammar.hs" #-}
                    )
           in  ( _lhsObreakLabels,_lhsOcontinueLabel,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive,_lhsOvalSpace)))

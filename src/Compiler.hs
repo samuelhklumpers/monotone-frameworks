@@ -59,7 +59,7 @@ prepare ana flow = (a, InterproceduralFragment b)
     (transferFunctions', _) = trans
 
     a = MonotoneFramework outgoing exL exV transferFunctions'
-    b = M.fromList [(c, (r, lookupR c trans)) | Inter c _ _ r <- S.toList inter]
+    b = M.fromList [(c, (r, lookupR r trans)) | Inter c _ _ r <- S.toList inter]
 
 
 
@@ -101,6 +101,6 @@ compile source = do
   putStrLn ""
   putStrLn "# Analyses"
   putStrLn "## Constant Propagation"
-  pPrintLightBg $ uncurry mfpSolution' constantPropM
+  pPrintLightBg $ id $ uncurry mfpSolution' constantPropM
 
 

@@ -2,6 +2,9 @@
 {-# HLINT ignore "Eta reduce" #-}
 module Analyses where
 
+  
+import Debug.Trace
+
 import Data.Bifunctor
 import Data.Set
 
@@ -9,7 +12,7 @@ import qualified Data.Map as M
 import qualified Data.Map.Merge.Strict as MM
 import qualified Data.Maybe as Maybe
 
-import Std (Endo(..), intercalate)
+import Std (Endo(..), intercalate, join)
 import MonotoneFrameworks
 
 
@@ -32,10 +35,10 @@ singleR :: Int -> (m -> m -> m) -> DifTrans m
 singleR i x = insertR i x mempty
 
 lookupL :: Int -> DifTrans p -> (p -> p)
-lookupL i = Maybe.fromJust . M.lookup i . fst
+lookupL i (m, _) = Maybe.fromMaybe (error $ show i ++ " is not in " ++ show (M.keys m)) $ M.lookup i m
 
 lookupR :: Int -> DifTrans p -> (p -> p -> p)
-lookupR i = Maybe.fromJust . M.lookup i . snd
+lookupR i (_, m) = Maybe.fromMaybe (error $ show i ++ " is not in " ++ show (M.keys m)) $ M.lookup i m
 
 data Proc'' = Proc'' { procEntry :: Int, procExit :: Int, procName :: String, procInp :: [String], procOut :: String } deriving (Show, Eq, Ord)
 type DStar = [(String, Proc'')]
@@ -103,7 +106,7 @@ surviveOne :: String -> String -> Set String -> Set String
 surviveOne name var = survive name (singleton var)
 
 constInto :: PtConstLat -> String -> (PtConstLat -> ConstLat) -> PtConstLat -> PtConstLat
-constInto env name exp = ptInsert name $ Maybe.fromMaybe (exp env) (ptLookup name env)
+constInto env name exp = ptInsert name (exp env)
 
 updateConst :: String -> (PtConstLat -> ConstLat) -> PtConstLat -> PtConstLat
 updateConst name exp env = constInto env name exp env
@@ -129,7 +132,6 @@ retConst retName outName c r = ptInsert outName (ptLookupBot retName c) r
 cIII :: (Int -> Int -> Int) -> ConstLat -> ConstLat -> ConstLat
 cIII f (CI x) (CI y) = CI (x `f` y)
 cIII _ _ _           = NonConst
-
 
 cIIB :: (Int -> Int -> Bool) -> ConstLat -> ConstLat -> ConstLat
 cIIB f (CI x) (CI y) = CB (x `f` y)

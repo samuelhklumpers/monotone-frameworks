@@ -8,7 +8,7 @@ import Data.Map.Merge.Strict qualified as MM
 import Std
 
 callStringsLimit :: Int
-callStringsLimit = 5
+callStringsLimit = 1
 
 class (Monoid m, Eq m) => BoundedSemiLattice m where
   lessOrEquals :: m -> m -> Bool
