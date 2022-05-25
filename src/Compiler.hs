@@ -7,6 +7,8 @@ import Parser
 import Lexer
 import AttributeGrammar
 import MonotoneFrameworks
+import Analyses
+
 import Text.Pretty.Simple (pPrintLightBg)
 
 data Flow = Flow {
@@ -17,8 +19,9 @@ data Flow = Flow {
 }
 
 data Analysis p = Analysis {
-  dft      :: DifTrans p,
-  extremal :: p
+  direction :: Dir,
+  difTrans   :: DifTrans p,
+  extremal   :: p
 }
 
 swap :: (a, b) -> (b, a)
@@ -47,17 +50,16 @@ prepare :: Analysis p -> Flow -> (MonotoneFramework p, InterproceduralFragment p
 prepare ana flow = (a, InterproceduralFragment b)
   where
     exV  = extremal ana
-    dft' = dft ana
+    trans = difTrans ana
 
-    (isBackwards, trans) = dft'
-    (exL, flow', inter) = unpackFlow isBackwards flow
+    (exL, flow', inter) = unpackFlow (direction ana == Backward) flow
 
     outgoing = group $ S.toList flow'
 
     (transferFunctions', _) = trans
 
     a = MonotoneFramework outgoing exL exV transferFunctions'
-    b = M.fromList [(c, (r, lookupR c dft')) | Inter c _ _ r <- S.toList inter]
+    b = M.fromList [(c, (r, lookupR c trans)) | Inter c _ _ r <- S.toList inter]
 
 
 
@@ -81,19 +83,19 @@ compile source = do
 
   putStrLn ""
   putStrLn "# Output"
-  print $ initial'
-  print $ finals'
-  print $ edges'
-  print $ interflow'
+  print initial'
+  print finals'
+  print edges'
+  print interflow'
 
-  
-  let constantPropA = Analysis (valSpace_Syn_Program' synProgram') mempty
+
+  let constantPropA = Analysis Forward (valSpace_Syn_Program' synProgram') mempty
   let constantPropM = prepare constantPropA flow
 
-  let strongLiveA = Analysis (strongLive_Syn_Program' synProgram') mempty
+  let strongLiveA = Analysis Backward (strongLive_Syn_Program' synProgram') mempty
   let strongLiveM = prepare strongLiveA flow
 
-  let ((MonotoneFramework _ _ _ m), _) = constantPropM
+  let (MonotoneFramework _ _ _ m, _) = constantPropM
   print $ M.keys m
 
   putStrLn ""

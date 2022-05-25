@@ -2,57 +2,9 @@
 import qualified Data.Map as M
 import qualified Data.Maybe as Maybe
 import qualified Data.List as L
-import qualified Data.Map.Merge.Strict as MM
-
-import Data.Bifunctor
-
 import Data.Set
 
-import MonotoneFrameworks
-
-import Std (Endo(..))
-
-instance Semigroup Bool where
-  False <> x = x
-  x <> False = x
-
-instance Monoid Bool where
-  mappend = (<>)
-  mempty = False
-
---                isBackward
-type DifTrans m = (Bool, (M.Map Int (m -> m), M.Map Int (m -> m -> m)))
-
-
-insertL :: Int -> (m -> m) -> DifTrans m -> DifTrans m
-insertL i f (b, m) = (b, first (M.insert i f) m)
-
-insertR :: Int -> (m -> m -> m) -> DifTrans m -> DifTrans m
-insertR i f (b, m) = (b, second (M.insert i f) m)
-
-singleL i x = insertL i x (False, mempty)
-singleR i x = insertR i x (False, mempty)
-
-lookupL :: Int -> DifTrans p -> (p -> p)
-lookupL i (_, (m, _)) = Maybe.fromJust $ M.lookup i m
-
-lookupR :: Int -> DifTrans p -> (p -> p -> p)
-lookupR i (_, (_, m)) = Maybe.fromJust $ M.lookup i m
-
-forwardAnalysis :: DifTrans m
-forwardAnalysis  = (False, mempty)
-
-backwardAnalysis :: DifTrans m
-backwardAnalysis = (True, mempty)
-
-data Proc'' = Proc'' { procEntry :: Int, procExit :: Int, procName :: String, procInp :: [String], procOut :: String } deriving (Show, Eq, Ord)
-type DStar = [(String, Proc'')]
-
-type Edge = (Int, Int)
-data Inter = Inter Int Int Int Int deriving (Eq, Ord)
-
-instance Show Inter where
-  show (Inter a b c d) = show (a, b, c, d)
+import Analyses
 }
 
 data Program
@@ -239,50 +191,38 @@ sem Stat
     lhs.label    = @lhs.label + 1
     lhs.labelled = Break' @lhs.label
 
-{
-data ConstLat = CI Int | CB Bool | NonConst deriving (Show, Eq)
-newtype PtConstLat = PtConstLat (M.Map String ConstLat) deriving (Show, Eq)
-
-(!) :: PtConstLat -> String -> ConstLat
-(PtConstLat m) ! k = Maybe.fromMaybe (error $ (show k) ++ " is not in " ++ (show m)) $ M.lookup k m
-
-ptInsert :: String -> ConstLat -> PtConstLat -> PtConstLat
-ptInsert k v (PtConstLat m) = PtConstLat (M.insert k v m)
-
-ptLookup :: String -> PtConstLat -> Maybe ConstLat
-ptLookup k (PtConstLat m) = M.lookup k m
-
-ptLookupBot :: String -> PtConstLat -> ConstLat
-ptLookupBot k (PtConstLat m) = M.findWithDefault NonConst k m
-
-instance Semigroup ConstLat where
-  CI x <> CI y = if x == y then CI x else NonConst
-  CB x <> CB y = if x == y then CB x else NonConst
-  _    <> _       = NonConst
-
-instance Semigroup PtConstLat where
-  (PtConstLat x) <> (PtConstLat y) = PtConstLat $ MM.merge MM.preserveMissing MM.preserveMissing (MM.zipWithMatched (const (<>))) x y
-
-instance Monoid PtConstLat where
-  mempty = PtConstLat mempty
-
-
-instance Monoid ConstLat where
-  mempty = NonConst
-
-instance BoundedSemiLattice PtConstLat where
-}
-
 -- * Pretty printer
-attr Program'           [ | | pretty :: String  init :: Int  final :: { Set Int }  flow :: { Set Edge }  interflow :: { Set Inter }  strongLive :: { DifTrans (Set String) }  valSpace :: { DifTrans PtConstLat } ]
-attr Proc' Stat'        [ dStar :: DStar | | pretty :: { [String] }  init :: Int  final :: { Set Int }  flow :: { Set Edge }  interflow use {<>} {mempty} :: { Set Inter } ]
-attr Procs'             [ dStar :: DStar | | pretty :: { [String] }  flow :: { Set Edge }  interflow use {<>} {mempty} :: { Set Inter } ]
-attr IExpr BExpr        [ | | pretty :: String  precedence :: Int  freeVars use {<>} {empty} :: { Set String }  expValSpace :: { PtConstLat -> ConstLat } ]
-attr Expr               [ | | freeVars use {<>} {empty} :: { Set String }  expValSpace :: { PtConstLat -> ConstLat }  ]
-attr Exprs              [ | | freeVars use {:} {[]} :: { [Set String] }   expValSpace use {:} {[]} :: { [PtConstLat -> ConstLat] }  ]  
-attr Expr Exprs         [ | | pretty :: String   ]
+attr Program'           [ | |
+  pretty :: String
+  init :: Int  final :: { Set Int }  flow :: { Set Edge }  interflow :: { Set Inter }
+  strongLive :: { DifTrans (Set String) }  valSpace :: { DifTrans PtConstLat } ]
+
+attr Proc' Stat'        [ dStar :: DStar | |
+  pretty :: { [String] }
+  init :: Int  final :: { Set Int }  flow :: { Set Edge }  interflow use {<>} {mempty} :: { Set Inter } ]
+
+attr Procs'             [ dStar :: DStar | |
+  pretty :: { [String] }
+  flow :: { Set Edge }  interflow use {<>} {mempty} :: { Set Inter } ]
+
+attr IExpr BExpr        [ | |
+  pretty :: String  precedence :: Int
+  freeVars use {<>} {empty} :: { Set String }
+  expValSpace :: { PtConstLat -> ConstLat } ]
+
+attr Expr               [ | |
+  freeVars use {<>} {empty} :: { Set String }
+  expValSpace :: { PtConstLat -> ConstLat }  ]
+
+attr Exprs              [ | |
+  freeVars use {:} {[]} :: { [Set String] } 
+  expValSpace use {:} {[]} :: { [PtConstLat -> ConstLat] }  ]  
+
+attr Expr Exprs         [ | | pretty :: String ]
+
 attr Stat'              [ | continueLabel :: { Maybe Int } | isSkip :: Bool  isSingle :: Bool  breakLabels use {<>} {empty} :: { Set Int }  ]
-attr Procs' Proc' Stat'  [ | | strongLive use {<>} {backwardAnalysis} :: { DifTrans (Set String) }  valSpace use {<>} {forwardAnalysis} :: { DifTrans PtConstLat }  ]
+attr Procs' Proc' Stat'  [ | |
+  strongLive :: { DifTrans (Set String) }  valSpace :: { DifTrans PtConstLat }  ]
 
 {
 indent :: [String] -> [String]
@@ -303,76 +243,41 @@ showLabel label = "\ESC[93m" ++ reverse (go label) ++ "\ESC[0m"
 addSemicolon :: [String] -> [String]
 addSemicolon [] = []
 addSemicolon xs = init xs ++ [last xs ++ ";"]
-
-findProc :: String -> DStar -> Proc''
-findProc = (Maybe.fromJust .) . lookup 
-
-surviveInto :: Set String -> String -> Set String -> Set String -> Set String
-surviveInto env name vars dst = if name `member` env then alive <> vars else alive
-  where
-    alive = delete name dst
-
-survive :: String -> Set String -> Set String -> Set String
-survive name vars env = surviveInto env name vars env
-
-surviveOne :: String -> String -> Set String -> Set String
-surviveOne name var env = survive name (singleton var) env
-
-constInto :: PtConstLat -> String -> (PtConstLat -> ConstLat) -> PtConstLat -> PtConstLat
-constInto env name exp dst = ptInsert name val' dst
-  where
-    val  = exp env
-    val' = case ptLookup name env of
-      Just y  -> if val == y then y else NonConst
-      Nothing -> val
-
-updateConst :: String -> (PtConstLat -> ConstLat) -> PtConstLat -> PtConstLat
-updateConst name exp env = constInto env name exp env
-}
-
-{
-callStrong :: [String] -> [Set String] -> Set String -> Set String -> Set String
-callStrong inputs params r c = appEndo (mconcat $ Endo <$> fs) r
- where
-  fs :: [Set String -> Set String]
-  fs = surviveInto c <$> inputs <*> params
-
-retStrong :: String -> String -> Set String -> Set String
-retStrong name var r = surviveInto r name (singleton var) mempty
-
-callConst :: [String] -> [PtConstLat -> ConstLat] -> PtConstLat -> PtConstLat
-callConst inputs params c = appEndo (mconcat $ Endo <$> fs) mempty
-  where
-    fs :: [PtConstLat -> PtConstLat]
-    fs = updateConst <$> inputs <*> params
-
-retConst :: String -> String -> PtConstLat -> PtConstLat -> PtConstLat
-retConst retName outName c r = ptInsert outName (ptLookupBot retName c) r
 }
 
 
 sem Program'
   | Program'
     lhs.pretty = unlines ("begin" : indent @procs.pretty ++ indent @stat.pretty ++ ["end"])
+    
+    -- properties
     lhs.init = @stat.init
     lhs.final = @stat.final
     lhs.flow = @procs.flow <> @stat.flow
     lhs.interflow = @procs.interflow <> @stat.interflow
+    
+    -- inherit
+    stat.dStar = @dStar
+    procs.dStar = @dStar
+    stat.continueLabel = Nothing
+
+    -- analyses
     lhs.strongLive = @procs.strongLive <> @stat.strongLive
     lhs.valSpace = @procs.valSpace <> @stat.valSpace
-    stat.dStar = @dStar
-    stat.continueLabel = Nothing
-    procs.dStar = @dStar
-
+    
 sem Procs'
   | Nil
     lhs.pretty = []
     lhs.flow = empty
     lhs.interflow = empty
+    lhs.strongLive = mempty
+    lhs.valSpace = mempty
   | Cons
     lhs.pretty = @hd.pretty ++ @tl.pretty
     lhs.flow = @hd.flow <> @tl.flow
     lhs.interflow = @hd.interflow <> @tl.interflow
+    lhs.strongLive = @hd.strongLive <> @tl.strongLive
+    lhs.valSpace = @hd.valSpace <> @tl.valSpace
 
 sem Proc'
   | Proc'
@@ -385,6 +290,7 @@ sem Proc'
     stat.dStar = @lhs.dStar
     stat.continueLabel = Nothing
     lhs.interflow = @stat.interflow
+    
     lhs.strongLive = insertL @labelEntry id $ insertL @labelExit id @stat.strongLive
     lhs.valSpace = insertL @labelEntry id $ insertL @labelExit id @stat.valSpace
 
@@ -396,6 +302,8 @@ sem Stat'
     lhs.init = @label
     lhs.final = singleton @label
     lhs.flow = empty
+    lhs.strongLive = singleL @label id
+    lhs.valSpace = singleL @label id
 
   | IfThenElse'
     lhs.pretty   = ["if [" ++ @cond.pretty ++ "]" ++ showLabel @labelc ++ " then" ++ (if @stat1.isSingle then "" else " {")]
@@ -425,7 +333,7 @@ sem Stat'
     lhs.continueLabel = Just @labelc
     lhs.breakLabels = empty
     lhs.strongLive = insertL @labelc (<> @cond.freeVars) $ @stat.strongLive
-    lhs.valSpace = insertL @labelc id forwardAnalysis <> @stat.valSpace
+    lhs.valSpace = insertL @labelc id @stat.valSpace
 
   | Call'
     lhs.pretty   = ["[call " ++ @name ++ "(" ++ @params.pretty ++ @out ++ ")]" ++ showLabel @labelCall ++ "₋" ++ showLabel @labelReturn]
@@ -466,6 +374,8 @@ sem Stat'
     lhs.init = @stat1.init
     lhs.final = @stat2.final
     lhs.flow = @stat1.flow <> @stat2.flow <> fromList [(label, @stat2.init) | label <- toList @stat1.final]
+    lhs.strongLive = @stat1.strongLive <> @stat2.strongLive
+    lhs.valSpace = @stat1.valSpace <> @stat2.valSpace
 
   | Malloc'
     lhs.pretty   = ["malloc(" ++ @name ++ ", " ++ @size.pretty ++ ")" ++ showLabel @label]
@@ -476,7 +386,7 @@ sem Stat'
     lhs.flow = empty
     lhs.strongLive = singleL @label (survive @name @size.freeVars)
     -- need CL in ConstLat for const prop on lists
-    lhs.valSpace = insertL @label id forwardAnalysis
+    lhs.valSpace = singleL @label id
 
 
   | Free'
@@ -486,8 +396,8 @@ sem Stat'
     lhs.init = @label
     lhs.final = singleton @label
     lhs.flow = empty
-    lhs.strongLive = insertL @label id backwardAnalysis
-    lhs.valSpace = insertL @label id forwardAnalysis
+    lhs.strongLive = singleL @label id
+    lhs.valSpace = singleL @label id
 
   | RefAssign'
     lhs.pretty   = ["[*" ++ @ptr.pretty ++ " := " ++ @val.pretty ++ "]" ++ showLabel @label]
@@ -497,8 +407,8 @@ sem Stat'
     lhs.final = singleton @label
     lhs.flow = empty
     -- TODO how do we compute strongLive here? (i.e. how do we mark *ptr as live or not)
-    lhs.strongLive = insertL @label id backwardAnalysis
-    lhs.valSpace = insertL @label id forwardAnalysis
+    lhs.strongLive = singleL @label id
+    lhs.valSpace = singleL @label id
 
   | Continue'
     lhs.pretty   = ["continue" ++ showLabel @label]
@@ -507,8 +417,8 @@ sem Stat'
     lhs.init = @label
     lhs.final = singleton @label
     lhs.flow = singleton (@label, (Maybe.fromJust @lhs.continueLabel))
-    lhs.strongLive = insertL @label id backwardAnalysis
-    lhs.valSpace = insertL @label id forwardAnalysis
+    lhs.strongLive = singleL @label id
+    lhs.valSpace = singleL @label id
 
   | Break'
     lhs.pretty   = ["break" ++ showLabel @label]
@@ -518,32 +428,13 @@ sem Stat'
     lhs.final = empty
     lhs.flow = empty
     lhs.breakLabels = singleton @label
-    lhs.strongLive = insertL @label id backwardAnalysis
-    lhs.valSpace = insertL @label id forwardAnalysis
+    lhs.strongLive = singleL @label id
+    lhs.valSpace = singleL @label id
 
 {
 parensIf :: Bool -> String -> String
 parensIf False str = str
 parensIf True str = "(" ++ str ++ ")"
-
-cIII :: (Int -> Int -> Int) -> ConstLat -> ConstLat -> ConstLat
-cIII f (CI x) (CI y) = CI (x `f` y)
-cIII _ NonConst _    = NonConst
-cIII _ _ NonConst    = NonConst
-
-cIIB :: (Int -> Int -> Bool) -> ConstLat -> ConstLat -> ConstLat
-cIIB f (CI x) (CI y) = CB (x `f` y)
-cIIB _ NonConst _    = NonConst
-cIIB _ _ NonConst    = NonConst
-
-cBBB :: (Bool -> Bool -> Bool) -> ConstLat -> ConstLat -> ConstLat
-cBBB f (CB x) (CB y) = CB (x `f` y)
-cBBB _ NonConst _    = NonConst
-cBBB _ _ NonConst    = NonConst
-
-cBB :: (Bool -> Bool) -> ConstLat -> ConstLat
-cBB f (CB x)   = CB (f x)
-cBB _ NonConst = NonConst
 }
 
 sem IExpr

@@ -33,6 +33,7 @@ library
       Lexer
       MonotoneFrameworks
       Parser
+      Analyses
       Std
   other-modules:
       Paths_mf
