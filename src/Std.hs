@@ -1,19 +1,32 @@
-{-# language NoImplicitPrelude #-}
-
 module Std
   (
     module Std,
-    module Relude,
-    module Relude.Extra.Foldable1,
-    module Control.Exception.Safe
+    module Prelude,
+    Map,
+    Set,
+    fold,
+    toList,
+    coerce,
+    fromMaybe,
+    Endo (..),
+    join
   )
   where
 
-import Control.Exception.Safe
+import Data.List.NonEmpty (NonEmpty)
 import Data.List.NonEmpty qualified as N
 import Data.Foldable qualified
-import Relude.Extra.Foldable1 hiding (foldr1)
-import Relude hiding (intercalate, some)
+import Data.Foldable (fold, toList)
+import Control.Arrow (first)
+import Control.Applicative (liftA2)
+import Data.List (intersperse)
+import Data.Ord (comparing)
+import Data.Map.Strict (Map)
+import Data.Set (Set)
+import Data.Coerce (coerce)
+import Data.Maybe (fromMaybe)
+import Data.Semigroup (Endo (..))
+import Control.Monad (join)
 
 (!=) :: (Eq a) => a -> a -> Bool
 (!=) = (/=)
@@ -21,9 +34,6 @@ import Relude hiding (intercalate, some)
 infixr 9 .:
 (.:) :: (c -> d) -> (a -> b -> c) -> a -> b -> d
 (.:) = (.) . (.)
-
-foldr1 :: (Foldable1 f) => (a -> a -> a) -> f a -> a
-foldr1 f = Data.Foldable.foldr1 f . toNonEmpty
 
 iterateFinite :: (a -> Either b a) -> a -> ([a], b)
 iterateFinite f =
@@ -40,9 +50,6 @@ infixl 4 <<*>>
 (<<*>>) ::
   (Applicative f, Applicative g) => f (g (a -> b)) -> f (g a) -> f (g b)
 (<<*>>) = liftA2 (<*>)
-
-some :: Alternative f => f a -> f (NonEmpty a)
-some v = (:|) <$> v <*> many v
 
 bind2 :: Monad m => (a -> b -> m c) -> m a -> m b -> m c
 bind2 f a b = uncurry f =<< liftA2 (,) a b

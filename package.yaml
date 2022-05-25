@@ -49,8 +49,6 @@ default-extensions:
 library:
   source-dirs: src
   dependencies:
-  - relude
-  - safe-exceptions
   - pretty-simple
 
 executables:
