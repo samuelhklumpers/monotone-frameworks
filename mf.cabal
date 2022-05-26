@@ -28,12 +28,12 @@ source-repository head
 
 library
   exposed-modules:
+      Analyses
       AttributeGrammar
       Compiler
       Lexer
       MonotoneFrameworks
       Parser
-      Analyses
       Std
   other-modules:
       Paths_mf

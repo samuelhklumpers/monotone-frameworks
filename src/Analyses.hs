@@ -8,7 +8,7 @@ import Debug.Trace
 import Data.Bifunctor
 import Data.Set
 
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import qualified Data.Map.Merge.Strict as MM
 import qualified Data.Maybe as Maybe
 

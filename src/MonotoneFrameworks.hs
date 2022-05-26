@@ -63,7 +63,9 @@ mfpSolution'
   = (analysisEntry, s)
   where
     (s, analysisEntry) =
-      iterateFinite step (initialAnalysis, initialWorkList)
+      first
+        ((initialAnalysis, initialWorkList) :)
+        (iterateFinite step (initialAnalysis, initialWorkList))
     initialAnalysis =
       M.fromSet (const $ TotalMapOnBoundedSemiLattice $ M.singleton [] extremalValue) extremalLabels
       <> -- left biased union
@@ -104,6 +106,7 @@ mfpSolution'
           | Just (callLabel, f) <- lookupReturn l interproceduralFragment =
             coerce -- ignore
               @(([Label] -> propertySpace -> propertySpace) -> Map [Label] propertySpace -> Map [Label] propertySpace)
+              -- assuming `f bottom a = bottom
               M.mapWithKey
                 (\s p ->
                   f
@@ -125,7 +128,7 @@ mfpSolution'
       ContextSensitive propertySpace ->
       ContextSensitive propertySpace
     transferFunction l =
-      fmap $
+      fmap $ -- assuming that `f bottom == bottom`
       fromMaybe (error $ "transfer function missing for " <> show l) $
       M.lookup l transferFunctions
     -- | warning. partial
