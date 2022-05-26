@@ -2484,7 +2484,7 @@ sem_Stat'_Call' labelCall_ labelReturn_ name_ params_ out_ =
                    )
               _lhsOvalSpace =
                   ({-# LINE 351 "AttributeGrammar.ag" #-}
-                   insertL labelCall_ (callConst (procInp _proc    ) $ _paramsIexpValSpace) $ singleR labelReturn_ (retConst out_ $ procOut _proc    )
+                   insertL labelCall_ (callConst (procInp _proc    ) (procOut _proc    ) _paramsIexpValSpace) $ singleR labelReturn_ (retConst out_ (procInp _proc    ) (procOut _proc    ))
                    {-# LINE 2489 "AttributeGrammar.hs" #-}
                    )
               _lhsObreakLabels =

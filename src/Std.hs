@@ -22,8 +22,8 @@ infixr 9 .:
 (.:) :: (c -> d) -> (a -> b -> c) -> a -> b -> d
 (.:) = (.) . (.)
 
-foldr1 :: (Foldable1 f) => (a -> a -> a) -> f a -> a
-foldr1 f = Data.Foldable.foldr1 f . toNonEmpty
+compose :: [a -> a] -> a -> a
+compose = foldr (.) id
 
 iterateFinite :: (a -> Either b a) -> a -> ([a], b)
 iterateFinite f =
@@ -32,6 +32,9 @@ iterateFinite f =
     go aOld
       | Right aNew <- f aOld = first (aNew :) (go aNew)
       | Left b <- f aOld = ([], b)
+
+foldr1 :: (Foldable1 f) => (a -> a -> a) -> f a -> a
+foldr1 f = Data.Foldable.foldr1 f . toNonEmpty
 
 intercalate :: (Monoid a, Foldable t) => a -> t a -> a
 intercalate a = fold . intersperse a . toList

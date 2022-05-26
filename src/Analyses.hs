@@ -12,7 +12,7 @@ import qualified Data.Map as M
 import qualified Data.Map.Merge.Strict as MM
 import qualified Data.Maybe as Maybe
 
-import Std (Endo(..), intercalate, join)
+import Std (Endo(..), intercalate, join, compose)
 import MonotoneFrameworks
 
 
@@ -120,14 +120,21 @@ callStrong inputs params r c = appEndo (mconcat $ Endo <$> fs) r
 retStrong :: String -> String -> Set String -> Set String
 retStrong name var r = surviveInto r name (singleton var) mempty
 
-callConst :: [String] -> [PtConstLat -> ConstLat] -> PtConstLat -> PtConstLat
-callConst inputs params c = appEndo (mconcat $ Endo <$> fs) mempty
+callConst :: [String] -> String -> [PtConstLat -> ConstLat] -> PtConstLat -> PtConstLat
+callConst inputs resultNameProc params c =
+  ptInsert resultNameProc NonConst $
+  appEndo (mconcat $ Endo <$> fs) $
+  c
   where
     fs :: [PtConstLat -> PtConstLat]
     fs = uncurry updateConst <$> zip inputs params
 
-retConst :: String -> String -> PtConstLat -> PtConstLat -> PtConstLat
-retConst retName outName c r = ptInsert outName (ptLookupBot retName c) r
+retConst :: String -> [String] -> String -> PtConstLat -> PtConstLat -> PtConstLat
+retConst resultNameCall inputs resultNameProc c r =
+  ptInsert resultNameCall (ptLookupBot resultNameProc r) $
+  compose
+    ((\i -> ptInsert i (ptLookupBot i c)) <$> resultNameProc : inputs) $
+  r
 
 cIII :: (Int -> Int -> Int) -> ConstLat -> ConstLat -> ConstLat
 cIII f (CI x) (CI y) = CI (x `f` y)

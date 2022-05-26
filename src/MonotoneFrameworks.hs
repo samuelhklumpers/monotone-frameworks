@@ -36,7 +36,8 @@ newtype InterproceduralFragment propertySpace =
       (
         Label -- return label in the case of forward flow
         ,
-        (propertySpace -> propertySpace -> propertySpace) -- transfer function
+        -- transfer function
+        (propertySpace {-call-} -> propertySpace {-procedure-} -> propertySpace)
       )
     )
 

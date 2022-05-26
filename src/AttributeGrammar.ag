@@ -348,7 +348,7 @@ sem Stat'
     lhs.interflow = singleton (Inter @labelCall (procEntry @loc.proc) (procExit @loc.proc) @labelReturn)
     lhs.flow = fromList [(@labelCall, (procEntry @loc.proc)), ((procExit @loc.proc), @labelReturn)]
     lhs.strongLive = insertL @labelReturn (retStrong @out $ procOut @loc.proc)    $ singleR @labelCall (callStrong (procInp @loc.proc) @params.freeVars)
-    lhs.valSpace   = insertL @labelCall (callConst (procInp @loc.proc) $ @params.expValSpace) $ singleR @labelReturn (retConst @out $ procOut @loc.proc)
+    lhs.valSpace   = insertL @labelCall (callConst (procInp @loc.proc) (procOut @loc.proc) @params.expValSpace) $ singleR @labelReturn (retConst @out (procInp @loc.proc) (procOut @loc.proc))
 
   | IAssign'
     lhs.pretty   = ["[" ++ @name ++ " := " ++ @val.pretty ++ "]" ++ showLabel @label]
