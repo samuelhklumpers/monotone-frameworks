@@ -10,6 +10,7 @@ import MonotoneFrameworks
 import Analyses
 
 import Text.Pretty.Simple (pPrintLightBg)
+import Control.Arrow
 
 data Flow = Flow {
   initial   :: Int,
@@ -89,7 +90,7 @@ compile source = do
   print interflow'
 
 
-  let constantPropA = Analysis Forward (valSpace_Syn_Program' synProgram') mempty
+  let constantPropA = Analysis Forward (valSpace_Syn_Program' synProgram') (pure mempty)
   let constantPropM = prepare constantPropA flow
 
   let strongLiveA = Analysis Backward (strongLive_Syn_Program' synProgram') mempty
@@ -101,6 +102,27 @@ compile source = do
   putStrLn ""
   putStrLn "# Analyses"
   putStrLn "## Constant Propagation"
-  pPrintLightBg $ fst $ uncurry mfpSolution' constantPropM
+  pPrintLightBg $ flipMap $ fmap runTotalMap $ fst $ uncurry mfpSolution' constantPropM
+
+  putStrLn ""
+  putStrLn "## Strongly Live Variables"
+  pPrintLightBg $ flipMap $ fmap runTotalMap $ fst $ uncurry mfpSolution' strongLiveM
+
+
+flipMap :: (Ord k, Ord m) => M.Map k (M.Map m v) -> M.Map m (M.Map k v)
+flipMap = fmap M.fromList . groupBy' h . rotate . M.toList . fmap M.toList
+  where
+    h (k, (m, v)) = (m, (k, v))
+
+groupBy :: Ord k => (a -> k) -> [a] -> M.Map k [a]
+groupBy f = M.fromListWith (++) . map (f &&& pure)
+
+groupBy' :: Ord k => (a -> (k, b)) -> [a] -> M.Map k [b]
+groupBy' f = M.fromListWith (++) . map (fst . f &&& pure . (snd . f))
+
+rotate :: [(k, [(m, v)])] -> [(k, (m, v))]
+rotate = (h =<<)
+  where
+    h (k, xs) = fmap (k, ) xs
 
 

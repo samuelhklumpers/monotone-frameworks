@@ -14,6 +14,8 @@ class (Monoid m, Eq m) => BoundedSemiLattice m where
   lessOrEquals :: m -> m -> Bool
   lessOrEquals a b = a <> b == b
 
+instance BoundedSemiLattice m => BoundedSemiLattice (Maybe m)
+
 bottom :: (BoundedSemiLattice m) => m
 bottom = mempty
 
@@ -138,7 +140,7 @@ mfpSolution'
       M.lookup
 
 newtype TotalMapOnBoundedSemiLattice domain codomain =
-  TotalMapOnBoundedSemiLattice (Map domain codomain)
+  TotalMapOnBoundedSemiLattice {runTotalMap :: Map domain codomain}
   deriving (Show, Eq)
   deriving (Functor) via Map domain
 

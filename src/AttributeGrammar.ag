@@ -4,7 +4,7 @@ import qualified Data.Maybe as Maybe
 import qualified Data.List as L
 import Data.Set
 
-import Debug.Trace
+import Std((.:))
 
 import Analyses
 }
@@ -211,15 +211,15 @@ attr Procs'             [ dStar :: DStar | |
 attr IExpr BExpr        [ | |
   pretty :: String  precedence :: Int
   freeVars use {<>} {empty} :: { Set String }
-  expValSpace :: { PtConstLat -> ConstLat } ]
+  expValSpace :: { ConstEnv -> Maybe ConstLat } ]
 
 attr Expr               [ | |
   freeVars use {<>} {empty} :: { Set String }
-  expValSpace :: { PtConstLat -> ConstLat }  ]
+  expValSpace :: { ConstEnv -> Maybe ConstLat }  ]
 
 attr Exprs              [ | |
   freeVars use {:} {[]} :: { [Set String] } 
-  expValSpace use {:} {[]} :: { [PtConstLat -> ConstLat] }  ]  
+  expValSpace use {:} {[]} :: { [ConstEnv -> Maybe ConstLat] }  ]  
 
 attr Expr Exprs         [ | | pretty :: String ]
 
@@ -348,7 +348,7 @@ sem Stat'
     lhs.interflow = singleton (Inter @labelCall (procEntry @loc.proc) (procExit @loc.proc) @labelReturn)
     lhs.flow = fromList [(@labelCall, (procEntry @loc.proc)), ((procExit @loc.proc), @labelReturn)]
     lhs.strongLive = insertL @labelReturn (retStrong @out $ procOut @loc.proc)    $ singleR @labelCall (callStrong (procInp @loc.proc) @params.freeVars)
-    lhs.valSpace   = insertL @labelCall (callConst (procInp @loc.proc) (procOut @loc.proc) @params.expValSpace) $ singleR @labelReturn (retConst @out (procInp @loc.proc) (procOut @loc.proc))
+    lhs.valSpace   = insertL @labelCall (fmap $ callConst (procInp @loc.proc) (procOut @loc.proc) @params.expValSpace) $ singleR @labelReturn ((<*>) .: fmap $ retConst @out (procInp @loc.proc) (procOut @loc.proc))
 
   | IAssign'
     lhs.pretty   = ["[" ++ @name ++ " := " ++ @val.pretty ++ "]" ++ showLabel @label]
@@ -358,7 +358,7 @@ sem Stat'
     lhs.final = singleton @label
     lhs.flow = empty
     lhs.strongLive = singleL @label (survive @name @val.freeVars)
-    lhs.valSpace = singleL @label (updateConst @name @val.expValSpace)
+    lhs.valSpace = singleL @label (fmap $ updateConst @name @val.expValSpace)
 
   | BAssign'
     lhs.pretty   = ["[" ++ @name ++ " := " ++ @val.pretty ++ "]" ++ showLabel @label]
@@ -368,7 +368,7 @@ sem Stat'
     lhs.final = singleton @label
     lhs.flow = empty
     lhs.strongLive = singleL @label (survive @name @val.freeVars)
-    lhs.valSpace = singleL @label (updateConst @name @val.expValSpace)
+    lhs.valSpace = singleL @label (fmap $ updateConst @name @val.expValSpace)
 
   | Seq'
     lhs.pretty   = addSemicolon @stat1.pretty ++ @stat2.pretty
@@ -444,12 +444,12 @@ sem IExpr
   | IConst
     lhs.pretty = show @val
     lhs.precedence = 10
-    lhs.expValSpace = \_ -> CI @val
+    lhs.expValSpace = \_ -> Just $ CI @val
   | Var
     lhs.pretty = @name
     lhs.precedence = 10
     lhs.freeVars = singleton @name
-    lhs.expValSpace = ptLookupBot @name
+    lhs.expValSpace = getConst @name
   | Plus
     lhs.pretty = parensIf (@left.precedence < 6) @left.pretty ++ " + " ++ parensIf (@right.precedence <= 6) @right.pretty
     lhs.precedence = 6
@@ -476,12 +476,12 @@ sem BExpr
   | BConst
     lhs.pretty = show @val
     lhs.precedence = 10
-    lhs.expValSpace = \_ -> CB @val
+    lhs.expValSpace = \_ -> Just $ CB @val
   | BVar
     lhs.pretty = @name
     lhs.precedence = 10
     lhs.freeVars = singleton @name
-    lhs.expValSpace = ptLookupBot @name
+    lhs.expValSpace = getConst @name
   | LessThan
     lhs.pretty = parensIf (@left.precedence <= 4) @left.pretty ++ " < " ++ parensIf (@right.precedence <= 4) @right.pretty
     lhs.precedence = 4

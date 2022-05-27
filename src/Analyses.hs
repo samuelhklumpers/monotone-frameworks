@@ -1,8 +1,9 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Eta reduce" #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Analyses where
 
-  
+
 import Debug.Trace
 
 import Data.Bifunctor
@@ -49,50 +50,31 @@ data Inter = Inter Int Int Int Int deriving (Eq, Ord)
 instance Show Inter where
   show (Inter a b c d) = show (a, b, c, d)
 
+findProc :: String -> DStar -> Proc''
+findProc = (Maybe.fromJust .) . lookup
 
-data ConstLat = CI Int | CB Bool | NonConst deriving (Show, Eq)
-newtype PtConstLat = PtConstLat (M.Map String ConstLat) deriving Eq
+data ConstLat = CI Int | CB Bool deriving (Show, Eq)
+newtype ConstEnv = ConstEnv (M.Map String ConstLat) deriving Eq
+type PtConstLat = Maybe ConstEnv
 
-instance Show PtConstLat where
-    show (PtConstLat lat) = "[" ++ intercalate ", " vals ++ "]"
+instance Show ConstEnv where
+    show (ConstEnv lat) = "[" ++ intercalate ", " vals ++ "]"
         where
             showCL (s, v) = s ++ " -> " ++ show v
             vals = showCL <$> M.toList lat
 
+instance Semigroup ConstEnv where
+  (ConstEnv x) <> (ConstEnv y) = ConstEnv $ MM.merge MM.dropMissing MM.dropMissing (MM.zipWithMaybeMatched f) x y
+    where
+      f :: String -> ConstLat -> ConstLat -> Maybe ConstLat
+      f _ a b = if a == b then Just a else Nothing
 
-(!) :: PtConstLat -> String -> ConstLat
-(PtConstLat m) ! k = Maybe.fromMaybe (error $ show k ++ " is not in " ++ show m) $ M.lookup k m
+instance Monoid ConstEnv where
+  mempty = ConstEnv mempty
 
-ptInsert :: String -> ConstLat -> PtConstLat -> PtConstLat
-ptInsert k v (PtConstLat m) = PtConstLat (M.insert k v m)
+instance BoundedSemiLattice ConstEnv
 
-ptLookup :: String -> PtConstLat -> Maybe ConstLat
-ptLookup k (PtConstLat m) = M.lookup k m
-
-ptLookupBot :: String -> PtConstLat -> ConstLat
-ptLookupBot k (PtConstLat m) = M.findWithDefault NonConst k m
-
-instance Semigroup ConstLat where
-  CI x <> CI y = if x == y then CI x else NonConst
-  CB x <> CB y = if x == y then CB x else NonConst
-  _    <> _       = NonConst
-
-instance Semigroup PtConstLat where
-  (PtConstLat x) <> (PtConstLat y) = PtConstLat $ MM.merge MM.preserveMissing MM.preserveMissing (MM.zipWithMatched (const (<>))) x y
-
-instance Monoid PtConstLat where
-  mempty = PtConstLat mempty
-
-
-instance Monoid ConstLat where
-  mempty = NonConst
-
-instance BoundedSemiLattice PtConstLat where
-
-
-
-findProc :: String -> DStar -> Proc''
-findProc = (Maybe.fromJust .) . lookup
+instance BoundedSemiLattice (Set String)
 
 surviveInto :: Set String -> String -> Set String -> Set String -> Set String
 surviveInto env name vars dst = if name `member` env then alive <> vars else alive
@@ -105,11 +87,18 @@ survive name vars env = surviveInto env name vars env
 surviveOne :: String -> String -> Set String -> Set String
 surviveOne name var = survive name (singleton var)
 
-constInto :: PtConstLat -> String -> (PtConstLat -> ConstLat) -> PtConstLat -> PtConstLat
-constInto env name exp = ptInsert name (exp env)
 
-updateConst :: String -> (PtConstLat -> ConstLat) -> PtConstLat -> PtConstLat
-updateConst name exp env = constInto env name exp env
+setConst :: String -> Maybe ConstLat -> ConstEnv -> ConstEnv
+setConst k v (ConstEnv e) = ConstEnv $ M.alter (const v) k e
+
+setNonConst :: String -> ConstEnv -> ConstEnv
+setNonConst k = setConst k Nothing
+
+getConst ::  String -> ConstEnv -> Maybe ConstLat
+getConst k (ConstEnv e) = M.lookup k e
+
+updateConst :: String -> (ConstEnv -> Maybe ConstLat) -> ConstEnv -> ConstEnv
+updateConst k v e = setConst k (v e) e
 
 callStrong :: [String] -> [Set String] -> Set String -> Set String -> Set String
 callStrong inputs params r c = appEndo (mconcat $ Endo <$> fs) r
@@ -120,34 +109,43 @@ callStrong inputs params r c = appEndo (mconcat $ Endo <$> fs) r
 retStrong :: String -> String -> Set String -> Set String
 retStrong name var r = surviveInto r name (singleton var) mempty
 
-callConst :: [String] -> String -> [PtConstLat -> ConstLat] -> PtConstLat -> PtConstLat
-callConst inputs resultNameProc params c =
-  ptInsert resultNameProc NonConst $
-  appEndo (mconcat $ Endo <$> fs) $
-  c
+callConst :: [String] -> String -> [ConstEnv -> Maybe ConstLat] -> ConstEnv -> ConstEnv
+callConst params resultNameProc values c = setNonConst resultNameProc $ compose fs c
   where
-    fs :: [PtConstLat -> PtConstLat]
-    fs = uncurry updateConst <$> zip inputs params
+    fs :: [ConstEnv -> ConstEnv]
+    fs = uncurry setConst <$> zip params (fmap ($ c) values)
 
-retConst :: String -> [String] -> String -> PtConstLat -> PtConstLat -> PtConstLat
+retConst :: String -> [String] -> String -> ConstEnv -> ConstEnv -> ConstEnv
 retConst resultNameCall inputs resultNameProc c r =
-  ptInsert resultNameCall (ptLookupBot resultNameProc r) $
+  setConst resultNameCall (getConst resultNameProc r) $
   compose
-    ((\i -> ptInsert i (ptLookupBot i c)) <$> resultNameProc : inputs) $
+    ((\i -> setConst i (getConst i c)) <$> resultNameProc : inputs)
   r
 
-cIII :: (Int -> Int -> Int) -> ConstLat -> ConstLat -> ConstLat
-cIII f (CI x) (CI y) = CI (x `f` y)
-cIII _ _ _           = NonConst
+cIII' :: (Int -> Int -> Int) -> ConstLat -> ConstLat -> Maybe ConstLat
+cIII' f (CI x) (CI y) = Just $ CI (x `f` y)
+cIII' _ _ _           = Nothing
 
-cIIB :: (Int -> Int -> Bool) -> ConstLat -> ConstLat -> ConstLat
-cIIB f (CI x) (CI y) = CB (x `f` y)
-cIIB f _ _           = NonConst
+cIIB' :: (Int -> Int -> Bool) -> ConstLat -> ConstLat -> Maybe ConstLat
+cIIB' f (CI x) (CI y) = Just $ CB (x `f` y)
+cIIB' f _ _           = Nothing
 
-cBBB :: (Bool -> Bool -> Bool) -> ConstLat -> ConstLat -> ConstLat
-cBBB f (CB x) (CB y) = CB (x `f` y)
-cBBB _ _ _           = NonConst
+cBBB' :: (Bool -> Bool -> Bool) -> ConstLat -> ConstLat -> Maybe ConstLat
+cBBB' f (CB x) (CB y) = Just $ CB (x `f` y)
+cBBB' _ _ _           = Nothing
 
-cBB :: (Bool -> Bool) -> ConstLat -> ConstLat
-cBB f (CB x) = CB (f x)
-cBB _ _      = NonConst
+cBB' :: (Bool -> Bool) -> ConstLat -> Maybe ConstLat
+cBB' f (CB x) = Just $ CB (f x)
+cBB' _ _      = Nothing
+
+cIII :: (Int -> Int -> Int) -> Maybe ConstLat -> Maybe ConstLat -> Maybe ConstLat
+cIII f x y = join $ cIII' f <$> x <*> y
+
+cIIB :: (Int -> Int -> Bool) -> Maybe ConstLat -> Maybe ConstLat -> Maybe ConstLat
+cIIB f x y = join $ cIIB' f <$> x <*> y
+
+cBBB :: (Bool -> Bool -> Bool) -> Maybe ConstLat -> Maybe ConstLat -> Maybe ConstLat
+cBBB f x y = join $ cBBB' f <$> x <*> y
+
+cBB :: (Bool -> Bool) -> Maybe ConstLat -> Maybe ConstLat
+cBB f x = cBB' f =<< x

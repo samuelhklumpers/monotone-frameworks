@@ -9,7 +9,7 @@ import qualified Data.Maybe as Maybe
 import qualified Data.List as L
 import Data.Set
 
-import Debug.Trace
+import Std((.:))
 
 import Analyses
 {-# LINE 16 "AttributeGrammar.hs" #-}
@@ -81,9 +81,9 @@ sem_BExpr (Or _left _right) =
 sem_BExpr (Not _val) =
     (sem_BExpr_Not (sem_BExpr _val))
 -- semantic domain
-type T_BExpr = ( ( PtConstLat -> ConstLat ),( Set String ),Int,String,BExpr)
+type T_BExpr = ( ( ConstEnv -> Maybe ConstLat ),( Set String ),Int,String,BExpr)
 data Inh_BExpr = Inh_BExpr {}
-data Syn_BExpr = Syn_BExpr {expValSpace_Syn_BExpr :: ( PtConstLat -> ConstLat ),freeVars_Syn_BExpr :: ( Set String ),precedence_Syn_BExpr :: Int,pretty_Syn_BExpr :: String,self_Syn_BExpr :: BExpr}
+data Syn_BExpr = Syn_BExpr {expValSpace_Syn_BExpr :: ( ConstEnv -> Maybe ConstLat ),freeVars_Syn_BExpr :: ( Set String ),precedence_Syn_BExpr :: Int,pretty_Syn_BExpr :: String,self_Syn_BExpr :: BExpr}
 wrap_BExpr :: T_BExpr ->
               Inh_BExpr ->
               Syn_BExpr
@@ -95,7 +95,7 @@ sem_BExpr_BConst :: Bool ->
 sem_BExpr_BConst val_ =
     (let _lhsOpretty :: String
          _lhsOprecedence :: Int
-         _lhsOexpValSpace :: ( PtConstLat -> ConstLat )
+         _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: BExpr
          _lhsOpretty =
@@ -110,7 +110,7 @@ sem_BExpr_BConst val_ =
               )
          _lhsOexpValSpace =
              ({-# LINE 479 "AttributeGrammar.ag" #-}
-              \_ -> CB val_
+              \_ -> Just $ CB val_
               {-# LINE 115 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
@@ -129,7 +129,7 @@ sem_BExpr_BVar name_ =
     (let _lhsOpretty :: String
          _lhsOprecedence :: Int
          _lhsOfreeVars :: ( Set String )
-         _lhsOexpValSpace :: ( PtConstLat -> ConstLat )
+         _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _lhsOself :: BExpr
          _lhsOpretty =
              ({-# LINE 481 "AttributeGrammar.ag" #-}
@@ -148,7 +148,7 @@ sem_BExpr_BVar name_ =
               )
          _lhsOexpValSpace =
              ({-# LINE 484 "AttributeGrammar.ag" #-}
-              ptLookupBot name_
+              getConst name_
               {-# LINE 153 "AttributeGrammar.hs" #-}
               )
          _self =
@@ -162,15 +162,15 @@ sem_BExpr_LessThan :: T_IExpr ->
 sem_BExpr_LessThan left_ right_ =
     (let _lhsOpretty :: String
          _lhsOprecedence :: Int
-         _lhsOexpValSpace :: ( PtConstLat -> ConstLat )
+         _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: BExpr
-         _leftIexpValSpace :: ( PtConstLat -> ConstLat )
+         _leftIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _leftIfreeVars :: ( Set String )
          _leftIprecedence :: Int
          _leftIpretty :: String
          _leftIself :: IExpr
-         _rightIexpValSpace :: ( PtConstLat -> ConstLat )
+         _rightIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _rightIfreeVars :: ( Set String )
          _rightIprecedence :: Int
          _rightIpretty :: String
@@ -210,15 +210,15 @@ sem_BExpr_GreaterThan :: T_IExpr ->
 sem_BExpr_GreaterThan left_ right_ =
     (let _lhsOpretty :: String
          _lhsOprecedence :: Int
-         _lhsOexpValSpace :: ( PtConstLat -> ConstLat )
+         _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: BExpr
-         _leftIexpValSpace :: ( PtConstLat -> ConstLat )
+         _leftIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _leftIfreeVars :: ( Set String )
          _leftIprecedence :: Int
          _leftIpretty :: String
          _leftIself :: IExpr
-         _rightIexpValSpace :: ( PtConstLat -> ConstLat )
+         _rightIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _rightIfreeVars :: ( Set String )
          _rightIprecedence :: Int
          _rightIpretty :: String
@@ -258,15 +258,15 @@ sem_BExpr_LessEqual :: T_IExpr ->
 sem_BExpr_LessEqual left_ right_ =
     (let _lhsOpretty :: String
          _lhsOprecedence :: Int
-         _lhsOexpValSpace :: ( PtConstLat -> ConstLat )
+         _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: BExpr
-         _leftIexpValSpace :: ( PtConstLat -> ConstLat )
+         _leftIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _leftIfreeVars :: ( Set String )
          _leftIprecedence :: Int
          _leftIpretty :: String
          _leftIself :: IExpr
-         _rightIexpValSpace :: ( PtConstLat -> ConstLat )
+         _rightIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _rightIfreeVars :: ( Set String )
          _rightIprecedence :: Int
          _rightIpretty :: String
@@ -306,15 +306,15 @@ sem_BExpr_GreaterEqual :: T_IExpr ->
 sem_BExpr_GreaterEqual left_ right_ =
     (let _lhsOpretty :: String
          _lhsOprecedence :: Int
-         _lhsOexpValSpace :: ( PtConstLat -> ConstLat )
+         _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: BExpr
-         _leftIexpValSpace :: ( PtConstLat -> ConstLat )
+         _leftIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _leftIfreeVars :: ( Set String )
          _leftIprecedence :: Int
          _leftIpretty :: String
          _leftIself :: IExpr
-         _rightIexpValSpace :: ( PtConstLat -> ConstLat )
+         _rightIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _rightIfreeVars :: ( Set String )
          _rightIprecedence :: Int
          _rightIpretty :: String
@@ -354,15 +354,15 @@ sem_BExpr_IEqual :: T_IExpr ->
 sem_BExpr_IEqual left_ right_ =
     (let _lhsOpretty :: String
          _lhsOprecedence :: Int
-         _lhsOexpValSpace :: ( PtConstLat -> ConstLat )
+         _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: BExpr
-         _leftIexpValSpace :: ( PtConstLat -> ConstLat )
+         _leftIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _leftIfreeVars :: ( Set String )
          _leftIprecedence :: Int
          _leftIpretty :: String
          _leftIself :: IExpr
-         _rightIexpValSpace :: ( PtConstLat -> ConstLat )
+         _rightIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _rightIfreeVars :: ( Set String )
          _rightIprecedence :: Int
          _rightIpretty :: String
@@ -402,15 +402,15 @@ sem_BExpr_BEqual :: T_BExpr ->
 sem_BExpr_BEqual left_ right_ =
     (let _lhsOpretty :: String
          _lhsOprecedence :: Int
-         _lhsOexpValSpace :: ( PtConstLat -> ConstLat )
+         _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: BExpr
-         _leftIexpValSpace :: ( PtConstLat -> ConstLat )
+         _leftIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _leftIfreeVars :: ( Set String )
          _leftIprecedence :: Int
          _leftIpretty :: String
          _leftIself :: BExpr
-         _rightIexpValSpace :: ( PtConstLat -> ConstLat )
+         _rightIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _rightIfreeVars :: ( Set String )
          _rightIprecedence :: Int
          _rightIpretty :: String
@@ -450,15 +450,15 @@ sem_BExpr_And :: T_BExpr ->
 sem_BExpr_And left_ right_ =
     (let _lhsOpretty :: String
          _lhsOprecedence :: Int
-         _lhsOexpValSpace :: ( PtConstLat -> ConstLat )
+         _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: BExpr
-         _leftIexpValSpace :: ( PtConstLat -> ConstLat )
+         _leftIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _leftIfreeVars :: ( Set String )
          _leftIprecedence :: Int
          _leftIpretty :: String
          _leftIself :: BExpr
-         _rightIexpValSpace :: ( PtConstLat -> ConstLat )
+         _rightIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _rightIfreeVars :: ( Set String )
          _rightIprecedence :: Int
          _rightIpretty :: String
@@ -498,15 +498,15 @@ sem_BExpr_Or :: T_BExpr ->
 sem_BExpr_Or left_ right_ =
     (let _lhsOpretty :: String
          _lhsOprecedence :: Int
-         _lhsOexpValSpace :: ( PtConstLat -> ConstLat )
+         _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: BExpr
-         _leftIexpValSpace :: ( PtConstLat -> ConstLat )
+         _leftIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _leftIfreeVars :: ( Set String )
          _leftIprecedence :: Int
          _leftIpretty :: String
          _leftIself :: BExpr
-         _rightIexpValSpace :: ( PtConstLat -> ConstLat )
+         _rightIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _rightIfreeVars :: ( Set String )
          _rightIprecedence :: Int
          _rightIpretty :: String
@@ -545,10 +545,10 @@ sem_BExpr_Not :: T_BExpr ->
 sem_BExpr_Not val_ =
     (let _lhsOpretty :: String
          _lhsOprecedence :: Int
-         _lhsOexpValSpace :: ( PtConstLat -> ConstLat )
+         _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: BExpr
-         _valIexpValSpace :: ( PtConstLat -> ConstLat )
+         _valIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _valIfreeVars :: ( Set String )
          _valIprecedence :: Int
          _valIpretty :: String
@@ -592,9 +592,9 @@ sem_Expr (B _expr) =
 sem_Expr (I _expr) =
     (sem_Expr_I (sem_IExpr _expr))
 -- semantic domain
-type T_Expr = ( ( PtConstLat -> ConstLat ),( Set String ),String,Expr)
+type T_Expr = ( ( ConstEnv -> Maybe ConstLat ),( Set String ),String,Expr)
 data Inh_Expr = Inh_Expr {}
-data Syn_Expr = Syn_Expr {expValSpace_Syn_Expr :: ( PtConstLat -> ConstLat ),freeVars_Syn_Expr :: ( Set String ),pretty_Syn_Expr :: String,self_Syn_Expr :: Expr}
+data Syn_Expr = Syn_Expr {expValSpace_Syn_Expr :: ( ConstEnv -> Maybe ConstLat ),freeVars_Syn_Expr :: ( Set String ),pretty_Syn_Expr :: String,self_Syn_Expr :: Expr}
 wrap_Expr :: T_Expr ->
              Inh_Expr ->
              Syn_Expr
@@ -607,8 +607,8 @@ sem_Expr_B expr_ =
     (let _lhsOpretty :: String
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: Expr
-         _lhsOexpValSpace :: ( PtConstLat -> ConstLat )
-         _exprIexpValSpace :: ( PtConstLat -> ConstLat )
+         _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _exprIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _exprIfreeVars :: ( Set String )
          _exprIprecedence :: Int
          _exprIpretty :: String
@@ -641,8 +641,8 @@ sem_Expr_I expr_ =
     (let _lhsOpretty :: String
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: Expr
-         _lhsOexpValSpace :: ( PtConstLat -> ConstLat )
-         _exprIexpValSpace :: ( PtConstLat -> ConstLat )
+         _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _exprIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _exprIfreeVars :: ( Set String )
          _exprIprecedence :: Int
          _exprIpretty :: String
@@ -677,9 +677,9 @@ sem_Exprs :: Exprs ->
 sem_Exprs list =
     (Prelude.foldr sem_Exprs_Cons sem_Exprs_Nil (Prelude.map sem_Expr list))
 -- semantic domain
-type T_Exprs = ( ( [PtConstLat -> ConstLat] ),( [Set String] ),String,Exprs)
+type T_Exprs = ( ( [ConstEnv -> Maybe ConstLat] ),( [Set String] ),String,Exprs)
 data Inh_Exprs = Inh_Exprs {}
-data Syn_Exprs = Syn_Exprs {expValSpace_Syn_Exprs :: ( [PtConstLat -> ConstLat] ),freeVars_Syn_Exprs :: ( [Set String] ),pretty_Syn_Exprs :: String,self_Syn_Exprs :: Exprs}
+data Syn_Exprs = Syn_Exprs {expValSpace_Syn_Exprs :: ( [ConstEnv -> Maybe ConstLat] ),freeVars_Syn_Exprs :: ( [Set String] ),pretty_Syn_Exprs :: String,self_Syn_Exprs :: Exprs}
 wrap_Exprs :: T_Exprs ->
               Inh_Exprs ->
               Syn_Exprs
@@ -691,14 +691,14 @@ sem_Exprs_Cons :: T_Expr ->
                   T_Exprs
 sem_Exprs_Cons hd_ tl_ =
     (let _lhsOpretty :: String
-         _lhsOexpValSpace :: ( [PtConstLat -> ConstLat] )
+         _lhsOexpValSpace :: ( [ConstEnv -> Maybe ConstLat] )
          _lhsOfreeVars :: ( [Set String] )
          _lhsOself :: Exprs
-         _hdIexpValSpace :: ( PtConstLat -> ConstLat )
+         _hdIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _hdIfreeVars :: ( Set String )
          _hdIpretty :: String
          _hdIself :: Expr
-         _tlIexpValSpace :: ( [PtConstLat -> ConstLat] )
+         _tlIexpValSpace :: ( [ConstEnv -> Maybe ConstLat] )
          _tlIfreeVars :: ( [Set String] )
          _tlIpretty :: String
          _tlIself :: Exprs
@@ -729,7 +729,7 @@ sem_Exprs_Cons hd_ tl_ =
 sem_Exprs_Nil :: T_Exprs
 sem_Exprs_Nil =
     (let _lhsOpretty :: String
-         _lhsOexpValSpace :: ( [PtConstLat -> ConstLat] )
+         _lhsOexpValSpace :: ( [ConstEnv -> Maybe ConstLat] )
          _lhsOfreeVars :: ( [Set String] )
          _lhsOself :: Exprs
          _lhsOpretty =
@@ -779,9 +779,9 @@ sem_IExpr (Divide _left _right) =
 sem_IExpr (Deref _ptr) =
     (sem_IExpr_Deref (sem_IExpr _ptr))
 -- semantic domain
-type T_IExpr = ( ( PtConstLat -> ConstLat ),( Set String ),Int,String,IExpr)
+type T_IExpr = ( ( ConstEnv -> Maybe ConstLat ),( Set String ),Int,String,IExpr)
 data Inh_IExpr = Inh_IExpr {}
-data Syn_IExpr = Syn_IExpr {expValSpace_Syn_IExpr :: ( PtConstLat -> ConstLat ),freeVars_Syn_IExpr :: ( Set String ),precedence_Syn_IExpr :: Int,pretty_Syn_IExpr :: String,self_Syn_IExpr :: IExpr}
+data Syn_IExpr = Syn_IExpr {expValSpace_Syn_IExpr :: ( ConstEnv -> Maybe ConstLat ),freeVars_Syn_IExpr :: ( Set String ),precedence_Syn_IExpr :: Int,pretty_Syn_IExpr :: String,self_Syn_IExpr :: IExpr}
 wrap_IExpr :: T_IExpr ->
               Inh_IExpr ->
               Syn_IExpr
@@ -793,7 +793,7 @@ sem_IExpr_IConst :: Int ->
 sem_IExpr_IConst val_ =
     (let _lhsOpretty :: String
          _lhsOprecedence :: Int
-         _lhsOexpValSpace :: ( PtConstLat -> ConstLat )
+         _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: IExpr
          _lhsOpretty =
@@ -808,7 +808,7 @@ sem_IExpr_IConst val_ =
               )
          _lhsOexpValSpace =
              ({-# LINE 447 "AttributeGrammar.ag" #-}
-              \_ -> CI val_
+              \_ -> Just $ CI val_
               {-# LINE 813 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
@@ -827,7 +827,7 @@ sem_IExpr_Var name_ =
     (let _lhsOpretty :: String
          _lhsOprecedence :: Int
          _lhsOfreeVars :: ( Set String )
-         _lhsOexpValSpace :: ( PtConstLat -> ConstLat )
+         _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _lhsOself :: IExpr
          _lhsOpretty =
              ({-# LINE 449 "AttributeGrammar.ag" #-}
@@ -846,7 +846,7 @@ sem_IExpr_Var name_ =
               )
          _lhsOexpValSpace =
              ({-# LINE 452 "AttributeGrammar.ag" #-}
-              ptLookupBot name_
+              getConst name_
               {-# LINE 851 "AttributeGrammar.hs" #-}
               )
          _self =
@@ -860,15 +860,15 @@ sem_IExpr_Plus :: T_IExpr ->
 sem_IExpr_Plus left_ right_ =
     (let _lhsOpretty :: String
          _lhsOprecedence :: Int
-         _lhsOexpValSpace :: ( PtConstLat -> ConstLat )
+         _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: IExpr
-         _leftIexpValSpace :: ( PtConstLat -> ConstLat )
+         _leftIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _leftIfreeVars :: ( Set String )
          _leftIprecedence :: Int
          _leftIpretty :: String
          _leftIself :: IExpr
-         _rightIexpValSpace :: ( PtConstLat -> ConstLat )
+         _rightIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _rightIfreeVars :: ( Set String )
          _rightIprecedence :: Int
          _rightIpretty :: String
@@ -908,15 +908,15 @@ sem_IExpr_Minus :: T_IExpr ->
 sem_IExpr_Minus left_ right_ =
     (let _lhsOpretty :: String
          _lhsOprecedence :: Int
-         _lhsOexpValSpace :: ( PtConstLat -> ConstLat )
+         _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: IExpr
-         _leftIexpValSpace :: ( PtConstLat -> ConstLat )
+         _leftIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _leftIfreeVars :: ( Set String )
          _leftIprecedence :: Int
          _leftIpretty :: String
          _leftIself :: IExpr
-         _rightIexpValSpace :: ( PtConstLat -> ConstLat )
+         _rightIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _rightIfreeVars :: ( Set String )
          _rightIprecedence :: Int
          _rightIpretty :: String
@@ -956,15 +956,15 @@ sem_IExpr_Times :: T_IExpr ->
 sem_IExpr_Times left_ right_ =
     (let _lhsOpretty :: String
          _lhsOprecedence :: Int
-         _lhsOexpValSpace :: ( PtConstLat -> ConstLat )
+         _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: IExpr
-         _leftIexpValSpace :: ( PtConstLat -> ConstLat )
+         _leftIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _leftIfreeVars :: ( Set String )
          _leftIprecedence :: Int
          _leftIpretty :: String
          _leftIself :: IExpr
-         _rightIexpValSpace :: ( PtConstLat -> ConstLat )
+         _rightIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _rightIfreeVars :: ( Set String )
          _rightIprecedence :: Int
          _rightIpretty :: String
@@ -1004,15 +1004,15 @@ sem_IExpr_Divide :: T_IExpr ->
 sem_IExpr_Divide left_ right_ =
     (let _lhsOpretty :: String
          _lhsOprecedence :: Int
-         _lhsOexpValSpace :: ( PtConstLat -> ConstLat )
+         _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: IExpr
-         _leftIexpValSpace :: ( PtConstLat -> ConstLat )
+         _leftIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _leftIfreeVars :: ( Set String )
          _leftIprecedence :: Int
          _leftIpretty :: String
          _leftIself :: IExpr
-         _rightIexpValSpace :: ( PtConstLat -> ConstLat )
+         _rightIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _rightIfreeVars :: ( Set String )
          _rightIprecedence :: Int
          _rightIpretty :: String
@@ -1053,8 +1053,8 @@ sem_IExpr_Deref ptr_ =
          _lhsOprecedence :: Int
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: IExpr
-         _lhsOexpValSpace :: ( PtConstLat -> ConstLat )
-         _ptrIexpValSpace :: ( PtConstLat -> ConstLat )
+         _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _ptrIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
          _ptrIfreeVars :: ( Set String )
          _ptrIprecedence :: Int
          _ptrIpretty :: String
@@ -2177,7 +2177,7 @@ sem_Stat'_IfThenElse' labelc_ cond_ stat1_ stat2_ =
               _stat1OdStar :: DStar
               _stat2OcontinueLabel :: ( Maybe Int )
               _stat2OdStar :: DStar
-              _condIexpValSpace :: ( PtConstLat -> ConstLat )
+              _condIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
               _condIfreeVars :: ( Set String )
               _condIprecedence :: Int
               _condIpretty :: String
@@ -2319,7 +2319,7 @@ sem_Stat'_While' labelc_ cond_ stat_ =
               _lhsOself :: Stat'
               _statOcontinueLabel :: ( Maybe Int )
               _statOdStar :: DStar
-              _condIexpValSpace :: ( PtConstLat -> ConstLat )
+              _condIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
               _condIfreeVars :: ( Set String )
               _condIprecedence :: Int
               _condIpretty :: String
@@ -2433,7 +2433,7 @@ sem_Stat'_Call' labelCall_ labelReturn_ name_ params_ out_ =
               _lhsObreakLabels :: ( Set Int )
               _lhsOself :: Stat'
               _lhsOcontinueLabel :: ( Maybe Int )
-              _paramsIexpValSpace :: ( [PtConstLat -> ConstLat] )
+              _paramsIexpValSpace :: ( [ConstEnv -> Maybe ConstLat] )
               _paramsIfreeVars :: ( [Set String] )
               _paramsIpretty :: String
               _paramsIself :: Exprs
@@ -2484,7 +2484,7 @@ sem_Stat'_Call' labelCall_ labelReturn_ name_ params_ out_ =
                    )
               _lhsOvalSpace =
                   ({-# LINE 351 "AttributeGrammar.ag" #-}
-                   insertL labelCall_ (callConst (procInp _proc    ) (procOut _proc    ) _paramsIexpValSpace) $ singleR labelReturn_ (retConst out_ (procInp _proc    ) (procOut _proc    ))
+                   insertL labelCall_ (fmap $ callConst (procInp _proc    ) (procOut _proc    ) _paramsIexpValSpace) $ singleR labelReturn_ ((<*>) .: fmap $ retConst out_ (procInp _proc    ) (procOut _proc    ))
                    {-# LINE 2489 "AttributeGrammar.hs" #-}
                    )
               _lhsObreakLabels =
@@ -2523,7 +2523,7 @@ sem_Stat'_IAssign' label_ name_ val_ =
               _lhsOinterflow :: ( Set Inter )
               _lhsOself :: Stat'
               _lhsOcontinueLabel :: ( Maybe Int )
-              _valIexpValSpace :: ( PtConstLat -> ConstLat )
+              _valIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
               _valIfreeVars :: ( Set String )
               _valIprecedence :: Int
               _valIpretty :: String
@@ -2565,7 +2565,7 @@ sem_Stat'_IAssign' label_ name_ val_ =
                    )
               _lhsOvalSpace =
                   ({-# LINE 361 "AttributeGrammar.ag" #-}
-                   singleL label_ (updateConst name_ _valIexpValSpace)
+                   singleL label_ (fmap $ updateConst name_ _valIexpValSpace)
                    {-# LINE 2570 "AttributeGrammar.hs" #-}
                    )
               _lhsObreakLabels =
@@ -2609,7 +2609,7 @@ sem_Stat'_BAssign' label_ name_ val_ =
               _lhsOinterflow :: ( Set Inter )
               _lhsOself :: Stat'
               _lhsOcontinueLabel :: ( Maybe Int )
-              _valIexpValSpace :: ( PtConstLat -> ConstLat )
+              _valIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
               _valIfreeVars :: ( Set String )
               _valIprecedence :: Int
               _valIpretty :: String
@@ -2651,7 +2651,7 @@ sem_Stat'_BAssign' label_ name_ val_ =
                    )
               _lhsOvalSpace =
                   ({-# LINE 371 "AttributeGrammar.ag" #-}
-                   singleL label_ (updateConst name_ _valIexpValSpace)
+                   singleL label_ (fmap $ updateConst name_ _valIexpValSpace)
                    {-# LINE 2656 "AttributeGrammar.hs" #-}
                    )
               _lhsObreakLabels =
@@ -2825,7 +2825,7 @@ sem_Stat'_Malloc' label_ name_ size_ =
               _lhsOinterflow :: ( Set Inter )
               _lhsOself :: Stat'
               _lhsOcontinueLabel :: ( Maybe Int )
-              _sizeIexpValSpace :: ( PtConstLat -> ConstLat )
+              _sizeIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
               _sizeIfreeVars :: ( Set String )
               _sizeIprecedence :: Int
               _sizeIpretty :: String
@@ -2910,7 +2910,7 @@ sem_Stat'_Free' label_ ptr_ =
               _lhsOinterflow :: ( Set Inter )
               _lhsOself :: Stat'
               _lhsOcontinueLabel :: ( Maybe Int )
-              _ptrIexpValSpace :: ( PtConstLat -> ConstLat )
+              _ptrIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
               _ptrIfreeVars :: ( Set String )
               _ptrIprecedence :: Int
               _ptrIpretty :: String
@@ -2996,12 +2996,12 @@ sem_Stat'_RefAssign' label_ ptr_ val_ =
               _lhsOinterflow :: ( Set Inter )
               _lhsOself :: Stat'
               _lhsOcontinueLabel :: ( Maybe Int )
-              _ptrIexpValSpace :: ( PtConstLat -> ConstLat )
+              _ptrIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
               _ptrIfreeVars :: ( Set String )
               _ptrIprecedence :: Int
               _ptrIpretty :: String
               _ptrIself :: IExpr
-              _valIexpValSpace :: ( PtConstLat -> ConstLat )
+              _valIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
               _valIfreeVars :: ( Set String )
               _valIprecedence :: Int
               _valIpretty :: String
