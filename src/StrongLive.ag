@@ -1,0 +1,46 @@
+{
+import StrongLive
+}
+
+attr Program'               [ | | strongLive :: { DifTrans (Set String) } ]
+attr Procs' Proc' Stat'     [ | | strongLive :: { DifTrans (Set String) }   ]
+
+sem Program'
+  | Program'
+    lhs.strongLive = @procs.strongLive <> @stat.strongLive
+    
+sem Procs'
+  | Nil
+    lhs.strongLive = mempty
+  | Cons
+    lhs.strongLive = @hd.strongLive <> @tl.strongLive
+
+sem Proc'
+  | Proc'
+    lhs.strongLive = insertL @labelEntry id $ insertL @labelExit id @stat.strongLive
+
+sem Stat'
+  | Skip'
+    lhs.strongLive = singleL @label id
+  | IfThenElse'
+    lhs.strongLive = insertL @labelc (<> @cond.freeVars) $ @stat1.strongLive <> @stat2.strongLive 
+  | While'
+    lhs.strongLive = insertL @labelc (<> @cond.freeVars) $ @stat.strongLive
+  | Call'
+    lhs.strongLive = insertL @labelReturn (aliveInExit @out (procOut @loc.proc)) $ singleR @labelCall (aliveInCall (procInp @loc.proc) (procOut @loc.proc) @params.freeVars)
+  | IAssign'
+    lhs.strongLive = singleL @label (keepAlive @name @val.freeVars)
+  | BAssign'
+    lhs.strongLive = singleL @label (keepAlive @name @val.freeVars)
+  | Seq'
+    lhs.strongLive = @stat1.strongLive <> @stat2.strongLive
+  | Malloc'
+    lhs.strongLive = singleL @label (keepAlive @name @size.freeVars)
+  | Free'
+    lhs.strongLive = singleL @label id
+  | RefAssign'
+    lhs.strongLive = singleL @label id
+  | Continue'
+    lhs.strongLive = singleL @label id
+  | Break'
+    lhs.strongLive = singleL @label id

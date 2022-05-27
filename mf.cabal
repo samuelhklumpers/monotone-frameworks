@@ -33,6 +33,8 @@ library
       Compiler
       Lexer
       MonotoneFrameworks
+      ConstantProp
+      StrongLive
       Parser
       Std
   other-modules:

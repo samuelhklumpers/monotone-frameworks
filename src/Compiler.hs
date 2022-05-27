@@ -8,6 +8,8 @@ import Lexer
 import AttributeGrammar
 import MonotoneFrameworks
 import Analyses
+import ConstantProp
+import StrongLive
 
 import Text.Pretty.Simple (pPrintLightBg)
 import Control.Arrow
@@ -107,6 +109,7 @@ compile source = do
   putStrLn ""
   putStrLn "## Strongly Live Variables"
   pPrintLightBg $ flipMap $ fmap runTotalMap $ fst $ uncurry mfpSolution' strongLiveM
+--  pPrintLightBg $ uncurry mfpSolution' strongLiveM
 
 
 flipMap :: (Ord k, Ord m) => M.Map k (M.Map m v) -> M.Map m (M.Map k v)

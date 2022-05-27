@@ -195,37 +195,15 @@ sem Stat
     lhs.labelled = Break' @lhs.label
 
 -- * Pretty printer
-attr Program'           [ | |
-  pretty :: String
-  init :: Int  final :: { Set Int }  flow :: { Set Edge }  interflow :: { Set Inter }
-  strongLive :: { DifTrans (Set String) }  valSpace :: { DifTrans PtConstLat } ]
 
-attr Proc' Stat'        [ dStar :: DStar | |
-  pretty :: { [String] }
-  init :: Int  final :: { Set Int }  flow :: { Set Edge }  interflow use {<>} {mempty} :: { Set Inter } ]
-
-attr Procs'             [ dStar :: DStar | |
-  pretty :: { [String] }
-  flow :: { Set Edge }  interflow use {<>} {mempty} :: { Set Inter } ]
-
-attr IExpr BExpr        [ | |
-  pretty :: String  precedence :: Int
-  freeVars use {<>} {empty} :: { Set String }
-  expValSpace :: { ConstEnv -> Maybe ConstLat } ]
-
-attr Expr               [ | |
-  freeVars use {<>} {empty} :: { Set String }
-  expValSpace :: { ConstEnv -> Maybe ConstLat }  ]
-
-attr Exprs              [ | |
-  freeVars use {:} {[]} :: { [Set String] } 
-  expValSpace use {:} {[]} :: { [ConstEnv -> Maybe ConstLat] }  ]  
-
+attr Program'           [ | | pretty :: String  init :: Int  final :: { Set Int }  flow :: { Set Edge }  interflow :: { Set Inter } ]
+attr Proc' Stat'        [ dStar :: DStar | | pretty :: { [String] }  init :: Int  final :: { Set Int }  flow :: { Set Edge }  interflow use {<>} {mempty} :: { Set Inter } ]
+attr Procs'             [ dStar :: DStar | | pretty :: { [String] }  flow :: { Set Edge }  interflow use {<>} {mempty} :: { Set Inter } ]
+attr IExpr BExpr        [ | | pretty :: String  precedence :: Int  freeVars use {<>} {empty} :: { Set String } ]
+attr Expr               [ | | freeVars use {<>} {empty} :: { Set String } ]
+attr Exprs              [ | | freeVars use {:} {[]} :: { [Set String] } ]  
 attr Expr Exprs         [ | | pretty :: String ]
-
 attr Stat'              [ | continueLabel :: { Maybe Int } | isSkip :: Bool  isSingle :: Bool  breakLabels use {<>} {empty} :: { Set Int }  ]
-attr Procs' Proc' Stat'  [ | |
-  strongLive :: { DifTrans (Set String) }  valSpace :: { DifTrans PtConstLat }  ]
 
 {
 indent :: [String] -> [String]
@@ -264,23 +242,15 @@ sem Program'
     procs.dStar = @dStar
     stat.continueLabel = Nothing
 
-    -- analyses
-    lhs.strongLive = @procs.strongLive <> @stat.strongLive
-    lhs.valSpace = @procs.valSpace <> @stat.valSpace
-    
 sem Procs'
   | Nil
     lhs.pretty = []
     lhs.flow = empty
     lhs.interflow = empty
-    lhs.strongLive = mempty
-    lhs.valSpace = mempty
   | Cons
     lhs.pretty = @hd.pretty ++ @tl.pretty
     lhs.flow = @hd.flow <> @tl.flow
     lhs.interflow = @hd.interflow <> @tl.interflow
-    lhs.strongLive = @hd.strongLive <> @tl.strongLive
-    lhs.valSpace = @hd.valSpace <> @tl.valSpace
 
 sem Proc'
   | Proc'
@@ -293,9 +263,6 @@ sem Proc'
     stat.dStar = @lhs.dStar
     stat.continueLabel = Nothing
     lhs.interflow = @stat.interflow
-    
-    lhs.strongLive = insertL @labelEntry id $ insertL @labelExit id @stat.strongLive
-    lhs.valSpace = insertL @labelEntry id $ insertL @labelExit id @stat.valSpace
 
 sem Stat'
   | Skip'
@@ -305,9 +272,6 @@ sem Stat'
     lhs.init = @label
     lhs.final = singleton @label
     lhs.flow = empty
-    lhs.strongLive = singleL @label id
-    lhs.valSpace = singleL @label id
-
   | IfThenElse'
     lhs.pretty   = ["if [" ++ @cond.pretty ++ "]" ++ showLabel @labelc ++ " then" ++ (if @stat1.isSingle then "" else " {")]
                     ++ indent @stat1.pretty
@@ -321,9 +285,6 @@ sem Stat'
     lhs.init = @labelc
     lhs.final = @stat1.final <> @stat2.final 
     lhs.flow = @stat1.flow <> @stat2.flow <> fromList [(@labelc, @stat1.init), (@labelc, @stat2.init)]
-    lhs.strongLive = insertL @labelc (<> @cond.freeVars) $ @stat1.strongLive <> @stat2.strongLive 
-    lhs.valSpace = insertL @labelc id $ @stat1.valSpace <> @stat2.valSpace 
-
   | While'
     lhs.pretty   = ["while [" ++ @cond.pretty ++ "]" ++ showLabel @labelc ++ " do" ++ (if @stat.isSingle then "" else " {")]
                     ++ indent @stat.pretty
@@ -335,9 +296,6 @@ sem Stat'
     lhs.flow = @stat.flow <> singleton (@labelc, @stat.init) <> fromList [(label, @labelc) | label <- toList @stat.final ] 
     lhs.continueLabel = Just @labelc
     lhs.breakLabels = empty
-    lhs.strongLive = insertL @labelc (<> @cond.freeVars) $ @stat.strongLive
-    lhs.valSpace = insertL @labelc id @stat.valSpace
-
   | Call'
     lhs.pretty   = ["[call " ++ @name ++ "(" ++ @params.pretty ++ @out ++ ")]" ++ showLabel @labelCall ++ "₋" ++ showLabel @labelReturn]
     lhs.isSkip   = False
@@ -347,9 +305,6 @@ sem Stat'
     loc.proc = { findProc @name @lhs.dStar }
     lhs.interflow = singleton (Inter @labelCall (procEntry @loc.proc) (procExit @loc.proc) @labelReturn)
     lhs.flow = fromList [(@labelCall, (procEntry @loc.proc)), ((procExit @loc.proc), @labelReturn)]
-    lhs.strongLive = insertL @labelReturn (retStrong @out $ procOut @loc.proc)    $ singleR @labelCall (callStrong (procInp @loc.proc) @params.freeVars)
-    lhs.valSpace   = insertL @labelCall (fmap $ callConst (procInp @loc.proc) (procOut @loc.proc) @params.expValSpace) $ singleR @labelReturn ((<*>) .: fmap $ retConst @out (procInp @loc.proc) (procOut @loc.proc))
-
   | IAssign'
     lhs.pretty   = ["[" ++ @name ++ " := " ++ @val.pretty ++ "]" ++ showLabel @label]
     lhs.isSkip   = False
@@ -357,9 +312,6 @@ sem Stat'
     lhs.init = @label
     lhs.final = singleton @label
     lhs.flow = empty
-    lhs.strongLive = singleL @label (survive @name @val.freeVars)
-    lhs.valSpace = singleL @label (fmap $ updateConst @name @val.expValSpace)
-
   | BAssign'
     lhs.pretty   = ["[" ++ @name ++ " := " ++ @val.pretty ++ "]" ++ showLabel @label]
     lhs.isSkip   = False
@@ -367,9 +319,6 @@ sem Stat'
     lhs.init = @label
     lhs.final = singleton @label
     lhs.flow = empty
-    lhs.strongLive = singleL @label (survive @name @val.freeVars)
-    lhs.valSpace = singleL @label (fmap $ updateConst @name @val.expValSpace)
-
   | Seq'
     lhs.pretty   = addSemicolon @stat1.pretty ++ @stat2.pretty
     lhs.isSkip   = False
@@ -377,9 +326,6 @@ sem Stat'
     lhs.init = @stat1.init
     lhs.final = @stat2.final
     lhs.flow = @stat1.flow <> @stat2.flow <> fromList [(label, @stat2.init) | label <- toList @stat1.final]
-    lhs.strongLive = @stat1.strongLive <> @stat2.strongLive
-    lhs.valSpace = @stat1.valSpace <> @stat2.valSpace
-
   | Malloc'
     lhs.pretty   = ["malloc(" ++ @name ++ ", " ++ @size.pretty ++ ")" ++ showLabel @label]
     lhs.isSkip   = False
@@ -387,11 +333,6 @@ sem Stat'
     lhs.init = @label
     lhs.final = singleton @label
     lhs.flow = empty
-    lhs.strongLive = singleL @label (survive @name @size.freeVars)
-    -- need CL in ConstLat for const prop on lists
-    lhs.valSpace = singleL @label id
-
-
   | Free'
     lhs.pretty   = ["free(" ++ @ptr.pretty ++ ")" ++ showLabel @label]
     lhs.isSkip   = False
@@ -399,9 +340,6 @@ sem Stat'
     lhs.init = @label
     lhs.final = singleton @label
     lhs.flow = empty
-    lhs.strongLive = singleL @label id
-    lhs.valSpace = singleL @label id
-
   | RefAssign'
     lhs.pretty   = ["[*" ++ @ptr.pretty ++ " := " ++ @val.pretty ++ "]" ++ showLabel @label]
     lhs.isSkip   = False
@@ -409,10 +347,6 @@ sem Stat'
     lhs.init = @label
     lhs.final = singleton @label
     lhs.flow = empty
-    -- TODO how do we compute strongLive here? (i.e. how do we mark *ptr as live or not)
-    lhs.strongLive = singleL @label id
-    lhs.valSpace = singleL @label id
-
   | Continue'
     lhs.pretty   = ["continue" ++ showLabel @label]
     lhs.isSkip   = False
@@ -420,9 +354,6 @@ sem Stat'
     lhs.init = @label
     lhs.final = singleton @label
     lhs.flow = singleton (@label, (Maybe.fromJust @lhs.continueLabel))
-    lhs.strongLive = singleL @label id
-    lhs.valSpace = singleL @label id
-
   | Break'
     lhs.pretty   = ["break" ++ showLabel @label]
     lhs.isSkip   = False
@@ -431,8 +362,6 @@ sem Stat'
     lhs.final = empty
     lhs.flow = empty
     lhs.breakLabels = singleton @label
-    lhs.strongLive = singleL @label id
-    lhs.valSpace = singleL @label id
 
 {
 parensIf :: Bool -> String -> String
@@ -444,80 +373,61 @@ sem IExpr
   | IConst
     lhs.pretty = show @val
     lhs.precedence = 10
-    lhs.expValSpace = \_ -> Just $ CI @val
   | Var
     lhs.pretty = @name
     lhs.precedence = 10
     lhs.freeVars = singleton @name
-    lhs.expValSpace = getConst @name
   | Plus
     lhs.pretty = parensIf (@left.precedence < 6) @left.pretty ++ " + " ++ parensIf (@right.precedence <= 6) @right.pretty
     lhs.precedence = 6
-    lhs.expValSpace = \env -> cIII (+) (@left.expValSpace env) (@right.expValSpace env)
   | Minus
     lhs.pretty = parensIf (@left.precedence < 6) @left.pretty ++ " - " ++ parensIf (@right.precedence <= 6) @right.pretty
     lhs.precedence = 6
-    lhs.expValSpace = \env -> cIII (-) (@left.expValSpace env) (@right.expValSpace env)
   | Times
     lhs.pretty = parensIf (@left.precedence < 7) @left.pretty ++ " * " ++ parensIf (@right.precedence <= 7) @right.pretty
     lhs.precedence = 7
-    lhs.expValSpace = \env -> cIII (*) (@left.expValSpace env) (@right.expValSpace env)
   | Divide
     lhs.pretty = parensIf (@left.precedence < 7) @left.pretty ++ " / " ++ parensIf (@right.precedence <= 7) @right.pretty
     lhs.precedence = 7
-    lhs.expValSpace = \env -> cIII div (@left.expValSpace env) (@right.expValSpace env)
   | Deref
     lhs.pretty = "*" ++ parensIf (@ptr.precedence < 10) @ptr.pretty
     lhs.precedence = 10
-    --lhs.freeVars = singleton @ptr -- TODO what are the freevars here
-    -- TODO expValSpace
 
 sem BExpr
   | BConst
     lhs.pretty = show @val
     lhs.precedence = 10
-    lhs.expValSpace = \_ -> Just $ CB @val
   | BVar
     lhs.pretty = @name
     lhs.precedence = 10
     lhs.freeVars = singleton @name
-    lhs.expValSpace = getConst @name
   | LessThan
     lhs.pretty = parensIf (@left.precedence <= 4) @left.pretty ++ " < " ++ parensIf (@right.precedence <= 4) @right.pretty
     lhs.precedence = 4
-    lhs.expValSpace = \env -> cIIB (<) (@left.expValSpace env) (@right.expValSpace env)
   | GreaterThan
     lhs.pretty = parensIf (@left.precedence <= 4) @left.pretty ++ " > " ++ parensIf (@right.precedence <= 4) @right.pretty
     lhs.precedence = 4
-    lhs.expValSpace = \env -> cIIB (>) (@left.expValSpace env) (@right.expValSpace env)
   | LessEqual
     lhs.pretty = parensIf (@left.precedence <= 4) @left.pretty ++ " <= " ++ parensIf (@right.precedence <= 4) @right.pretty
     lhs.precedence = 4
-    lhs.expValSpace = \env -> cIIB (<=) (@left.expValSpace env) (@right.expValSpace env)
   | GreaterEqual
     lhs.pretty = parensIf (@left.precedence <= 4) @left.pretty ++ " >= " ++ parensIf (@right.precedence <= 4) @right.pretty
     lhs.precedence = 4
-    lhs.expValSpace = \env -> cIIB (>=) (@left.expValSpace env) (@right.expValSpace env)
   | IEqual
     lhs.pretty = parensIf (@left.precedence <= 4) @left.pretty ++ " == " ++ parensIf (@right.precedence <= 4) @right.pretty
     lhs.precedence = 4
-    lhs.expValSpace = \env -> cIIB (==) (@left.expValSpace env) (@right.expValSpace env)
   | BEqual
     lhs.pretty = parensIf (@left.precedence <= 4) @left.pretty ++ " == " ++ parensIf (@right.precedence <= 4) @right.pretty
     lhs.precedence = 4
-    lhs.expValSpace = \env -> cIIB (==) (@left.expValSpace env) (@right.expValSpace env)
   | And
     lhs.pretty = parensIf (@left.precedence < 3) @left.pretty ++ " && " ++ parensIf (@right.precedence < 3) @right.pretty
     lhs.precedence = 3
-    lhs.expValSpace = \env -> cBBB (&&) (@left.expValSpace env) (@right.expValSpace env)
   | Or
     lhs.pretty = parensIf (@left.precedence < 2) @left.pretty ++ " || " ++ parensIf (@right.precedence < 2) @right.pretty
     lhs.precedence = 2
-    lhs.expValSpace = \env -> cBBB (||) (@left.expValSpace env) (@right.expValSpace env)
   | Not
     lhs.pretty = "not " ++ parensIf (@val.precedence < 10) @val.pretty
     lhs.precedence = 10
-    lhs.expValSpace = \env -> cBB not (@val.expValSpace env)
 
 sem Expr
   | B
@@ -530,3 +440,7 @@ sem Exprs
     lhs.pretty = ""
   | Cons
     lhs.pretty = @hd.pretty ++ ", " ++ @tl.pretty
+
+
+include "ConstantProp.ag"
+include "StrongLive.ag"

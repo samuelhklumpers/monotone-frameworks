@@ -1,0 +1,86 @@
+{
+import ConstantProp
+}
+
+attr Program' Procs' Proc' Stat'    [ | | valSpace :: { DifTrans PtConstLat } ]
+attr IExpr BExpr Expr               [ | | expValSpace :: { ConstEnv -> Maybe ConstLat } ]
+attr Exprs                          [ | | expValSpace use {:} {[]} :: { [ConstEnv -> Maybe ConstLat] }  ]  
+
+sem Program'
+  | Program'
+    lhs.valSpace = @procs.valSpace <> @stat.valSpace
+
+sem Procs'
+  | Nil
+    lhs.valSpace = mempty
+  | Cons
+    lhs.valSpace = @hd.valSpace <> @tl.valSpace
+
+sem Proc'
+  | Proc'
+    lhs.valSpace = insertL @labelEntry id $ insertL @labelExit id @stat.valSpace
+
+sem Stat'
+  | Skip'
+    lhs.valSpace = singleL @label id
+  | IfThenElse'
+    lhs.valSpace = insertL @labelc id $ @stat1.valSpace <> @stat2.valSpace 
+  | While'
+    lhs.valSpace = insertL @labelc id @stat.valSpace
+  | Call'
+    lhs.valSpace = insertL @labelCall (fmap $ callConst (procInp @loc.proc) (procOut @loc.proc) @params.expValSpace) $ singleR @labelReturn ((<*>) .: fmap $ retConst @out (procInp @loc.proc) (procOut @loc.proc))
+  | IAssign'
+    lhs.valSpace = singleL @label (fmap $ updateConst @name @val.expValSpace)
+  | BAssign'
+    lhs.valSpace = singleL @label (fmap $ updateConst @name @val.expValSpace)
+  | Seq'
+    lhs.valSpace = @stat1.valSpace <> @stat2.valSpace
+  | Malloc'
+    lhs.valSpace = singleL @label id
+  | Free'
+    lhs.valSpace = singleL @label id
+  | RefAssign'
+    lhs.valSpace = singleL @label id
+  | Continue'
+    lhs.valSpace = singleL @label id
+  | Break'
+    lhs.valSpace = singleL @label id
+
+sem IExpr
+  | IConst
+    lhs.expValSpace = \_ -> Just $ CI @val
+  | Var
+    lhs.expValSpace = getConst @name
+  | Plus
+    lhs.expValSpace = \env -> cIII (+) (@left.expValSpace env) (@right.expValSpace env)
+  | Minus
+    lhs.expValSpace = \env -> cIII (-) (@left.expValSpace env) (@right.expValSpace env)
+  | Times
+    lhs.expValSpace = \env -> cIII (*) (@left.expValSpace env) (@right.expValSpace env)
+  | Divide
+    lhs.expValSpace = \env -> cIII div (@left.expValSpace env) (@right.expValSpace env)
+  | Deref
+  
+sem BExpr
+  | BConst
+    lhs.expValSpace = \_ -> Just $ CB @val
+  | BVar
+    lhs.expValSpace = getConst @name
+  | LessThan
+    lhs.expValSpace = \env -> cIIB (<) (@left.expValSpace env) (@right.expValSpace env)
+  | GreaterThan
+    lhs.expValSpace = \env -> cIIB (>) (@left.expValSpace env) (@right.expValSpace env)
+  | LessEqual
+    lhs.expValSpace = \env -> cIIB (<=) (@left.expValSpace env) (@right.expValSpace env)
+  | GreaterEqual
+    lhs.expValSpace = \env -> cIIB (>=) (@left.expValSpace env) (@right.expValSpace env)
+  | IEqual
+    lhs.expValSpace = \env -> cIIB (==) (@left.expValSpace env) (@right.expValSpace env)
+  | BEqual
+    lhs.expValSpace = \env -> cIIB (==) (@left.expValSpace env) (@right.expValSpace env)
+  | And
+    lhs.expValSpace = \env -> cBBB (&&) (@left.expValSpace env) (@right.expValSpace env)
+  | Or
+    lhs.expValSpace = \env -> cBBB (||) (@left.expValSpace env) (@right.expValSpace env)
+  | Not
+    lhs.expValSpace = \env -> cBB not (@val.expValSpace env)
