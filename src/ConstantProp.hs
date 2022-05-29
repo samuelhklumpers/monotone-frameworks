@@ -77,11 +77,26 @@ cBB' _ _      = Nothing
 cIII :: (Int -> Int -> Int) -> Maybe ConstLat -> Maybe ConstLat -> Maybe ConstLat
 cIII f x y = join $ cIII' f <$> x <*> y
 
+constMul :: Maybe ConstLat -> Maybe ConstLat -> Maybe ConstLat
+constMul (Just (CI 0)) y = Just $ CI 0
+constMul x (Just (CI 0)) = Just $ CI 0
+constMul x y               = cIII (*) x y
+
 cIIB :: (Int -> Int -> Bool) -> Maybe ConstLat -> Maybe ConstLat -> Maybe ConstLat
 cIIB f x y = join $ cIIB' f <$> x <*> y
 
 cBBB :: (Bool -> Bool -> Bool) -> Maybe ConstLat -> Maybe ConstLat -> Maybe ConstLat
 cBBB f x y = join $ cBBB' f <$> x <*> y
+
+constAnd :: Maybe ConstLat -> Maybe ConstLat -> Maybe ConstLat
+constAnd (Just (CB False)) y = Just $ CB False
+constAnd x (Just (CB False)) = Just $ CB False
+constAnd x y                 = cBBB (&&) x y
+
+constOr :: Maybe ConstLat -> Maybe ConstLat -> Maybe ConstLat
+constOr (Just (CB True)) y = Just $ CB True
+constOr x (Just (CB True)) = Just $ CB True
+constOr x y                 = cBBB (&&) x y
 
 cBB :: (Bool -> Bool) -> Maybe ConstLat -> Maybe ConstLat
 cBB f x = cBB' f =<< x

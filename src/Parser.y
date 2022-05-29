@@ -128,6 +128,7 @@ BExpr  : not BExpr         { Not $2 }
        | AExpr "<=" AExpr  { LessEqual $1 $3 }
        | BExpr0            { $1 }
 BExpr0 : bool              { BConst $1 }
+       | ident             { BVar $1 }
        | "(" BExpr ")"     { $2 }
 
 

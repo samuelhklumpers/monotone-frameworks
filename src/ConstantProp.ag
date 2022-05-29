@@ -56,7 +56,7 @@ sem IExpr
   | Minus
     lhs.expValSpace = \env -> cIII (-) (@left.expValSpace env) (@right.expValSpace env)
   | Times
-    lhs.expValSpace = \env -> cIII (*) (@left.expValSpace env) (@right.expValSpace env)
+    lhs.expValSpace = \env -> constMul (@left.expValSpace env) (@right.expValSpace env)
   | Divide
     lhs.expValSpace = \env -> cIII div (@left.expValSpace env) (@right.expValSpace env)
   | Deref
@@ -77,10 +77,10 @@ sem BExpr
   | IEqual
     lhs.expValSpace = \env -> cIIB (==) (@left.expValSpace env) (@right.expValSpace env)
   | BEqual
-    lhs.expValSpace = \env -> cIIB (==) (@left.expValSpace env) (@right.expValSpace env)
+    lhs.expValSpace = \env -> cBBB (==) (@left.expValSpace env) (@right.expValSpace env)
   | And
-    lhs.expValSpace = \env -> cBBB (&&) (@left.expValSpace env) (@right.expValSpace env)
+    lhs.expValSpace = \env -> constAnd (@left.expValSpace env) (@right.expValSpace env)
   | Or
-    lhs.expValSpace = \env -> cBBB (||) (@left.expValSpace env) (@right.expValSpace env)
+    lhs.expValSpace = \env -> constOr (@left.expValSpace env) (@right.expValSpace env)
   | Not
     lhs.expValSpace = \env -> cBB not (@val.expValSpace env)

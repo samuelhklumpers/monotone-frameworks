@@ -427,7 +427,7 @@ sem_BExpr_BEqual left_ right_ =
          _rightIself :: BExpr
          _lhsOexpValSpace =
              ({-# LINE 80 "ConstantProp.ag" #-}
-              \env -> cIIB (==) (_leftIexpValSpace env) (_rightIexpValSpace env)
+              \env -> cBBB (==) (_leftIexpValSpace env) (_rightIexpValSpace env)
               {-# LINE 432 "AttributeGrammar.hs" #-}
               )
          _lhsOpretty =
@@ -475,7 +475,7 @@ sem_BExpr_And left_ right_ =
          _rightIself :: BExpr
          _lhsOexpValSpace =
              ({-# LINE 82 "ConstantProp.ag" #-}
-              \env -> cBBB (&&) (_leftIexpValSpace env) (_rightIexpValSpace env)
+              \env -> constAnd (_leftIexpValSpace env) (_rightIexpValSpace env)
               {-# LINE 480 "AttributeGrammar.hs" #-}
               )
          _lhsOpretty =
@@ -523,7 +523,7 @@ sem_BExpr_Or left_ right_ =
          _rightIself :: BExpr
          _lhsOexpValSpace =
              ({-# LINE 84 "ConstantProp.ag" #-}
-              \env -> cBBB (||) (_leftIexpValSpace env) (_rightIexpValSpace env)
+              \env -> constOr (_leftIexpValSpace env) (_rightIexpValSpace env)
               {-# LINE 528 "AttributeGrammar.hs" #-}
               )
          _lhsOpretty =
@@ -981,7 +981,7 @@ sem_IExpr_Times left_ right_ =
          _rightIself :: IExpr
          _lhsOexpValSpace =
              ({-# LINE 59 "ConstantProp.ag" #-}
-              \env -> cIII (*) (_leftIexpValSpace env) (_rightIexpValSpace env)
+              \env -> constMul (_leftIexpValSpace env) (_rightIexpValSpace env)
               {-# LINE 986 "AttributeGrammar.hs" #-}
               )
          _lhsOpretty =
