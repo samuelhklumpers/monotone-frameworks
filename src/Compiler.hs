@@ -98,9 +98,6 @@ compile source = do
   let strongLiveA = Analysis Backward (strongLive_Syn_Program' synProgram') mempty
   let strongLiveM = prepare strongLiveA flow
 
-  let (MonotoneFramework _ _ _ m, _) = constantPropM
-  print $ M.keys m
-
   putStrLn ""
   putStrLn "# Analyses"
   putStrLn "## Constant Propagation"
@@ -108,8 +105,8 @@ compile source = do
 
   putStrLn ""
   putStrLn "## Strongly Live Variables"
-  pPrintLightBg $ flipMap $ fmap runTotalMap $ fst $ uncurry mfpSolution' strongLiveM
---  pPrintLightBg $ uncurry mfpSolution' strongLiveM
+  --pPrintLightBg $ flipMap $ fmap runTotalMap $ fst $ uncurry mfpSolution' strongLiveM
+  --pPrintLightBg $ uncurry mfpSolution' strongLiveM
 
 
 flipMap :: (Ord k, Ord m) => M.Map k (M.Map m v) -> M.Map m (M.Map k v)
