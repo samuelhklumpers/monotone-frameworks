@@ -31,12 +31,12 @@ library
       Analyses
       AttributeGrammar
       Compiler
+      ConstantProp
       Lexer
       MonotoneFrameworks
-      ConstantProp
-      StrongLive
       Parser
       Std
+      StrongLive
   other-modules:
       Paths_mf
   hs-source-dirs:
@@ -49,6 +49,8 @@ library
       ScopedTypeVariables
       TypeApplications
       DerivingVia
+      LambdaCase
+      FlexibleContexts
   ghc-options: -O0
   build-tools:
       alex
@@ -59,6 +61,7 @@ library
       array
     , base >=4.7 && <5
     , containers
+    , path
     , pretty-simple
     , relude
     , safe-exceptions
@@ -79,6 +82,8 @@ executable mf-exe
       ScopedTypeVariables
       TypeApplications
       DerivingVia
+      LambdaCase
+      FlexibleContexts
   ghc-options: -O0 -threaded -rtsopts -with-rtsopts=-N
   build-tools:
       alex
@@ -90,6 +95,8 @@ executable mf-exe
     , base >=4.7 && <5
     , containers
     , mf
+    , path
+    , path-io
     , uuagc >=0.9.53.1 && <0.9.54
   default-language: Haskell2010
 
@@ -108,6 +115,8 @@ test-suite mf-test
       ScopedTypeVariables
       TypeApplications
       DerivingVia
+      LambdaCase
+      FlexibleContexts
   ghc-options: -O0 -threaded -rtsopts -with-rtsopts=-N
   build-tools:
       alex

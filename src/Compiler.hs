@@ -105,7 +105,7 @@ compile source = do
 
   putStrLn ""
   putStrLn "## Strongly Live Variables"
-  --pPrintLightBg $ flipMap $ fmap runTotalMap $ fst $ uncurry mfpSolution' strongLiveM
+  pPrintLightBg $ flipMap $ fmap runTotalMap $ fst $ uncurry mfpSolution' strongLiveM
   --pPrintLightBg $ uncurry mfpSolution' strongLiveM
 
 

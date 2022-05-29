@@ -45,12 +45,15 @@ default-extensions:
 - ScopedTypeVariables
 - TypeApplications
 - DerivingVia
+- LambdaCase
+- FlexibleContexts
 
 library:
   source-dirs: src
   dependencies:
   - relude
   - safe-exceptions
+  - path
   - pretty-simple
 
 executables:
@@ -63,6 +66,8 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - mf
+    - path
+    - path-io
 
 tests:
   mf-test:

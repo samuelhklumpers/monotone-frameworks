@@ -10,6 +10,7 @@ module Std
   where
 
 import Control.Exception.Safe
+import Path (Path, File, toFilePath)
 import Data.List.NonEmpty qualified as N
 import Data.Foldable qualified
 import Relude.Extra.Foldable1 hiding (foldr1)
@@ -49,6 +50,14 @@ some v = (:|) <$> v <*> many v
 
 bind2 :: Monad m => (a -> b -> m c) -> m a -> m b -> m c
 bind2 f a b = uncurry f =<< liftA2 (,) a b
+
+readFileUtf8 ::
+  (MonadIO m, ConvertUtf8 text ByteString) => Path b File -> m text
+readFileUtf8 =
+  (=<<) (either (liftIO . throw) pure) .
+  fmap decodeUtf8Strict .
+  readFileBS .
+  toFilePath
 
 sortNonEmptyOn :: Ord b => (a -> b) -> NonEmpty a -> NonEmpty a
 sortNonEmptyOn f =
