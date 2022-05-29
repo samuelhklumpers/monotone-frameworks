@@ -69,7 +69,7 @@ mfpSolution'
         ((initialAnalysis, initialWorkList) :)
         (iterateFinite step (initialAnalysis, initialWorkList))
     initialAnalysis =
-      M.fromSet (const $ TotalMapOnBoundedSemiLattice $ M.singleton [] extremalValue) extremalLabels
+      M.fromSet (const $ ContextSensitive $ M.singleton [] extremalValue) extremalLabels
       <> -- left biased union
       M.fromSet (const bottom) (M.keysSet flow <> fold flow)
     initialWorkList =
@@ -108,7 +108,6 @@ mfpSolution'
           | Just (callLabel, f) <- lookupReturn l interproceduralFragment =
             coerce -- ignore
               @(([Label] -> propertySpace -> propertySpace) -> Map [Label] propertySpace -> Map [Label] propertySpace)
-              -- assuming `f bottom a = bottom
               M.mapWithKey
                 (\s p ->
                   f
@@ -130,7 +129,7 @@ mfpSolution'
       ContextSensitive propertySpace ->
       ContextSensitive propertySpace
     transferFunction l =
-      fmap $ -- assuming that `f bottom == bottom`
+      fmap $
       fromMaybe (error $ "transfer function missing for " <> show l) $
       M.lookup l transferFunctions
     -- | warning. partial
@@ -139,36 +138,35 @@ mfpSolution'
       fromMaybe (error "impossible. initialAnalysis covers all labels") .:
       M.lookup
 
-newtype TotalMapOnBoundedSemiLattice domain codomain =
-  TotalMapOnBoundedSemiLattice {runTotalMap :: Map domain codomain}
+newtype ContextSensitive propertySpace =
+  ContextSensitive {runTotalMap :: Map [Label] propertySpace}
   deriving (Show, Eq)
-  deriving (Functor) via Map domain
+  deriving (Functor) via Map [Label]
 
 ($$) ::
-  (BoundedSemiLattice codomain, Ord domain) =>
-  TotalMapOnBoundedSemiLattice domain codomain -> domain -> codomain
-($$) (TotalMapOnBoundedSemiLattice m) = fromMaybe bottom . (`M.lookup` m)
+  (BoundedSemiLattice propertySpace) =>
+  ContextSensitive propertySpace -> [Label] -> propertySpace
+($$) (ContextSensitive m) = fromMaybe bottom . (`M.lookup` m)
 
 instance
-  (Semigroup codomain, Ord domain) =>
-  Semigroup (TotalMapOnBoundedSemiLattice domain codomain)
+  (Semigroup propertySpace) =>
+  Semigroup (ContextSensitive propertySpace)
   where
     (<>) =
       coerce -- ignore
-        @(Map domain codomain -> Map domain codomain -> Map domain codomain) $
+        @(Map [Label] propertySpace -> Map [Label] propertySpace -> Map [Label] propertySpace) $
         M.unionWith (<>)
 instance
-  (Semigroup codomain, Ord domain) =>
-  Monoid (TotalMapOnBoundedSemiLattice domain codomain)
+  (Semigroup propertySpace) =>
+  Monoid (ContextSensitive propertySpace)
   where
     mempty =
-      coerce @(Map domain codomain) $ -- ignore
+      coerce @(Map [Label] propertySpace) $ -- ignore
         M.empty
 instance
-  (BoundedSemiLattice codomain, Ord domain) =>
-  BoundedSemiLattice (TotalMapOnBoundedSemiLattice domain codomain)
-
-type ContextSensitive = TotalMapOnBoundedSemiLattice [Label]
+  (BoundedSemiLattice propertySpace) =>
+  BoundedSemiLattice (ContextSensitive propertySpace)
+  -- to-do. efficient implementation
 
 lookupCall ::
   forall propertySpace.
