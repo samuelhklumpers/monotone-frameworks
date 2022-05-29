@@ -167,22 +167,6 @@ instance
 instance
   (BoundedSemiLattice codomain, Ord domain) =>
   BoundedSemiLattice (TotalMapOnBoundedSemiLattice domain codomain)
-  where
-    lessOrEquals =
-      coerce --- ignore
-        @(Map domain codomain -> Map domain codomain -> Bool) $ -- ignore
-        null
-        .:
-        (MM.merge
-          -- allow bottom to be missing from right hand side
-          (MM.mapMaybeMissing
-            (\_ a -> if a == bottom then Nothing else Just a)
-          )
-          MM.dropMissing -- allow any missing from left hand side
-          (MM.zipWithMaybeMatched
-            (\_ a b -> if a `lessOrEquals` b then Nothing else Just a)
-          )
-        )
 
 type ContextSensitive = TotalMapOnBoundedSemiLattice [Label]
 
