@@ -4,5 +4,4 @@ begin
     end
     call id(x, y);
     call id(0, z);
-    skip;
 end

@@ -101,11 +101,11 @@ compile source = do
   putStrLn ""
   putStrLn "# Analyses"
   putStrLn "## Constant Propagation"
-  pPrintLightBg $ flipMap $ fmap runTotalMap $ fst $ uncurry mfpSolution' constantPropM
+  pPrintLightBg $ flipMap $ fmap runTotalMap $ secondOf3 $ uncurry mfpSolution' constantPropM
 
   putStrLn ""
   putStrLn "## Strongly Live Variables"
-  pPrintLightBg $ flipMap $ fmap runTotalMap $ fst $ uncurry mfpSolution' strongLiveM
+  pPrintLightBg $ flipMap $ fmap runTotalMap $ secondOf3 $ uncurry mfpSolution' strongLiveM
   --pPrintLightBg $ uncurry mfpSolution' strongLiveM
 
 
@@ -125,4 +125,5 @@ rotate = (h =<<)
   where
     h (k, xs) = fmap (k, ) xs
 
-
+secondOf3 :: (a, b, c) -> b
+secondOf3 (_, b, _) = b

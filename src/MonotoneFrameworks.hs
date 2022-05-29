@@ -54,15 +54,21 @@ mfpSolution' ::
   (BoundedSemiLattice propertySpace) =>
   MonotoneFramework propertySpace ->
   InterproceduralFragment propertySpace ->
-  -- | \(\mathrm{Analysis}_\circ\) and \(\mathrm{Analysis}_\bullet\)
+  -- | \(\mathrm{Analysis}_\circ\), \(\mathrm{Analysis}_\bullet\), and all
+  -- intermediate steps
   (
+    Map Label (ContextSensitive propertySpace),
     Map Label (ContextSensitive propertySpace),
     [(Map Label (ContextSensitive propertySpace), [(Label, Label)])]
   )
 mfpSolution'
   (MonotoneFramework flow extremalLabels extremalValue transferFunctions)
   interproceduralFragment
-  = (analysisEntry, s)
+  = (
+    analysisEntry,
+    M.mapWithKey (\k _ -> transfer analysisEntry k) analysisEntry,
+    s
+  )
   where
     (s, analysisEntry) =
       first
@@ -82,12 +88,12 @@ mfpSolution'
         (Map Label (ContextSensitive propertySpace)) -- terminate
         (Map Label (ContextSensitive propertySpace), [(Label, Label)])
     step (analysisOld, (l, l') : workListRest)
-      | newPropertiesForL' `lessOrEquals` analysisLookup l' analysisOld =
+      | transfer analysisOld l `lessOrEquals` analysisLookup l' analysisOld =
         Right (analysisOld, workListRest)
       | otherwise =
         Right $
         (
-          M.adjust (<> newPropertiesForL') l' analysisOld
+          M.adjust (<> transfer analysisOld l) l' analysisOld
           ,
           (
             (case lookupCall l' interproceduralFragment of
@@ -98,25 +104,28 @@ mfpSolution'
             workListRest
           )
         )
-      where
-        newPropertiesForL'
-          | Just _ <- lookupCall l interproceduralFragment =
-            coerce -- ignore
-              @(Map [Label] propertySpace -> Map [Label] propertySpace)
-              (M.mapKeysWith (<>) (take callStringsLimit . (l :))) $
-              transferFunction l (analysisLookup l analysisOld)
-          | Just (callLabel, f) <- lookupReturn l interproceduralFragment =
-            coerce -- ignore
-              @(([Label] -> propertySpace -> propertySpace) -> Map [Label] propertySpace -> Map [Label] propertySpace)
-              M.mapWithKey
-                (\s p ->
-                  f
-                    p
-                    (analysisLookup l analysisOld $$ take callStringsLimit (callLabel : s))
-                )
-                (analysisLookup callLabel analysisOld)
-          | otherwise = transferFunction l (analysisLookup l analysisOld)
     step (analysis, []) = Left analysis -- terminate
+    transfer ::
+      Map Label (ContextSensitive propertySpace) ->
+      Label ->
+      ContextSensitive propertySpace
+    transfer analysisOld l
+      | Just _ <- lookupCall l interproceduralFragment =
+        coerce -- ignore
+          @(Map [Label] propertySpace -> Map [Label] propertySpace)
+          (M.mapKeysWith (<>) (take callStringsLimit . (l :))) $
+          transferFunction l (analysisLookup l analysisOld)
+      | Just (callLabel, f) <- lookupReturn l interproceduralFragment =
+        coerce -- ignore
+          @(([Label] -> propertySpace -> propertySpace) -> Map [Label] propertySpace -> Map [Label] propertySpace)
+          M.mapWithKey
+            (\s p ->
+              f
+                p
+                (analysisLookup l analysisOld $$ take callStringsLimit (callLabel : s))
+            )
+            (analysisLookup callLabel analysisOld)
+      | otherwise = transferFunction l (analysisLookup l analysisOld)
     outgoingFlow :: Label -> [(Label, Label)]
     outgoingFlow l =
       fmap (l,) $

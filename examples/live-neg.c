@@ -3,7 +3,6 @@ begin
     skip;
     z := 3;
     x := 0;
-    skip;
     if z < 3 then
         skip;
     else
