@@ -3,22 +3,27 @@ module Compiler where
 import qualified Data.Map as M
 import qualified Data.Set as S
 
+-- to-do. explicify
 import Parser
 import Lexer
 import AttributeGrammar
 import MonotoneFrameworks
 import Analyses
-import ConstantProp
-import StrongLive
+import ConstantProp (PtConstLat)
+import ConstantBranch (ConstBranchLat)
 
 import Text.Pretty.Simple (pPrintLightBg)
+import Std (Set, Map)
 import Control.Arrow
+
+callStringLimit :: Int
+callStringLimit = 2
 
 data Flow = Flow {
   initial   :: Int,
-  finals    :: S.Set Int,
-  edges     :: S.Set Edge,
-  interflow :: S.Set Inter
+  finals    :: Set Int,
+  edges     :: Set Edge,
+  interflow :: Set Inter
 }
 
 data Analysis p = Analysis {
@@ -30,7 +35,7 @@ data Analysis p = Analysis {
 swap :: (a, b) -> (b, a)
 swap (a, b) = (b, a)
 
-unpackFlow :: Bool -> Flow -> (S.Set Int, S.Set Edge, S.Set Inter)
+unpackFlow :: Bool -> Flow -> (Set Int, Set Edge, Set Inter)
 unpackFlow backward flow = (a, b, c)
   where
     a = if backward then finals flow else S.singleton (initial flow)
@@ -42,7 +47,7 @@ unpackFlow backward flow = (a, b, c)
     is = interflow flow
     c = if backward then S.map swapInter is else is
 
-group :: (Ord a, Ord b) => [(a, b)] -> M.Map a (S.Set b)
+group :: (Ord a, Ord b) => [(a, b)] -> M.Map a (Set b)
 group []          = mempty
 group ((a, b):xs) = M.alter h a $ group xs
   where
@@ -86,34 +91,97 @@ compile source = do
 
   putStrLn ""
   putStrLn "# Output"
+  putStrLn "## initial"
   print initial'
+  putStrLn "## finals"
   print finals'
+  putStrLn "## flow"
   print edges'
+  putStrLn "## inter-flow"
   print interflow'
-
+  putStrLn "## call string limit"
+  print callStringLimit
 
   let constantPropA = Analysis Forward (valSpace_Syn_Program' synProgram') (pure mempty)
   let constantPropM = prepare constantPropA flow
+  let
+    constantPropagationMonotoneFramework :: MonotoneFramework PtConstLat
+    constantPropagationMonotoneFramework = fst constantPropM
+  let
+    constantPropagationEmbellishedMonotoneFramework ::
+      (MonotoneFramework PtConstLat, InterproceduralFragment PtConstLat)
+    constantPropagationEmbellishedMonotoneFramework =
+      (constantPropagationMonotoneFramework, snd constantPropM)
 
   let constantBranchA = Analysis Forward (constBranchT_Syn_Program' synProgram') (Just mempty, mempty)
   let constantBranchM = prepare constantBranchA flow
+  let
+    constantPropagationBranchAwareMonotoneFramework :: MonotoneFramework ConstBranchLat
+    constantPropagationBranchAwareMonotoneFramework = fst constantBranchM
+  let
+    constantPropagationBranchAwareEmbellishedMonotoneFramework ::
+      (MonotoneFramework ConstBranchLat, InterproceduralFragment ConstBranchLat)
+    constantPropagationBranchAwareEmbellishedMonotoneFramework =
+      (constantPropagationBranchAwareMonotoneFramework, snd constantBranchM)
 
   let strongLiveA = Analysis Backward (strongLive_Syn_Program' synProgram') mempty
   let strongLiveM = prepare strongLiveA flow
+  let
+    stronglyLiveVariablesMonotoneFramework :: MonotoneFramework (Set String)
+    stronglyLiveVariablesMonotoneFramework = fst strongLiveM
+  let
+    stronglyLiveVariablesEmbellishedMonotoneFramework ::
+      (MonotoneFramework (Set String), InterproceduralFragment (Set String))
+    stronglyLiveVariablesEmbellishedMonotoneFramework =
+      (stronglyLiveVariablesMonotoneFramework, snd strongLiveM)
 
   putStrLn ""
   putStrLn "# Analyses"
+  putStrLn "Each analysis result will be represented as a `Map [Label] (Map Label propertySpace)`."
+  putStrLn "That is, a map from call strings to a map from labels to properties."
+  putStrLn "Absent combinations of call strings and labels are unreachable."
+  putStrLn "Their properties are not restricted by the data flow equations and can be anything."
+  putStrLn "Assume them to be bottom for the least solution."
+  putStrLn "`Map`s will be printed as lists."
+  putStrLn "So the printed result will look as of type `[([Label], [(Label, propertySpace)])]`."
   putStrLn "## Constant Propagation"
-  pPrintLightBg $ flipMap $ fmap runTotalMap $ secondOf3 $ uncurry mfpSolution' constantPropM
+  prettyPrint $
+    uncurry (mfpSolution' callStringLimit) constantPropagationEmbellishedMonotoneFramework
 
   putStrLn "## Reachable Constant Propagation"
-  pPrintLightBg $ flipMap $ fmap runTotalMap $ secondOf3 $ uncurry mfpSolution' constantBranchM
+  prettyPrint $
+    uncurry (mfpSolution' callStringLimit) constantPropagationBranchAwareEmbellishedMonotoneFramework
 
   putStrLn ""
   putStrLn "## Strongly Live Variables"
-  pPrintLightBg $ flipMap $ fmap runTotalMap $ secondOf3 $ uncurry mfpSolution' strongLiveM
-  --pPrintLightBg $ uncurry mfpSolution' strongLiveM
+  prettyPrint $
+    uncurry (mfpSolution' callStringLimit) stronglyLiveVariablesEmbellishedMonotoneFramework
 
+
+prettyPrint ::
+  (Show propertySpace) =>
+  (
+    Map Label (ContextSensitive propertySpace),
+    Map Label (ContextSensitive propertySpace),
+    [(Map Label (ContextSensitive propertySpace), [(Label, Label)])]
+  ) ->
+  IO ()
+prettyPrint (entry, exit, _steps) =
+  putStrLn "### entry properties" *>
+  p entry *>
+  putStrLn "### exit properties" *>
+  p exit
+  where
+    p ::
+      (Show propertySpace) =>
+      Map Label (ContextSensitive propertySpace) -> IO ()
+    p =
+      pPrintLightBg .
+      M.toList .
+      fmap M.toList .
+      M.mapKeysWith (error "impossible. reverse is bijective.") reverse .
+      flipMap .
+      fmap runTotalMap
 
 flipMap :: (Ord k, Ord m) => M.Map k (M.Map m v) -> M.Map m (M.Map k v)
 flipMap = fmap M.fromList . groupBy' h . rotate . M.toList . fmap M.toList
