@@ -96,11 +96,11 @@ mfpSolution'
           M.adjust (<> transfer analysisOld l) l' analysisOld
           ,
           (
+            outgoingFlow l' <>
             (case lookupCall l' interproceduralFragment of
               Nothing -> []
               Just (returnLabel, _) -> outgoingFlow returnLabel
             ) <>
-            outgoingFlow l' <>
             workListRest
           )
         )
@@ -122,7 +122,11 @@ mfpSolution'
             (\s p ->
               f
                 p
-                (analysisLookup l analysisOld $$ take callStringsLimit (callLabel : s))
+                (fromMaybe bottom $
+                  lookupContext
+                    (take callStringsLimit (callLabel : s))
+                    (analysisLookup l analysisOld)
+                )
             )
             (analysisLookup callLabel analysisOld)
       | otherwise = transferFunction l (analysisLookup l analysisOld)
@@ -152,10 +156,14 @@ newtype ContextSensitive propertySpace =
   deriving (Show, Eq)
   deriving (Functor) via Map [Label]
 
-($$) ::
+lookupContext ::
+  forall propertySpace.
   (BoundedSemiLattice propertySpace) =>
-  ContextSensitive propertySpace -> [Label] -> propertySpace
-($$) (ContextSensitive m) = fromMaybe bottom . (`M.lookup` m)
+  [Label] -> ContextSensitive propertySpace -> Maybe propertySpace
+lookupContext =
+  coerce -- ignore
+    @([Label] -> Map [Label] propertySpace -> Maybe propertySpace) -- ignore
+    M.lookup
 
 instance
   (Semigroup propertySpace) =>
@@ -170,7 +178,7 @@ instance
   Monoid (ContextSensitive propertySpace)
   where
     mempty =
-      coerce @(Map [Label] propertySpace) $ -- ignore
+      coerce @(Map [Label] propertySpace) -- ignore
         M.empty
 instance
   (BoundedSemiLattice propertySpace) =>
