@@ -7,9 +7,6 @@ import Data.Map.Strict qualified as M
 import Data.Map.Merge.Strict qualified as MM
 import Std
 
-callStringsLimit :: Int
-callStringsLimit = 1
-
 class (Monoid m, Eq m) => BoundedSemiLattice m where
   lessOrEquals :: m -> m -> Bool
   lessOrEquals a b = a <> b == b
@@ -30,7 +27,7 @@ data MonotoneFramework propertySpace =
       transferFunctions :: Map Label (propertySpace -> propertySpace)
     }
 
--- invariant. call label is functionally dependent on the return label
+-- | invariant. call label is functionally dependent on the return label
 newtype InterproceduralFragment propertySpace =
   InterproceduralFragment
     (Map
@@ -44,7 +41,8 @@ newtype InterproceduralFragment propertySpace =
     )
 
 -- | interprocedural MFP solution
--- | warning. partial. 'transferFunctions' must cover all labels except for
+--
+-- warning. partial. 'transferFunctions' must cover all labels except for
 -- call return labels.
 --
 -- warning. termination is only guaranteed if 'propertySpace' satisfies the
@@ -52,7 +50,11 @@ newtype InterproceduralFragment propertySpace =
 mfpSolution' ::
   forall propertySpace.
   (BoundedSemiLattice propertySpace) =>
+  -- | call string limit
+  Int ->
+  -- | monotone framework
   MonotoneFramework propertySpace ->
+  -- | interprocedural fragment
   InterproceduralFragment propertySpace ->
   -- | \(\mathrm{Analysis}_\circ\), \(\mathrm{Analysis}_\bullet\), and all
   -- intermediate steps
@@ -62,6 +64,7 @@ mfpSolution' ::
     [(Map Label (ContextSensitive propertySpace), [(Label, Label)])]
   )
 mfpSolution'
+  callStringsLimit
   (MonotoneFramework flow extremalLabels extremalValue transferFunctions)
   interproceduralFragment
   = (

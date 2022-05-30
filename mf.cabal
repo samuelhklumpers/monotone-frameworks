@@ -31,8 +31,8 @@ library
       Analyses
       AttributeGrammar
       Compiler
-      ConstantProp
       ConstantBranch
+      ConstantProp
       Lexer
       MonotoneFrameworks
       Parser

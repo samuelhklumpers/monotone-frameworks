@@ -2404,7 +2404,7 @@ sem_Stat'_While' labelc_ cond_ stat_ =
                    )
               _lhsOconstBranchT =
                   ({-# LINE 30 "ConstantBranch.ag" #-}
-                   insertL labelc_ (constBranchWhile (_condIexpValSpace) _statIinit)  _statIconstBranchT
+                   insertL labelc_ (constBranchWhile (_condIexpValSpace) _statIinit labelc_)  _statIconstBranchT
                    {-# LINE 2409 "AttributeGrammar.hs" #-}
                    )
               _lhsOvalSpace =
