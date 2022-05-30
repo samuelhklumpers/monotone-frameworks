@@ -95,6 +95,9 @@ compile source = do
   let constantPropA = Analysis Forward (valSpace_Syn_Program' synProgram') (pure mempty)
   let constantPropM = prepare constantPropA flow
 
+  let constantBranchA = Analysis Forward (constBranchT_Syn_Program' synProgram') (Just mempty, mempty)
+  let constantBranchM = prepare constantBranchA flow
+
   let strongLiveA = Analysis Backward (strongLive_Syn_Program' synProgram') mempty
   let strongLiveM = prepare strongLiveA flow
 
@@ -102,6 +105,9 @@ compile source = do
   putStrLn "# Analyses"
   putStrLn "## Constant Propagation"
   pPrintLightBg $ flipMap $ fmap runTotalMap $ secondOf3 $ uncurry mfpSolution' constantPropM
+
+  putStrLn "## Reachable Constant Propagation"
+  pPrintLightBg $ flipMap $ fmap runTotalMap $ secondOf3 $ uncurry mfpSolution' constantBranchM
 
   putStrLn ""
   putStrLn "## Strongly Live Variables"

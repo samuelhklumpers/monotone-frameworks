@@ -443,4 +443,5 @@ sem Exprs
 
 
 include "ConstantProp.ag"
+include "ConstantBranch.ag"
 include "StrongLive.ag"

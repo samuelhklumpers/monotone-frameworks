@@ -1,0 +1,48 @@
+-- This analysis depends on ConstantProp.ag
+
+{
+import ConstantProp
+import ConstantBranch
+}
+
+attr Program' Procs' Proc' Stat'    [ | | constBranchT :: { DifTrans ConstBranchLat } ]
+
+sem Program'
+  | Program'
+    lhs.constBranchT = @procs.constBranchT <> @stat.constBranchT
+
+sem Procs'
+  | Nil
+    lhs.constBranchT = mempty
+  | Cons
+    lhs.constBranchT = @hd.constBranchT <> @tl.constBranchT
+
+sem Proc'
+  | Proc'
+    lhs.constBranchT = insertL @labelEntry id $ insertL @labelExit id @stat.constBranchT
+
+sem Stat'
+  | Skip'
+    lhs.constBranchT = singleL @label (constBranchId @label)
+  | IfThenElse'
+    lhs.constBranchT = insertL @labelc (constBranchIf (@cond.expValSpace) @stat1.init @stat2.init) $ @stat1.constBranchT <> @stat2.constBranchT 
+  | While'
+    lhs.constBranchT = insertL @labelc (constBranchWhile (@cond.expValSpace) @stat.init @labelc)  @stat.constBranchT
+  | Call'
+    lhs.constBranchT = insertL @labelCall (ignoreDead @labelCall $ fmap $ callConst (procInp @loc.proc) (procOut @loc.proc) @params.expValSpace) $ singleR @labelReturn (ignoreDead2 @labelReturn $ ((<*>) .: fmap $ retConst @out (procInp @loc.proc) (procOut @loc.proc)))
+  | IAssign'
+    lhs.constBranchT = singleL @label (ignoreDead @label $ fmap $ updateConst @name @val.expValSpace)
+  | BAssign'
+    lhs.constBranchT = singleL @label (ignoreDead @label $ fmap $ updateConst @name @val.expValSpace)
+  | Seq'
+    lhs.constBranchT = @stat1.constBranchT <> @stat2.constBranchT
+  | Malloc'
+    lhs.constBranchT = singleL @label (constBranchId @label)
+  | Free'
+    lhs.constBranchT = singleL @label (constBranchId @label)
+  | RefAssign'
+    lhs.constBranchT = singleL @label (constBranchId @label)
+  | Continue'
+    lhs.constBranchT = singleL @label (constBranchId @label)
+  | Break'
+    lhs.constBranchT = singleL @label (constBranchId @label)
