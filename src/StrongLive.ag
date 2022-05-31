@@ -26,6 +26,8 @@ sem Stat'
     lhs.strongLive = insertL @labelc (<> @cond.freeVars) $ @stat1.strongLive <> @stat2.strongLive 
   | While'
     lhs.strongLive = insertL @labelc (<> @cond.freeVars) $ @stat.strongLive
+  | Print'
+    lhs.strongLive = singleL @label (<> @param.freeVars)
   | Call'
     lhs.strongLive = insertL @labelReturn (aliveInExit @out (procOut @loc.proc)) $ singleR @labelCall (aliveInCall (procInp @loc.proc) (procOut @loc.proc) @params.freeVars)
   | IAssign'

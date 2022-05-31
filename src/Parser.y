@@ -18,6 +18,7 @@ import AttributeGrammar
       else             { TElse }
       while            { TWhile }
       do               { TDo }
+      print            { TPrint }
       skip             { TSkip }
       not              { TNot }
       ":="             { TIAssign }
@@ -90,6 +91,7 @@ Stat  : if BExpr then Stat0 else Stat0 { IfThenElse $2 $4 $6 }
 Stat0 : skip ";"                         { Skip }
       | ident ":=" AExpr ";"             { IAssign $1 $3 }
       | ident "b=" BExpr ";"             { BAssign $1 $3 }
+      | print "(" EitherExpr ")" ";"     { Print $3 }
       | "*" AExpr0 ":=" AExpr0 ";"       { RefAssign $2 $4 }
       | call ident "(" CallArgs "," ident ")" ";"  { Call $2 $4 $6 }
       | malloc "(" ident "," AExpr ")" ";"      { Malloc $3 $5 }

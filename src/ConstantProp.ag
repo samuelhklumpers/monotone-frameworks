@@ -27,6 +27,8 @@ sem Stat'
     lhs.valSpace = insertL @labelc id $ @stat1.valSpace <> @stat2.valSpace 
   | While'
     lhs.valSpace = insertL @labelc id @stat.valSpace
+  | Print'
+    lhs.valSpace = singleL @label id
   | Call'
     lhs.valSpace = insertL @labelCall (fmap $ callConst (procInp @loc.proc) (procOut @loc.proc) @params.expValSpace) $ singleR @labelReturn ((<*>) .: fmap $ retConst @out (procInp @loc.proc) (procOut @loc.proc))
   | IAssign'

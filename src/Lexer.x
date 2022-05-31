@@ -17,6 +17,7 @@ tokens :-
   false                            { \s -> TBool False }
 
   if                               { \s -> TIf }
+  print                            { \s -> TPrint }
   then                             { \s -> TThen }
   else                             { \s -> TElse }
   while                            { \s -> TWhile }
@@ -72,6 +73,7 @@ data Token  = TIdent String
             | TElse
             | TWhile
             | TDo
+            | TPrint
             | TSkip
             | TNot
             | TIAssign

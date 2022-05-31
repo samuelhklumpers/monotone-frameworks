@@ -48,6 +48,7 @@ data Stat
   | Skip
   | IfThenElse    cond  :: {BExpr}    stat1  :: Stat       stat2 :: Stat
   | While         cond  :: {BExpr}    stat   :: Stat
+  | Print         param :: {Expr}
   | Call          name  :: String     params :: {Exprs}    out :: String
   | IAssign       name  :: String     val    :: {IExpr}
   | BAssign       name  :: String     val    :: {BExpr}
@@ -64,6 +65,7 @@ data Stat'
   | Skip'          label :: Int
   | IfThenElse'    labelc :: Int       cond  :: BExpr      stat1  :: Stat'     stat2 :: Stat'
   | While'         labelc :: Int       cond  :: BExpr      stat   :: Stat'
+  | Print'         label :: Int        param :: Expr
   | Call'          labelCall :: Int    labelReturn :: Int  name  :: String     params :: Exprs    out :: String
   | IAssign'       label :: Int        name  :: String     val    :: IExpr
   | BAssign'       label :: Int        name  :: String     val    :: BExpr
@@ -156,6 +158,10 @@ sem Stat
     stat.label   = @lhs.label + 1 -- lhs.label is the label of the conditional.
     lhs.label    = @stat.label
     lhs.labelled = While' @lhs.label @cond @stat.labelled
+
+  | Print
+    lhs.label    = @lhs.label + 1
+    lhs.labelled = Print' @lhs.label @param
 
   | Call
     lhs.label    = @lhs.label + 2 -- Entry and exit label
@@ -296,6 +302,13 @@ sem Stat'
     lhs.flow = @stat.flow <> singleton (@labelc, @stat.init) <> fromList [(label, @labelc) | label <- toList @stat.final ] 
     lhs.continueLabel = Just @labelc
     lhs.breakLabels = empty
+  | Print'
+    lhs.pretty   = ["print(" ++ @param.pretty ++ ")"]
+    lhs.isSkip   = False
+    lhs.isSingle = True
+    lhs.init = @label
+    lhs.final = singleton @label
+    lhs.flow = empty 
   | Call'
     lhs.pretty   = ["[call " ++ @name ++ "(" ++ @params.pretty ++ @out ++ ")]" ++ showLabel @labelCall ++ "₋" ++ showLabel @labelReturn]
     lhs.isSkip   = False

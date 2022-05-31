@@ -28,6 +28,8 @@ sem Stat'
     lhs.constBranchT = insertL @labelc (constBranchIf (@cond.expValSpace) @stat1.init @stat2.init) $ @stat1.constBranchT <> @stat2.constBranchT 
   | While'
     lhs.constBranchT = insertL @labelc (constBranchWhile (@cond.expValSpace) @stat.init @labelc)  @stat.constBranchT
+  | Print'
+    lhs.constBranchT = singleL @label (constBranchId @label)
   | Call'
     lhs.constBranchT = insertL @labelCall (ignoreDead @labelCall $ fmap $ callConst (procInp @loc.proc) (procOut @loc.proc) @params.expValSpace) $ singleR @labelReturn (ignoreDead2 @labelReturn $ ((<*>) .: fmap $ retConst @out (procInp @loc.proc) (procOut @loc.proc)))
   | IAssign'
