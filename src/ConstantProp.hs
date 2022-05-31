@@ -59,45 +59,37 @@ retConst resultNameCall inputs resultNameProc c r =
     ((\i -> setConst i (getConst i c)) <$> resultNameProc : inputs)
   r
 
-cIII' :: (Int -> Int -> Int) -> ConstLat -> ConstLat -> Maybe ConstLat
-cIII' f (CI x) (CI y) = Just $ CI (x `f` y)
-cIII' _ _ _           = Nothing
-
-cIIB' :: (Int -> Int -> Bool) -> ConstLat -> ConstLat -> Maybe ConstLat
-cIIB' f (CI x) (CI y) = Just $ CB (x `f` y)
-cIIB' f _ _           = Nothing
-
-cBBB' :: (Bool -> Bool -> Bool) -> ConstLat -> ConstLat -> Maybe ConstLat
-cBBB' f (CB x) (CB y) = Just $ CB (x `f` y)
-cBBB' _ _ _           = Nothing
-
-cBB' :: (Bool -> Bool) -> ConstLat -> Maybe ConstLat
-cBB' f (CB x) = Just $ CB (f x)
-cBB' _ _      = Nothing
-
 cIII :: (Int -> Int -> Int) -> Maybe ConstLat -> Maybe ConstLat -> Maybe ConstLat
-cIII f x y = join $ cIII' f <$> x <*> y
+cIII f (Just (CI x)) (Just (CI y)) = Just $ CI (x `f` y)
+cIII _ (Just _) (Just _) = error "type error"
+cIII _ _ _ = Nothing
 
 constMul :: Maybe ConstLat -> Maybe ConstLat -> Maybe ConstLat
-constMul (Just (CI 0)) y = Just $ CI 0
-constMul x (Just (CI 0)) = Just $ CI 0
+constMul (Just (CI 0)) Nothing = Just $ CI 0
+constMul Nothing (Just (CI 0)) = Just $ CI 0
 constMul x y               = cIII (*) x y
 
 cIIB :: (Int -> Int -> Bool) -> Maybe ConstLat -> Maybe ConstLat -> Maybe ConstLat
-cIIB f x y = join $ cIIB' f <$> x <*> y
+cIIB f (Just (CI x)) (Just (CI y)) = Just $ CB (x `f` y)
+cIIB _ (Just _) (Just _) = error "type error"
+cIIB _ _ _ = Nothing
 
 cBBB :: (Bool -> Bool -> Bool) -> Maybe ConstLat -> Maybe ConstLat -> Maybe ConstLat
-cBBB f x y = join $ cBBB' f <$> x <*> y
+cBBB f (Just (CB x)) (Just (CB y)) = Just $ CB (x `f` y)
+cBBB _ (Just _) (Just _) = error "type error"
+cBBB _ _ _ = Nothing
 
 constAnd :: Maybe ConstLat -> Maybe ConstLat -> Maybe ConstLat
-constAnd (Just (CB False)) y = Just $ CB False
-constAnd x (Just (CB False)) = Just $ CB False
+constAnd (Just (CB False)) Nothing = Just $ CB False
+constAnd Nothing (Just (CB False)) = Just $ CB False
 constAnd x y                 = cBBB (&&) x y
 
 constOr :: Maybe ConstLat -> Maybe ConstLat -> Maybe ConstLat
-constOr (Just (CB True)) y = Just $ CB True
-constOr x (Just (CB True)) = Just $ CB True
+constOr (Just (CB True)) Nothing = Just $ CB True
+constOr Nothing (Just (CB True)) = Just $ CB True
 constOr x y                 = cBBB (&&) x y
 
 cBB :: (Bool -> Bool) -> Maybe ConstLat -> Maybe ConstLat
-cBB f x = cBB' f =<< x
+cBB f (Just (CB x)) = Just $ CB (f x)
+cBB f (Just _) = error "type error"
+cBB f Nothing = Nothing

@@ -1,5 +1,6 @@
 {
 import ConstantProp
+import Std (liftA2)
 }
 
 attr Program' Procs' Proc' Stat'    [ | | valSpace :: { DifTrans PtConstLat } ]
@@ -30,7 +31,7 @@ sem Stat'
   | Print'
     lhs.valSpace = singleL @label id
   | Call'
-    lhs.valSpace = insertL @labelCall (fmap $ callConst (procInp @loc.proc) (procOut @loc.proc) @params.expValSpace) $ singleR @labelReturn ((<*>) .: fmap $ retConst @out (procInp @loc.proc) (procOut @loc.proc))
+    lhs.valSpace = insertL @labelCall (fmap $ callConst (procInp @loc.proc) (procOut @loc.proc) @params.expValSpace) $ singleR @labelReturn (liftA2 $ retConst @out (procInp @loc.proc) (procOut @loc.proc))
   | IAssign'
     lhs.valSpace = singleL @label (fmap $ updateConst @name @val.expValSpace)
   | BAssign'
