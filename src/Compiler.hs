@@ -151,33 +151,42 @@ compile source = do
   putStrLn "`Map`s will be printed as lists."
   putStrLn "So the printed result will look as of type `[([Label], [(Label, propertySpace)])]`."
   putStrLn "## Constant Propagation"
-  prettyPrint $
+  prettyPrint constantPropA $
     uncurry (mfpSolution' callStringLimit) constantPropagationEmbellishedMonotoneFramework
 
   putStrLn "## Reachable Constant Propagation"
-  prettyPrint $
+  prettyPrint constantBranchA $
     uncurry (mfpSolution' callStringLimit) constantPropagationBranchAwareEmbellishedMonotoneFramework
 
   putStrLn ""
   putStrLn "## Strongly Live Variables"
-  prettyPrint $
+  prettyPrint strongLiveA $
     uncurry (mfpSolution' callStringLimit) stronglyLiveVariablesEmbellishedMonotoneFramework
 
 
 prettyPrint ::
   (Show propertySpace) =>
+  Analysis propertySpace ->
   (
     Map Label (ContextSensitive propertySpace),
     Map Label (ContextSensitive propertySpace),
     [(Map Label (ContextSensitive propertySpace), [(Label, Label)])]
   ) ->
   IO ()
-prettyPrint (entry, exit, _steps) =
+prettyPrint (Analysis {direction}) (solution_circ, solution_bullet, _steps) =
   putStrLn "### entry properties" *>
   p entry *>
   putStrLn "### exit properties" *>
   p exit
   where
+    entry =
+      case direction of
+        Forward -> solution_circ
+        Backward -> solution_bullet
+    exit =
+      case direction of
+        Forward -> solution_bullet
+        Backward -> solution_circ
     p ::
       (Show propertySpace) =>
       Map Label (ContextSensitive propertySpace) -> IO ()
