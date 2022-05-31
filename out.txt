@@ -9,7 +9,8 @@ begin
   if [z == 0][93m₈[0m then
     [w := z + w][93m₉[0m
   else
-    [w := 0][93m₁₀[0m
+    [w := 0][93m₁₀[0m;
+  print(w)
 end
 
 
@@ -17,9 +18,9 @@ end
 ## initial
 4
 ## finals
-fromList [9,10]
+fromList [11]
 ## flow
-fromList [(1,2),(2,3),(3,5),(3,7),(4,1),(5,6),(6,1),(7,8),(8,9),(8,10)]
+fromList [(1,2),(2,3),(3,5),(3,7),(4,1),(5,6),(6,1),(7,8),(8,9),(8,10),(9,11),(10,11)]
 ## inter-flow
 fromList [(4,1,3,5),(6,1,3,7)]
 ## call string limit
@@ -34,9 +35,9 @@ Assume them to be bottom for the least solution.
 `Map`s will be printed as lists.
 So the printed result will look as of type `[([Label], [(Label, propertySpace)])]`.
 ## Constant Propagation
-### entry table
-\[\begin{array}[|c|c|c|c|]
- & [] & [4] & [6]
+\[\begin{array}{|c|c|c|c|}
+\hline
+\text{Entry} & {[]} & {[4]} & {[6]}\\
 \hline
 1 &  &  & x \mapsto 0 \\
 \hline
@@ -58,11 +59,13 @@ So the printed result will look as of type `[([Label], [(Label, propertySpace)])
 \hline
 10 & z \mapsto 0 &  &  \\
 \hline
-\end{array}\]
-
-### exit table
-\[\begin{array}[|c|c|c|c|]
- & [] & [4] & [6]
+11 & z \mapsto 0 &  &  \\
+\hline
+\end{array}
+\hspace{1em}
+\begin{array}{|c|c|c|c|}
+\hline
+\text{Exit} & {[]} & {[4]} & {[6]}\\
 \hline
 1 &  &  & x \mapsto 0 \\
 \hline
@@ -84,7 +87,10 @@ So the printed result will look as of type `[([Label], [(Label, propertySpace)])
 \hline
 10 & w \mapsto 0, z \mapsto 0 &  &  \\
 \hline
-\end{array}\]
+11 & z \mapsto 0 &  &  \\
+\hline
+\end{array}
+\]
 
 ## Reachable Constant Propagation
 ### entry properties
@@ -123,6 +129,14 @@ So the printed result will look as of type `[([Label], [(Label, propertySpace)])
             )
         ,
             ( 10
+            ,
+                ( Just
+                    [ z -> CI 0 ]
+                , fromList [ 10 ]
+                )
+            )
+        ,
+            ( 11
             ,
                 ( Just
                     [ z -> CI 0 ]
@@ -265,6 +279,14 @@ So the printed result will look as of type `[([Label], [(Label, propertySpace)])
                 , fromList [ 10 ]
                 )
             )
+        ,
+            ( 11
+            ,
+                ( Just
+                    [ z -> CI 0 ]
+                , fromList [ 10 ]
+                )
+            )
         ]
     )
 ,
@@ -349,24 +371,34 @@ So the printed result will look as of type `[([Label], [(Label, propertySpace)])
     ( []
     ,
         [
-            ( 5
+            ( 4
             , fromList [ "x" ]
             )
         ,
-            ( 7
-            , fromList [ "z" ]
+            ( 6
+            , fromList [ "x" ]
             )
         ,
             ( 8
-            , fromList []
+            , fromList
+                [ "w"
+                , "z"
+                ]
             )
         ,
             ( 9
-            , fromList []
+            , fromList
+                [ "w"
+                , "z"
+                ]
             )
         ,
             ( 10
             , fromList []
+            )
+        ,
+            ( 11
+            , fromList [ "w" ]
             )
         ]
     )
@@ -386,11 +418,7 @@ So the printed result will look as of type `[([Label], [(Label, propertySpace)])
             , fromList []
             )
         ,
-            ( 4
-            , fromList []
-            )
-        ,
-            ( 6
+            ( 5
             , fromList []
             )
         ]
@@ -404,19 +432,15 @@ So the printed result will look as of type `[([Label], [(Label, propertySpace)])
             )
         ,
             ( 2
-            , fromList [ "y" ]
+            , fromList [ "x" ]
             )
         ,
             ( 3
             , fromList [ "y" ]
             )
         ,
-            ( 4
-            , fromList [ "x" ]
-            )
-        ,
-            ( 6
-            , fromList [ "x" ]
+            ( 7
+            , fromList [ "y" ]
             )
         ]
     )
@@ -426,23 +450,33 @@ So the printed result will look as of type `[([Label], [(Label, propertySpace)])
     ( []
     ,
         [
-            ( 4
+            ( 5
             , fromList [ "x" ]
             )
         ,
-            ( 6
-            , fromList [ "x" ]
+            ( 7
+            , fromList
+                [ "w"
+                , "z"
+                ]
             )
         ,
             ( 8
-            , fromList [ "z" ]
+            , fromList
+                [ "w"
+                , "z"
+                ]
             )
         ,
             ( 9
-            , fromList []
+            , fromList [ "w" ]
             )
         ,
             ( 10
+            , fromList [ "w" ]
+            )
+        ,
+            ( 11
             , fromList []
             )
         ]
@@ -463,7 +497,11 @@ So the printed result will look as of type `[([Label], [(Label, propertySpace)])
             , fromList []
             )
         ,
-            ( 5
+            ( 4
+            , fromList []
+            )
+        ,
+            ( 6
             , fromList []
             )
         ]
@@ -477,15 +515,19 @@ So the printed result will look as of type `[([Label], [(Label, propertySpace)])
             )
         ,
             ( 2
-            , fromList [ "x" ]
+            , fromList [ "y" ]
             )
         ,
             ( 3
             , fromList [ "y" ]
             )
         ,
-            ( 7
-            , fromList [ "y" ]
+            ( 4
+            , fromList [ "x" ]
+            )
+        ,
+            ( 6
+            , fromList [ "x" ]
             )
         ]
     )

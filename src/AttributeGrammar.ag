@@ -303,7 +303,7 @@ sem Stat'
     stat.continueLabel = Just @labelc
     lhs.breakLabels = empty
   | Print'
-    lhs.pretty   = ["print(" ++ @param.pretty ++ ")"]
+    lhs.pretty   = ["print(" ++ @param.pretty ++ ")" ++ showLabel @label]
     lhs.isSkip   = False
     lhs.isSingle = True
     lhs.init = @label

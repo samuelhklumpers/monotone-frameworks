@@ -8,4 +8,5 @@ begin
         w := z + w;
     else
         w := 0;
+    print(w);
 end

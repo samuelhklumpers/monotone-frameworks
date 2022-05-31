@@ -207,13 +207,15 @@ latexPrint ::
   ) ->
   IO ()
 latexPrint p (entry, exit, _steps) =
-  putStrLn "### entry table" *>
-  putStrLn (latexPrinter p entry) *>
-  putStrLn "### exit table" *>
-  putStrLn (latexPrinter p exit)
+  putStr "\\[" *>
+  putStr (latexPrinter "Entry" p entry) *>
+  putStrLn "\\hspace{1em}" *>
+  putStr (latexPrinter "Exit" p exit) *>
+  putStrLn "\\]" *>
+  putStrLn ""
 
-latexPrinter :: (Maybe propertySpace -> String) -> Map Label (ContextSensitive propertySpace)-> String
-latexPrinter p a = unlines (header : labels :  body ++ [footer])
+latexPrinter :: String -> (Maybe propertySpace -> String) -> Map Label (ContextSensitive propertySpace)-> String
+latexPrinter name p a = unlines (header : "\\hline" : labels :  body ++ [footer])
   where
   analysis  = fmap runTotalMap a
   analysisT = flipMap analysis
@@ -223,10 +225,10 @@ latexPrinter p a = unlines (header : labels :  body ++ [footer])
   findAll ks m = fmap (`M.lookup` m) ks
   printRow i   = show i ++ " & " ++ intercalate " & " (fmap p (findAll cols $ analysis M.! i)) ++ " \\\\"
 
-  header = "\\[\\begin{array}[|" ++ intercalate "|" (replicate (1 + length cols) "c") ++ "|]"
-  labels = " & " ++ intercalate " & " (fmap show cols)
+  header = "\\begin{array}{|" ++ intercalate "|" (replicate (1 + length cols) "c") ++ "|}"
+  labels = "\\text{" ++ name ++ "} & {" ++ intercalate "} & {" (fmap show cols) ++ "}\\\\"
   body   = ["\\hline"] ++ intersperse "\\hline" (fmap printRow rows) ++ ["\\hline"]
-  footer = "\\end{array}\\]"
+  footer = "\\end{array}"
 
 constantPropagationTex :: Maybe PtConstLat -> String
 constantPropagationTex (Just (Just (ConstEnv e))) = intercalate ", " $ p <$> M.toList e

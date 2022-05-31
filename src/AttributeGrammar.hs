@@ -2523,7 +2523,7 @@ sem_Stat'_Print' label_ param_ =
                    )
               _lhsOpretty =
                   ({-# LINE 306 "AttributeGrammar.ag" #-}
-                   ["print(" ++ _paramIpretty ++ ")"]
+                   ["print(" ++ _paramIpretty ++ ")" ++ showLabel label_]
                    {-# LINE 2528 "AttributeGrammar.hs" #-}
                    )
               _lhsOisSkip =
