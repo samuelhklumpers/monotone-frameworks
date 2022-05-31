@@ -20,13 +20,15 @@ import AttributeGrammar
       do               { TDo }
       skip             { TSkip }
       not              { TNot }
-      ":="             { TAssign }
+      ":="             { TIAssign }
+      "b="             { TBAssign }
       "+"              { TArithmeticOp "+" }
       "-"              { TArithmeticOp "-" }
       "*"              { TStar }
       "/"              { TArithmeticOp "/" }
       and              { TBoolOp "and" }
       or               { TBoolOp "or" }
+      "<=>"             { TBoolOp "<=>" }
       "=="             { TRelOp "==" }
       "<"              { TRelOp "<" }
       ">"              { TRelOp ">" }
@@ -87,7 +89,7 @@ Stat  : if BExpr then Stat0 else Stat0 { IfThenElse $2 $4 $6 }
       | Stat0                          { $1 }
 Stat0 : skip ";"                         { Skip }
       | ident ":=" AExpr ";"             { IAssign $1 $3 }
-      | ident ":=" BExpr ";"             { BAssign $1 $3 }
+      | ident "b=" BExpr ";"             { BAssign $1 $3 }
       | "*" AExpr0 ":=" AExpr0 ";"       { RefAssign $2 $4 }
       | call ident "(" CallArgs "," ident ")" ";"  { Call $2 $4 $6 }
       | malloc "(" ident "," AExpr ")" ";"      { Malloc $3 $5 }
@@ -120,7 +122,7 @@ AExpr0 : int               { IConst $1 }
 BExpr  : not BExpr         { Not $2 }
        | BExpr and BExpr   { And $1 $3 }
        | BExpr or  BExpr   { Or $1 $3 }
-       | BExpr "==" BExpr  { BEqual $1 $3 }
+       | BExpr "<=>" BExpr { BEqual $1 $3 }
        | AExpr "==" AExpr  { IEqual $1 $3 }
        | AExpr "<"  AExpr  { LessThan $1 $3 }
        | AExpr ">"  AExpr  { GreaterThan $1 $3 }
@@ -128,6 +130,7 @@ BExpr  : not BExpr         { Not $2 }
        | AExpr "<=" AExpr  { LessEqual $1 $3 }
        | BExpr0            { $1 }
 BExpr0 : bool              { BConst $1 }
+       | ident             { BVar $1 }
        | "(" BExpr ")"     { $2 }
 
 

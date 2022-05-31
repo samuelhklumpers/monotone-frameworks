@@ -26,11 +26,13 @@ tokens :-
   continue                         { \s -> TContinue}
   break                            { \s -> TBreak}
   
-  \:\=                             { \s -> TAssign }
+  \:\=                             { \s -> TIAssign }
+  b\=                              { \s -> TBAssign }
   [\+\-\/]                         { \s -> TArithmeticOp s }
   \*                               { \s -> TStar }
   and                              { \s -> TBoolOp s }
   or                               { \s -> TBoolOp s }
+  \<\=\>                           { \s -> TBoolOp s }
   (\<|\>|\<\=|\>\=|\=\=)           { \s -> TRelOp s }
   
   \;                               { \s -> TSemicolon }
@@ -72,7 +74,8 @@ data Token  = TIdent String
             | TDo
             | TSkip
             | TNot
-            | TAssign
+            | TIAssign
+            | TBAssign
             | TArithmeticOp String
             | TStar
             | TBoolOp String
