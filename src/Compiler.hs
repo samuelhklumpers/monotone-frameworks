@@ -9,7 +9,7 @@ import Lexer
 import AttributeGrammar
 import MonotoneFrameworks
 import Analyses
-import ConstantProp (PtConstLat)
+import ConstantProp (PtConstLat, constEmpty)
 import ConstantBranch (ConstBranchLat)
 
 import Text.Pretty.Simple (pPrintLightBg)
@@ -102,7 +102,7 @@ compile source = do
   putStrLn "## call string limit"
   print callStringLimit
 
-  let constantPropA = Analysis Forward (valSpace_Syn_Program' synProgram') (pure mempty)
+  let constantPropA = Analysis Forward (valSpace_Syn_Program' synProgram') (Just constEmpty)
   let constantPropM = prepare constantPropA flow
   let
     constantPropagationMonotoneFramework :: MonotoneFramework PtConstLat
@@ -113,7 +113,7 @@ compile source = do
     constantPropagationEmbellishedMonotoneFramework =
       (constantPropagationMonotoneFramework, snd constantPropM)
 
-  let constantBranchA = Analysis Forward (constBranchT_Syn_Program' synProgram') (Just mempty, mempty)
+  let constantBranchA = Analysis Forward (constBranchT_Syn_Program' synProgram') (Just constEmpty, mempty)
   let constantBranchM = prepare constantBranchA flow
   let
     constantPropagationBranchAwareMonotoneFramework :: MonotoneFramework ConstBranchLat

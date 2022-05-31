@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleInstances #-}
+
 module ConstantProp where
 
 import Data.Bifunctor
@@ -16,6 +18,8 @@ data ConstLat = CI Int | CB Bool deriving (Show, Eq)
 newtype ConstEnv = ConstEnv (M.Map String ConstLat) deriving Eq
 type PtConstLat = Maybe ConstEnv
 
+constEmpty = ConstEnv mempty
+
 instance Show ConstEnv where
     show (ConstEnv lat) = "[" ++ intercalate ", " vals ++ "]"
         where
@@ -28,10 +32,7 @@ instance Semigroup ConstEnv where
       f :: String -> ConstLat -> ConstLat -> Maybe ConstLat
       f _ a b = if a == b then Just a else Nothing
 
-instance Monoid ConstEnv where
-  mempty = ConstEnv mempty
-
-instance BoundedSemiLattice ConstEnv
+instance BoundedSemiLattice PtConstLat
 
 setConst :: String -> Maybe ConstLat -> ConstEnv -> ConstEnv
 setConst k v (ConstEnv e) = ConstEnv $ M.alter (const v) k e
