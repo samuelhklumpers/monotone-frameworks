@@ -1,0 +1,492 @@
+
+# Program
+begin
+  proc id(val x, out y) is[93m₁[0m
+    [y := x][93m₂[0m
+  end[93m₃[0m;
+  [call id(x, y)][93m₄[0m₋[93m₅[0m;
+  [call id(0, z)][93m₆[0m₋[93m₇[0m;
+  if [z == 0][93m₈[0m then
+    [w := z + w][93m₉[0m
+  else
+    [w := 0][93m₁₀[0m
+end
+
+
+# Output
+## initial
+4
+## finals
+fromList [9,10]
+## flow
+fromList [(1,2),(2,3),(3,5),(3,7),(4,1),(5,6),(6,1),(7,8),(8,9),(8,10)]
+## inter-flow
+fromList [(4,1,3,5),(6,1,3,7)]
+## call string limit
+2
+
+# Analyses
+Each analysis result will be represented as a `Map [Label] (Map Label propertySpace)`.
+That is, a map from call strings to a map from labels to properties.
+Absent combinations of call strings and labels are unreachable.
+Their properties are not restricted by the data flow equations and can be anything.
+Assume them to be bottom for the least solution.
+`Map`s will be printed as lists.
+So the printed result will look as of type `[([Label], [(Label, propertySpace)])]`.
+## Constant Propagation
+### entry table
+\[\begin{array}[|c|c|c|c|]
+ & [] & [4] & [6]
+\hline
+1 &  &  & x \mapsto 0 \\
+\hline
+2 &  &  & x \mapsto 0 \\
+\hline
+3 &  &  & x \mapsto 0, y \mapsto 0 \\
+\hline
+4 &  &  &  \\
+\hline
+5 &  &  & x \mapsto 0, y \mapsto 0 \\
+\hline
+6 &  &  &  \\
+\hline
+7 &  &  & x \mapsto 0, y \mapsto 0 \\
+\hline
+8 & z \mapsto 0 &  &  \\
+\hline
+9 & z \mapsto 0 &  &  \\
+\hline
+10 & z \mapsto 0 &  &  \\
+\hline
+\end{array}\]
+
+### exit table
+\[\begin{array}[|c|c|c|c|]
+ & [] & [4] & [6]
+\hline
+1 &  &  & x \mapsto 0 \\
+\hline
+2 &  &  & x \mapsto 0, y \mapsto 0 \\
+\hline
+3 &  &  & x \mapsto 0, y \mapsto 0 \\
+\hline
+4 &  &  &  \\
+\hline
+5 &  &  &  \\
+\hline
+6 &  &  & x \mapsto 0 \\
+\hline
+7 & z \mapsto 0 &  &  \\
+\hline
+8 & z \mapsto 0 &  &  \\
+\hline
+9 & z \mapsto 0 &  &  \\
+\hline
+10 & w \mapsto 0, z \mapsto 0 &  &  \\
+\hline
+\end{array}\]
+
+## Reachable Constant Propagation
+### entry properties
+[
+    ( []
+    ,
+        [
+            ( 4
+            ,
+                ( Just []
+                , fromList []
+                )
+            )
+        ,
+            ( 6
+            ,
+                ( Just []
+                , fromList []
+                )
+            )
+        ,
+            ( 8
+            ,
+                ( Just
+                    [ z -> CI 0 ]
+                , fromList []
+                )
+            )
+        ,
+            ( 9
+            ,
+                ( Just
+                    [ z -> CI 0 ]
+                , fromList [ 10 ]
+                )
+            )
+        ,
+            ( 10
+            ,
+                ( Just
+                    [ z -> CI 0 ]
+                , fromList [ 10 ]
+                )
+            )
+        ]
+    )
+,
+    ( [ 4 ]
+    ,
+        [
+            ( 1
+            ,
+                ( Just []
+                , fromList []
+                )
+            )
+        ,
+            ( 2
+            ,
+                ( Just []
+                , fromList []
+                )
+            )
+        ,
+            ( 3
+            ,
+                ( Just []
+                , fromList []
+                )
+            )
+        ,
+            ( 5
+            ,
+                ( Just []
+                , fromList []
+                )
+            )
+        ,
+            ( 7
+            ,
+                ( Just []
+                , fromList []
+                )
+            )
+        ]
+    )
+,
+    ( [ 6 ]
+    ,
+        [
+            ( 1
+            ,
+                ( Just
+                    [ x -> CI 0 ]
+                , fromList []
+                )
+            )
+        ,
+            ( 2
+            ,
+                ( Just
+                    [ x -> CI 0 ]
+                , fromList []
+                )
+            )
+        ,
+            ( 3
+            ,
+                ( Just
+                    [ x -> CI 0
+                    , y -> CI 0
+                    ]
+                , fromList []
+                )
+            )
+        ,
+            ( 5
+            ,
+                ( Just
+                    [ x -> CI 0
+                    , y -> CI 0
+                    ]
+                , fromList []
+                )
+            )
+        ,
+            ( 7
+            ,
+                ( Just
+                    [ x -> CI 0
+                    , y -> CI 0
+                    ]
+                , fromList []
+                )
+            )
+        ]
+    )
+]
+### exit properties
+[
+    ( []
+    ,
+        [
+            ( 5
+            ,
+                ( Just []
+                , fromList []
+                )
+            )
+        ,
+            ( 7
+            ,
+                ( Just
+                    [ z -> CI 0 ]
+                , fromList []
+                )
+            )
+        ,
+            ( 8
+            ,
+                ( Just
+                    [ z -> CI 0 ]
+                , fromList [ 10 ]
+                )
+            )
+        ,
+            ( 9
+            ,
+                ( Just
+                    [ z -> CI 0 ]
+                , fromList [ 10 ]
+                )
+            )
+        ,
+            ( 10
+            ,
+                ( Nothing
+                , fromList [ 10 ]
+                )
+            )
+        ]
+    )
+,
+    ( [ 4 ]
+    ,
+        [
+            ( 1
+            ,
+                ( Just []
+                , fromList []
+                )
+            )
+        ,
+            ( 2
+            ,
+                ( Just []
+                , fromList []
+                )
+            )
+        ,
+            ( 3
+            ,
+                ( Just []
+                , fromList []
+                )
+            )
+        ,
+            ( 4
+            ,
+                ( Just []
+                , fromList []
+                )
+            )
+        ]
+    )
+,
+    ( [ 6 ]
+    ,
+        [
+            ( 1
+            ,
+                ( Just
+                    [ x -> CI 0 ]
+                , fromList []
+                )
+            )
+        ,
+            ( 2
+            ,
+                ( Just
+                    [ x -> CI 0
+                    , y -> CI 0
+                    ]
+                , fromList []
+                )
+            )
+        ,
+            ( 3
+            ,
+                ( Just
+                    [ x -> CI 0
+                    , y -> CI 0
+                    ]
+                , fromList []
+                )
+            )
+        ,
+            ( 6
+            ,
+                ( Just
+                    [ x -> CI 0 ]
+                , fromList []
+                )
+            )
+        ]
+    )
+]
+
+## Strongly Live Variables
+### entry properties
+[
+    ( []
+    ,
+        [
+            ( 5
+            , fromList [ "x" ]
+            )
+        ,
+            ( 7
+            , fromList [ "z" ]
+            )
+        ,
+            ( 8
+            , fromList []
+            )
+        ,
+            ( 9
+            , fromList []
+            )
+        ,
+            ( 10
+            , fromList []
+            )
+        ]
+    )
+,
+    ( [ 5 ]
+    ,
+        [
+            ( 1
+            , fromList []
+            )
+        ,
+            ( 2
+            , fromList []
+            )
+        ,
+            ( 3
+            , fromList []
+            )
+        ,
+            ( 4
+            , fromList []
+            )
+        ,
+            ( 6
+            , fromList []
+            )
+        ]
+    )
+,
+    ( [ 7 ]
+    ,
+        [
+            ( 1
+            , fromList [ "x" ]
+            )
+        ,
+            ( 2
+            , fromList [ "y" ]
+            )
+        ,
+            ( 3
+            , fromList [ "y" ]
+            )
+        ,
+            ( 4
+            , fromList [ "x" ]
+            )
+        ,
+            ( 6
+            , fromList [ "x" ]
+            )
+        ]
+    )
+]
+### exit properties
+[
+    ( []
+    ,
+        [
+            ( 4
+            , fromList [ "x" ]
+            )
+        ,
+            ( 6
+            , fromList [ "x" ]
+            )
+        ,
+            ( 8
+            , fromList [ "z" ]
+            )
+        ,
+            ( 9
+            , fromList []
+            )
+        ,
+            ( 10
+            , fromList []
+            )
+        ]
+    )
+,
+    ( [ 5 ]
+    ,
+        [
+            ( 1
+            , fromList []
+            )
+        ,
+            ( 2
+            , fromList []
+            )
+        ,
+            ( 3
+            , fromList []
+            )
+        ,
+            ( 5
+            , fromList []
+            )
+        ]
+    )
+,
+    ( [ 7 ]
+    ,
+        [
+            ( 1
+            , fromList [ "x" ]
+            )
+        ,
+            ( 2
+            , fromList [ "x" ]
+            )
+        ,
+            ( 3
+            , fromList [ "y" ]
+            )
+        ,
+            ( 7
+            , fromList [ "y" ]
+            )
+        ]
+    )
+]

@@ -366,7 +366,7 @@ sem Stat'
     lhs.isSingle = True
     lhs.init = @label
     lhs.final = empty
-    lhs.flow = singleton (@label, (maybe (error "toplevel continue at " ++ show @label) @lhs.continueLabel))
+    lhs.flow = singleton (@label, (Maybe.fromMaybe (error $ "toplevel continue at " ++ show @label) @lhs.continueLabel))
   | Break'
     lhs.pretty   = ["break" ++ showLabel @label]
     lhs.isSkip   = False

@@ -3285,7 +3285,7 @@ sem_Stat'_Continue' label_ =
                    )
               _lhsOflow =
                   ({-# LINE 369 "AttributeGrammar.ag" #-}
-                   singleton (label_, (Maybe.fromJust _lhsIcontinueLabel))
+                   singleton (label_, (Maybe.fromMaybe (error $ "toplevel continue at " ++ show label_) _lhsIcontinueLabel))
                    {-# LINE 3290 "AttributeGrammar.hs" #-}
                    )
               _lhsObreakLabels =

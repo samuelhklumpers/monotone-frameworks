@@ -5,7 +5,7 @@ module Compiler where
 import Analyses (DifTrans, Dir (..), Edge, Inter (..), lookupR)
 import AttributeGrammar
 import ConstantBranch (ConstBranchLat)
-import ConstantProp (PtConstLat, constEmpty)
+import ConstantProp (PtConstLat, constEmpty, ConstLat (..), ConstEnv (ConstEnv))
 import Control.Arrow (Arrow ((&&&)))
 import Data.Map qualified as M
 import Data.Set qualified as S
@@ -18,7 +18,7 @@ import MonotoneFrameworks
     mfpSolution',
   )
 import Parser (happy)
-import Std (Map, Set)
+import Std (Map, Set, intercalate, intersperse)
 import Text.Pretty.Simple (pPrintLightBg)
 
 
@@ -151,7 +151,7 @@ compile source = do
   putStrLn "`Map`s will be printed as lists."
   putStrLn "So the printed result will look as of type `[([Label], [(Label, propertySpace)])]`."
   putStrLn "## Constant Propagation"
-  prettyPrint constantPropA $
+  latexPrint constantPropagationTex $
     uncurry (mfpSolution' callStringLimit) constantPropagationEmbellishedMonotoneFramework
 
   putStrLn "## Reachable Constant Propagation"
@@ -197,6 +197,44 @@ prettyPrint (Analysis {direction}) (solution_circ, solution_bullet, _steps) =
       M.mapKeysWith (error "impossible. reverse is bijective.") reverse .
       flipMap .
       fmap runTotalMap
+
+latexPrint ::
+  (Maybe propertySpace -> String) ->
+  (
+    Map Label (ContextSensitive propertySpace),
+    Map Label (ContextSensitive propertySpace),
+    [(Map Label (ContextSensitive propertySpace), [(Label, Label)])]
+  ) ->
+  IO ()
+latexPrint p (entry, exit, _steps) =
+  putStrLn "### entry table" *>
+  putStrLn (latexPrinter p entry) *>
+  putStrLn "### exit table" *>
+  putStrLn (latexPrinter p exit)
+
+latexPrinter :: (Maybe propertySpace -> String) -> Map Label (ContextSensitive propertySpace)-> String
+latexPrinter p a = unlines (header : labels :  body ++ [footer])
+  where
+  analysis  = fmap runTotalMap a
+  analysisT = flipMap analysis
+  rows      = M.keys analysis
+  cols      = M.keys analysisT
+
+  findAll ks m = fmap (`M.lookup` m) ks
+  printRow i   = show i ++ " & " ++ intercalate " & " (fmap p (findAll cols $ analysis M.! i)) ++ " \\\\"
+
+  header = "\\[\\begin{array}[|" ++ intercalate "|" (replicate (1 + length cols) "c") ++ "|]"
+  labels = " & " ++ intercalate " & " (fmap show cols)
+  body   = ["\\hline"] ++ intersperse "\\hline" (fmap printRow rows) ++ ["\\hline"]
+  footer = "\\end{array}\\]"
+
+constantPropagationTex :: Maybe PtConstLat -> String
+constantPropagationTex (Just (Just (ConstEnv e))) = intercalate ", " $ p <$> M.toList e
+  where
+    p (k, CI n) = k ++ " \\mapsto " ++ show n
+    p (k, CB n) = k ++ " \\mapsto " ++ show n
+constantPropagationTex _             = ""
+
 
 flipMap :: (Ord k, Ord m) => M.Map k (M.Map m v) -> M.Map m (M.Map k v)
 flipMap = fmap M.fromList . groupBy' h . rotate . M.toList . fmap M.toList
