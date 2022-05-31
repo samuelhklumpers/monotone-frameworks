@@ -6,7 +6,13 @@ begin
         x := 0;
     else
         x := 0;
-    while x > 0 do
-        x := 1;
+    while x > 0 do {
+        if x < 0 then {
+            continue;
+            x := 2;
+        }
+        else
+            x := 1;
+    }
     skip;
 end

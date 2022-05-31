@@ -1,20 +1,26 @@
 module Compiler where
 
-import qualified Data.Map as M
-import qualified Data.Set as S
-
 -- to-do. explicify
-import Parser
-import Lexer
-import AttributeGrammar
-import MonotoneFrameworks
-import Analyses
-import ConstantProp (PtConstLat, constEmpty)
-import ConstantBranch (ConstBranchLat)
 
+import Analyses (DifTrans, Dir (..), Edge, Inter (..), lookupR)
+import AttributeGrammar
+import ConstantBranch (ConstBranchLat)
+import ConstantProp (PtConstLat, constEmpty)
+import Control.Arrow (Arrow ((&&&)))
+import Data.Map qualified as M
+import Data.Set qualified as S
+import Lexer (alex)
+import MonotoneFrameworks
+  ( ContextSensitive (runTotalMap),
+    InterproceduralFragment (..),
+    Label,
+    MonotoneFramework (MonotoneFramework),
+    mfpSolution',
+  )
+import Parser (happy)
+import Std (Map, Set)
 import Text.Pretty.Simple (pPrintLightBg)
-import Std (Set, Map)
-import Control.Arrow
+
 
 callStringLimit :: Int
 callStringLimit = 2

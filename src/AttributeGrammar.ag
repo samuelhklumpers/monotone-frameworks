@@ -209,7 +209,7 @@ attr IExpr BExpr        [ | | pretty :: String  precedence :: Int  freeVars use 
 attr Expr               [ | | freeVars use {<>} {empty} :: { Set String } ]
 attr Exprs              [ | | freeVars use {:} {[]} :: { [Set String] } ]  
 attr Expr Exprs         [ | | pretty :: String ]
-attr Stat'              [ | continueLabel :: { Maybe Int } | isSkip :: Bool  isSingle :: Bool  breakLabels use {<>} {empty} :: { Set Int }  ]
+attr Stat'              [ continueLabel :: { Maybe Int } | | isSkip :: Bool  isSingle :: Bool  breakLabels use {<>} {empty} :: { Set Int }  ]
 
 {
 indent :: [String] -> [String]
@@ -300,7 +300,7 @@ sem Stat'
     lhs.init = @labelc
     lhs.final = singleton @labelc <> @stat.breakLabels
     lhs.flow = @stat.flow <> singleton (@labelc, @stat.init) <> fromList [(label, @labelc) | label <- toList @stat.final ] 
-    lhs.continueLabel = Just @labelc
+    stat.continueLabel = Just @labelc
     lhs.breakLabels = empty
   | Print'
     lhs.pretty   = ["print(" ++ @param.pretty ++ ")"]
@@ -365,8 +365,8 @@ sem Stat'
     lhs.isSkip   = False
     lhs.isSingle = True
     lhs.init = @label
-    lhs.final = singleton @label
-    lhs.flow = singleton (@label, (Maybe.fromJust @lhs.continueLabel))
+    lhs.final = empty
+    lhs.flow = singleton (@label, (maybe (error "toplevel continue at " ++ show @label) @lhs.continueLabel))
   | Break'
     lhs.pretty   = ["break" ++ showLabel @label]
     lhs.isSkip   = False
