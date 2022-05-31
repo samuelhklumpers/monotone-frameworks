@@ -11,12 +11,13 @@ import Data.Map qualified as M
 import Data.Set qualified as S
 import Lexer (alex)
 import MonotoneFrameworks
-  ( ContextSensitive (runTotalMap),
+  (
     InterproceduralFragment (..),
     Label,
     MonotoneFramework (MonotoneFramework),
-    mfpSolution',
+    mfpSolution,
   )
+import ContextSensitive
 import Parser (happy)
 import Std (Map, Set, intercalate, intersperse)
 import Text.Pretty.Simple (pPrintLightBg)
@@ -60,8 +61,16 @@ group ((a, b):xs) = M.alter h a $ group xs
     h Nothing  = Just $ S.singleton b
     h (Just u) = Just $ S.insert b u
 
-prepare :: Analysis p -> Flow -> (MonotoneFramework p, InterproceduralFragment p)
-prepare ana flow = (a, InterproceduralFragment b)
+prepare :: Analysis p -> Flow -> MonotoneFramework p
+prepare ana flow =
+  MonotoneFramework
+    outgoing
+    exL
+    exV
+    transferFunctions'
+    (InterproceduralFragment $
+      M.fromList [(c, (r, lookupR r trans)) | Inter c _ _ r <- S.toList inter]
+    )
   where
     exV  = extremal ana
     trans = difTrans ana
@@ -71,11 +80,6 @@ prepare ana flow = (a, InterproceduralFragment b)
     outgoing = group $ S.toList flow'
 
     (transferFunctions', _) = trans
-
-    a = MonotoneFramework outgoing exL exV transferFunctions'
-    b = M.fromList [(c, (r, lookupR r trans)) | Inter c _ _ r <- S.toList inter]
-
-
 
 compile :: String -> IO ()
 compile source = do
@@ -108,38 +112,41 @@ compile source = do
   putStrLn "## call string limit"
   print callStringLimit
 
-  let constantPropA = Analysis Forward (valSpace_Syn_Program' synProgram') (Just constEmpty)
-  let constantPropM = prepare constantPropA flow
+  let
+    constantPropA =
+      Analysis Forward (valSpace_Syn_Program' synProgram') (Just constEmpty)
   let
     constantPropagationMonotoneFramework :: MonotoneFramework PtConstLat
-    constantPropagationMonotoneFramework = fst constantPropM
+    constantPropagationMonotoneFramework = prepare constantPropA flow
   let
     constantPropagationEmbellishedMonotoneFramework ::
-      (MonotoneFramework PtConstLat, InterproceduralFragment PtConstLat)
+      MonotoneFramework (ContextSensitive PtConstLat)
     constantPropagationEmbellishedMonotoneFramework =
-      (constantPropagationMonotoneFramework, snd constantPropM)
+      contextSensitize callStringLimit constantPropagationMonotoneFramework
 
-  let constantBranchA = Analysis Forward (constBranchT_Syn_Program' synProgram') (Just constEmpty, mempty)
-  let constantBranchM = prepare constantBranchA flow
+  let
+    constantBranchA =
+      Analysis Forward (constBranchT_Syn_Program' synProgram') (Just constEmpty, mempty)
   let
     constantPropagationBranchAwareMonotoneFramework :: MonotoneFramework ConstBranchLat
-    constantPropagationBranchAwareMonotoneFramework = fst constantBranchM
+    constantPropagationBranchAwareMonotoneFramework = prepare constantBranchA flow
   let
     constantPropagationBranchAwareEmbellishedMonotoneFramework ::
-      (MonotoneFramework ConstBranchLat, InterproceduralFragment ConstBranchLat)
+      MonotoneFramework (ContextSensitive ConstBranchLat)
     constantPropagationBranchAwareEmbellishedMonotoneFramework =
-      (constantPropagationBranchAwareMonotoneFramework, snd constantBranchM)
+      contextSensitize callStringLimit constantPropagationBranchAwareMonotoneFramework
 
-  let strongLiveA = Analysis Backward (strongLive_Syn_Program' synProgram') mempty
-  let strongLiveM = prepare strongLiveA flow
+  let
+    strongLiveA =
+      Analysis Backward (strongLive_Syn_Program' synProgram') mempty
   let
     stronglyLiveVariablesMonotoneFramework :: MonotoneFramework (Set String)
-    stronglyLiveVariablesMonotoneFramework = fst strongLiveM
+    stronglyLiveVariablesMonotoneFramework = prepare strongLiveA flow
   let
     stronglyLiveVariablesEmbellishedMonotoneFramework ::
-      (MonotoneFramework (Set String), InterproceduralFragment (Set String))
+      MonotoneFramework (ContextSensitive (Set String))
     stronglyLiveVariablesEmbellishedMonotoneFramework =
-      (stronglyLiveVariablesMonotoneFramework, snd strongLiveM)
+      contextSensitize callStringLimit stronglyLiveVariablesMonotoneFramework
 
   putStrLn ""
   putStrLn "# Analyses"
@@ -151,17 +158,17 @@ compile source = do
   putStrLn "`Map`s will be printed as lists."
   putStrLn "So the printed result will look as of type `[([Label], [(Label, propertySpace)])]`."
   putStrLn "## Constant Propagation"
-  latexPrint constantPropagationTex $
-    uncurry (mfpSolution' callStringLimit) constantPropagationEmbellishedMonotoneFramework
+  prettyPrint constantPropA $
+    mfpSolution constantPropagationEmbellishedMonotoneFramework
 
   putStrLn "## Reachable Constant Propagation"
   prettyPrint constantBranchA $
-    uncurry (mfpSolution' callStringLimit) constantPropagationBranchAwareEmbellishedMonotoneFramework
+    mfpSolution constantPropagationBranchAwareEmbellishedMonotoneFramework
 
   putStrLn ""
   putStrLn "## Strongly Live Variables"
   prettyPrint strongLiveA $
-    uncurry (mfpSolution' callStringLimit) stronglyLiveVariablesEmbellishedMonotoneFramework
+    mfpSolution stronglyLiveVariablesEmbellishedMonotoneFramework
 
 
 prettyPrint ::

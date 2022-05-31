@@ -33,6 +33,7 @@ library
       Compiler
       ConstantBranch
       ConstantProp
+      ContextSensitive
       Lexer
       MonotoneFrameworks
       Parser

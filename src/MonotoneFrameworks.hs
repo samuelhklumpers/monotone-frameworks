@@ -4,7 +4,6 @@ module MonotoneFrameworks where
 
 import Data.Set qualified as S
 import Data.Map.Strict qualified as M
-import Data.Map.Merge.Strict qualified as MM
 import Std
 
 class (Monoid m, Eq m) => BoundedSemiLattice m where
@@ -22,7 +21,8 @@ data MonotoneFramework propertySpace =
       flow :: Map Label (Set Label),
       extremalLabels :: Set Label,
       extremalValue :: propertySpace,
-      transferFunctions :: Map Label (propertySpace -> propertySpace)
+      transferFunctions :: Map Label (propertySpace -> propertySpace),
+      interproceduralFragment :: InterproceduralFragment propertySpace
     }
 
 -- | invariant. call label is functionally dependent on the return label
@@ -45,26 +45,20 @@ newtype InterproceduralFragment propertySpace =
 --
 -- warning. termination is only guaranteed if 'propertySpace' satisfies the
 -- /Ascending Chain Condition/.
-mfpSolution' ::
+mfpSolution ::
   forall propertySpace.
   (BoundedSemiLattice propertySpace) =>
-  -- | call string limit
-  Int ->
   -- | monotone framework
   MonotoneFramework propertySpace ->
-  -- | interprocedural fragment
-  InterproceduralFragment propertySpace ->
   -- | \(\mathrm{Analysis}_\circ\), \(\mathrm{Analysis}_\bullet\), and all
   -- intermediate steps
   (
-    Map Label (ContextSensitive propertySpace),
-    Map Label (ContextSensitive propertySpace),
-    [(Map Label (ContextSensitive propertySpace), [(Label, Label)])]
+    Map Label propertySpace,
+    Map Label propertySpace,
+    [(Map Label propertySpace, [(Label, Label)])]
   )
-mfpSolution'
-  callStringsLimit
-  (MonotoneFramework flow extremalLabels extremalValue transferFunctions)
-  interproceduralFragment
+mfpSolution
+  (MonotoneFramework flow extremalLabels extremalValue transferFunctions interproceduralFragment)
   = (
     analysisEntry,
     M.mapWithKey (\k _ -> transfer analysisEntry k) analysisEntry,
@@ -76,18 +70,18 @@ mfpSolution'
         ((initialAnalysis, initialWorkList) :)
         (iterateFinite step (initialAnalysis, initialWorkList))
     initialAnalysis =
-      M.fromSet (const $ ContextSensitive $ M.singleton [] extremalValue) extremalLabels
+      M.fromSet (const extremalValue) extremalLabels
       <> -- left biased union
       M.fromSet (const bottom) (M.keysSet flow <> fold flow)
     initialWorkList =
       foldMap (\(l, ls) -> (l,) <$> toList ls) (M.toList flow)
     step ::
       -- | pair of current analysis and worklist
-      (Map Label (ContextSensitive propertySpace), [(Label, Label)]) ->
+      (Map Label propertySpace, [(Label, Label)]) ->
       -- | either result in case of termination or new state
       Either
-        (Map Label (ContextSensitive propertySpace)) -- terminate
-        (Map Label (ContextSensitive propertySpace), [(Label, Label)])
+        (Map Label propertySpace) -- terminate
+        (Map Label propertySpace, [(Label, Label)])
     step (analysisOld, (l, l') : workListRest)
       | transfer analysisOld l `lessOrEquals` analysisLookup l' analysisOld =
         Right (analysisOld, workListRest)
@@ -107,29 +101,14 @@ mfpSolution'
         )
     step (analysis, []) = Left analysis -- terminate
     transfer ::
-      Map Label (ContextSensitive propertySpace) ->
+      Map Label propertySpace ->
       Label ->
-      ContextSensitive propertySpace
+      propertySpace
     transfer analysisOld l
-      | Just _ <- lookupCall l interproceduralFragment =
-        coerce -- ignore
-          @(Map [Label] propertySpace -> Map [Label] propertySpace)
-          (M.mapKeysWith (<>) (take callStringsLimit . (l :))) $
-          transferFunction l (analysisLookup l analysisOld)
       | Just (callLabel, f) <- lookupReturn l interproceduralFragment =
-        coerce -- ignore
-          @(([Label] -> propertySpace -> propertySpace) -> Map [Label] propertySpace -> Map [Label] propertySpace)
-          M.mapWithKey
-            (\s p ->
-              f
-                p
-                (fromMaybe bottom $
-                  lookupContext
-                    (take callStringsLimit (callLabel : s))
-                    (analysisLookup l analysisOld)
-                )
-            )
-            (analysisLookup callLabel analysisOld)
+        f
+          (analysisLookup callLabel analysisOld)
+          (analysisLookup l analysisOld)
       | otherwise = transferFunction l (analysisLookup l analysisOld)
     outgoingFlow :: Label -> [(Label, Label)]
     outgoingFlow l =
@@ -140,10 +119,9 @@ mfpSolution'
     -- | warning. partial
     transferFunction ::
       Label ->
-      ContextSensitive propertySpace ->
-      ContextSensitive propertySpace
+      propertySpace ->
+      propertySpace
     transferFunction l =
-      fmap $
       fromMaybe (error $ "transfer function missing for " <> show l) $
       M.lookup l transferFunctions
     -- | warning. partial
@@ -152,39 +130,15 @@ mfpSolution'
       fromMaybe (error "impossible. initialAnalysis covers all labels") .:
       M.lookup
 
-newtype ContextSensitive propertySpace =
-  ContextSensitive {runTotalMap :: Map [Label] propertySpace}
-  deriving (Show, Eq)
-  deriving (Functor) via Map [Label]
-
-lookupContext ::
-  forall propertySpace.
-  (BoundedSemiLattice propertySpace) =>
-  [Label] -> ContextSensitive propertySpace -> Maybe propertySpace
-lookupContext =
+mapFunctionWithCallLabel ::
+  forall p0 p1.
+  (Label -> (p0 -> p0 -> p0) -> (p1 -> p1 -> p1)) ->
+  InterproceduralFragment p0 ->
+  InterproceduralFragment p1
+mapFunctionWithCallLabel binaryTransferFunction =
   coerce -- ignore
-    @([Label] -> Map [Label] propertySpace -> Maybe propertySpace) -- ignore
-    M.lookup
-
-instance
-  (Semigroup propertySpace) =>
-  Semigroup (ContextSensitive propertySpace)
-  where
-    (<>) =
-      coerce -- ignore
-        @(Map [Label] propertySpace -> Map [Label] propertySpace -> Map [Label] propertySpace) $
-        M.unionWith (<>)
-instance
-  (Semigroup propertySpace) =>
-  Monoid (ContextSensitive propertySpace)
-  where
-    mempty =
-      coerce @(Map [Label] propertySpace) -- ignore
-        M.empty
-instance
-  (BoundedSemiLattice propertySpace) =>
-  BoundedSemiLattice (ContextSensitive propertySpace)
-  -- to-do. efficient implementation
+    @(Map Label (Label, (p0 -> p0 -> p0)) -> Map Label (Label, (p1 -> p1 -> p1))) $
+    M.mapWithKey (second . binaryTransferFunction)
 
 lookupCall ::
   forall propertySpace.
@@ -205,6 +159,6 @@ lookupReturn returnLabel (InterproceduralFragment interproceduralFragment)
     M.toList $ M.filter ((== returnLabel) . fst) $ interproceduralFragment
   of
     [] -> Nothing
-    [(callLabel, (_returnLabel, transferFunction))] ->
-      Just (callLabel, transferFunction)
-    _ -> error "impossible. smart constructor of InterproceduralFragment."
+    [(callLabel, (_returnLabel, binaryTransferFunction))] ->
+      Just (callLabel, binaryTransferFunction)
+    _ -> error "impossible. smart constructor of InterproceduralFragment." -- to-do
