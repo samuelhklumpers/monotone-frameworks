@@ -25,17 +25,17 @@ sem Stat'
   | Skip'
     lhs.constBranchT = singleL @label (constBranchId @label)
   | IfThenElse'
-    lhs.constBranchT = insertL @labelc (constBranchIf (@cond.expValSpace) @stat1.init @stat2.init) $ @stat1.constBranchT <> @stat2.constBranchT 
+    lhs.constBranchT = insertL @labelc (constBranchIf (@cond.constantPropagation) @stat1.init @stat2.init) $ @stat1.constBranchT <> @stat2.constBranchT 
   | While'
-    lhs.constBranchT = insertL @labelc (constBranchWhile @lhs.successor (@cond.expValSpace) @stat.init @labelc)  @stat.constBranchT
+    lhs.constBranchT = insertL @labelc (constBranchWhile @lhs.successor (@cond.constantPropagation) @stat.init @labelc)  @stat.constBranchT
   | Print'
     lhs.constBranchT = singleL @label (constBranchId @label)
   | Call'
-    lhs.constBranchT = insertL @labelCall (ignoreDead @labelCall $ fmap $ callConst (procInp @loc.proc) (procOut @loc.proc) @params.expValSpace) $ singleR @labelReturn (ignoreDead2 @labelReturn $ ((<*>) .: fmap $ retConst @out (procInp @loc.proc) (procOut @loc.proc)))
+    lhs.constBranchT = insertL @labelCall (ignoreDead @labelCall $ fmap $ callConst (procInp @loc.proc) (procOut @loc.proc) @params.constantPropagation) $ singleR @labelReturn (ignoreDead2 @labelReturn $ ((<*>) .: fmap $ retConst @out (procInp @loc.proc) (procOut @loc.proc)))
   | IAssign'
-    lhs.constBranchT = singleL @label (ignoreDead @label $ fmap $ updateConst @name @val.expValSpace)
+    lhs.constBranchT = singleL @label (ignoreDead @label $ fmap $ updateConst @name @val.constantPropagation)
   | BAssign'
-    lhs.constBranchT = singleL @label (ignoreDead @label $ fmap $ updateConst @name @val.expValSpace)
+    lhs.constBranchT = singleL @label (ignoreDead @label $ fmap $ updateConst @name @val.constantPropagation)
   | Seq'
     lhs.constBranchT = @stat1.constBranchT <> @stat2.constBranchT
   | Malloc'

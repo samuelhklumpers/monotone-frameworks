@@ -114,7 +114,7 @@ compile source = do
 
   let
     constantPropA =
-      Analysis Forward (valSpace_Syn_Program' synProgram') (Just constEmpty)
+      Analysis Forward (constantPropagation_Syn_Program' synProgram') (Just constEmpty)
   let
     constantPropagationMonotoneFramework :: MonotoneFramework PtConstLat
     constantPropagationMonotoneFramework = prepare constantPropA flow

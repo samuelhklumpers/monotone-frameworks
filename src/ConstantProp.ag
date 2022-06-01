@@ -2,87 +2,87 @@
 import Std (liftA2)
 }
 
-attr Program' Procs' Proc' Stat'    [ | | valSpace :: { DifTrans PtConstLat } ]
-attr IExpr BExpr Expr               [ | | expValSpace :: { ConstEnv -> Maybe ConstLat } ]
-attr Exprs                          [ | | expValSpace use {:} {[]} :: { [ConstEnv -> Maybe ConstLat] }  ]  
+attr Program' Procs' Proc' Stat'    [ | | constantPropagation :: { DifTrans PtConstLat } ]
+attr IExpr BExpr Expr               [ | | constantPropagation :: { ConstEnv -> Maybe ConstLat } ]
+attr Exprs                          [ | | constantPropagation use {:} {[]} :: { [ConstEnv -> Maybe ConstLat] }  ]  
 
 sem Program'
   | Program'
-    lhs.valSpace = @procs.valSpace <> @stat.valSpace
+    lhs.constantPropagation = @procs.constantPropagation <> @stat.constantPropagation
 
 sem Procs'
   | Nil
-    lhs.valSpace = mempty
+    lhs.constantPropagation = mempty
   | Cons
-    lhs.valSpace = @hd.valSpace <> @tl.valSpace
+    lhs.constantPropagation = @hd.constantPropagation <> @tl.constantPropagation
 
 sem Proc'
   | Proc'
-    lhs.valSpace = insertL @labelEntry id $ insertL @labelExit id @stat.valSpace
+    lhs.constantPropagation = insertL @labelEntry id $ insertL @labelExit id @stat.constantPropagation
 
 sem Stat'
   | Skip'
-    lhs.valSpace = singleL @label id
+    lhs.constantPropagation = singleL @label id
   | IfThenElse'
-    lhs.valSpace = insertL @labelc id $ @stat1.valSpace <> @stat2.valSpace 
+    lhs.constantPropagation = insertL @labelc id $ @stat1.constantPropagation <> @stat2.constantPropagation 
   | While'
-    lhs.valSpace = insertL @labelc id @stat.valSpace
+    lhs.constantPropagation = insertL @labelc id @stat.constantPropagation
   | Print'
-    lhs.valSpace = singleL @label id
+    lhs.constantPropagation = singleL @label id
   | Call'
-    lhs.valSpace = insertL @labelCall (fmap $ callConst (procInp @loc.proc) (procOut @loc.proc) @params.expValSpace) $ singleR @labelReturn (liftA2 $ retConst @out (procInp @loc.proc) (procOut @loc.proc))
+    lhs.constantPropagation = insertL @labelCall (fmap $ callConst (procInp @loc.proc) (procOut @loc.proc) @params.constantPropagation) $ singleR @labelReturn (liftA2 $ retConst @out (procInp @loc.proc) (procOut @loc.proc))
   | IAssign'
-    lhs.valSpace = singleL @label (fmap $ updateConst @name @val.expValSpace)
+    lhs.constantPropagation = singleL @label (fmap $ updateConst @name @val.constantPropagation)
   | BAssign'
-    lhs.valSpace = singleL @label (fmap $ updateConst @name @val.expValSpace)
+    lhs.constantPropagation = singleL @label (fmap $ updateConst @name @val.constantPropagation)
   | Seq'
-    lhs.valSpace = @stat1.valSpace <> @stat2.valSpace
+    lhs.constantPropagation = @stat1.constantPropagation <> @stat2.constantPropagation
   | Malloc'
-    lhs.valSpace = singleL @label id
+    lhs.constantPropagation = singleL @label id
   | Free'
-    lhs.valSpace = singleL @label id
+    lhs.constantPropagation = singleL @label id
   | RefAssign'
-    lhs.valSpace = singleL @label id
+    lhs.constantPropagation = singleL @label id
   | Continue'
-    lhs.valSpace = singleL @label id
+    lhs.constantPropagation = singleL @label id
   | Break'
-    lhs.valSpace = singleL @label id
+    lhs.constantPropagation = singleL @label id
 
 sem IExpr
   | IConst
-    lhs.expValSpace = \_ -> Just $ CI @val
+    lhs.constantPropagation = \_ -> Just $ CI @val
   | Var
-    lhs.expValSpace = getConst @name
+    lhs.constantPropagation = getConst @name
   | Plus
-    lhs.expValSpace = \env -> cIII (+) (@left.expValSpace env) (@right.expValSpace env)
+    lhs.constantPropagation = \env -> cIII (+) (@left.constantPropagation env) (@right.constantPropagation env)
   | Minus
-    lhs.expValSpace = \env -> cIII (-) (@left.expValSpace env) (@right.expValSpace env)
+    lhs.constantPropagation = \env -> cIII (-) (@left.constantPropagation env) (@right.constantPropagation env)
   | Times
-    lhs.expValSpace = \env -> constMul (@left.expValSpace env) (@right.expValSpace env)
+    lhs.constantPropagation = \env -> constMul (@left.constantPropagation env) (@right.constantPropagation env)
   | Divide
-    lhs.expValSpace = \env -> cIII div (@left.expValSpace env) (@right.expValSpace env)
+    lhs.constantPropagation = \env -> cIII div (@left.constantPropagation env) (@right.constantPropagation env)
   | Deref
   
 sem BExpr
   | BConst
-    lhs.expValSpace = \_ -> Just $ CB @val
+    lhs.constantPropagation = \_ -> Just $ CB @val
   | BVar
-    lhs.expValSpace = getConst @name
+    lhs.constantPropagation = getConst @name
   | LessThan
-    lhs.expValSpace = \env -> cIIB (<) (@left.expValSpace env) (@right.expValSpace env)
+    lhs.constantPropagation = \env -> cIIB (<) (@left.constantPropagation env) (@right.constantPropagation env)
   | GreaterThan
-    lhs.expValSpace = \env -> cIIB (>) (@left.expValSpace env) (@right.expValSpace env)
+    lhs.constantPropagation = \env -> cIIB (>) (@left.constantPropagation env) (@right.constantPropagation env)
   | LessEqual
-    lhs.expValSpace = \env -> cIIB (<=) (@left.expValSpace env) (@right.expValSpace env)
+    lhs.constantPropagation = \env -> cIIB (<=) (@left.constantPropagation env) (@right.constantPropagation env)
   | GreaterEqual
-    lhs.expValSpace = \env -> cIIB (>=) (@left.expValSpace env) (@right.expValSpace env)
+    lhs.constantPropagation = \env -> cIIB (>=) (@left.constantPropagation env) (@right.constantPropagation env)
   | IEqual
-    lhs.expValSpace = \env -> cIIB (==) (@left.expValSpace env) (@right.expValSpace env)
+    lhs.constantPropagation = \env -> cIIB (==) (@left.constantPropagation env) (@right.constantPropagation env)
   | BEqual
-    lhs.expValSpace = \env -> cBBB (==) (@left.expValSpace env) (@right.expValSpace env)
+    lhs.constantPropagation = \env -> cBBB (==) (@left.constantPropagation env) (@right.constantPropagation env)
   | And
-    lhs.expValSpace = \env -> constAnd (@left.expValSpace env) (@right.expValSpace env)
+    lhs.constantPropagation = \env -> constAnd (@left.constantPropagation env) (@right.constantPropagation env)
   | Or
-    lhs.expValSpace = \env -> constOr (@left.expValSpace env) (@right.expValSpace env)
+    lhs.constantPropagation = \env -> constOr (@left.constantPropagation env) (@right.constantPropagation env)
   | Not
-    lhs.expValSpace = \env -> cBB not (@val.expValSpace env)
+    lhs.constantPropagation = \env -> cBB not (@val.constantPropagation env)

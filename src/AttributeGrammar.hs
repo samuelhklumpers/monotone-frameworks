@@ -97,22 +97,22 @@ sem_BExpr (Not _val) =
 -- semantic domain
 type T_BExpr = ( ( ConstEnv -> Maybe ConstLat ),( Set String ),Int,String,BExpr)
 data Inh_BExpr = Inh_BExpr {}
-data Syn_BExpr = Syn_BExpr {expValSpace_Syn_BExpr :: ( ConstEnv -> Maybe ConstLat ),freeVars_Syn_BExpr :: ( Set String ),precedence_Syn_BExpr :: Int,pretty_Syn_BExpr :: String,self_Syn_BExpr :: BExpr}
+data Syn_BExpr = Syn_BExpr {constantPropagation_Syn_BExpr :: ( ConstEnv -> Maybe ConstLat ),freeVars_Syn_BExpr :: ( Set String ),precedence_Syn_BExpr :: Int,pretty_Syn_BExpr :: String,self_Syn_BExpr :: BExpr}
 wrap_BExpr :: T_BExpr ->
               Inh_BExpr ->
               Syn_BExpr
 wrap_BExpr sem (Inh_BExpr) =
-    (let ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself) = sem
-     in  (Syn_BExpr _lhsOexpValSpace _lhsOfreeVars _lhsOprecedence _lhsOpretty _lhsOself))
+    (let ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself) = sem
+     in  (Syn_BExpr _lhsOconstantPropagation _lhsOfreeVars _lhsOprecedence _lhsOpretty _lhsOself))
 sem_BExpr_BConst :: Bool ->
                     T_BExpr
 sem_BExpr_BConst val_ =
-    (let _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+    (let _lhsOconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _lhsOpretty :: String
          _lhsOprecedence :: Int
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: BExpr
-         _lhsOexpValSpace =
+         _lhsOconstantPropagation =
              ({-# LINE 68 "ConstantProp.ag" #-}
               \_ -> Just $ CB val_
               {-# LINE 119 "AttributeGrammar.hs" #-}
@@ -136,16 +136,16 @@ sem_BExpr_BConst val_ =
              BConst val_
          _lhsOself =
              _self
-     in  ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
+     in  ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
 sem_BExpr_BVar :: String ->
                   T_BExpr
 sem_BExpr_BVar name_ =
-    (let _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+    (let _lhsOconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _lhsOpretty :: String
          _lhsOprecedence :: Int
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: BExpr
-         _lhsOexpValSpace =
+         _lhsOconstantPropagation =
              ({-# LINE 70 "ConstantProp.ag" #-}
               getConst name_
               {-# LINE 152 "AttributeGrammar.hs" #-}
@@ -169,29 +169,29 @@ sem_BExpr_BVar name_ =
              BVar name_
          _lhsOself =
              _self
-     in  ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
+     in  ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
 sem_BExpr_LessThan :: T_IExpr ->
                       T_IExpr ->
                       T_BExpr
 sem_BExpr_LessThan left_ right_ =
-    (let _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+    (let _lhsOconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _lhsOpretty :: String
          _lhsOprecedence :: Int
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: BExpr
-         _leftIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _leftIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _leftIfreeVars :: ( Set String )
          _leftIprecedence :: Int
          _leftIpretty :: String
          _leftIself :: IExpr
-         _rightIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _rightIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _rightIfreeVars :: ( Set String )
          _rightIprecedence :: Int
          _rightIpretty :: String
          _rightIself :: IExpr
-         _lhsOexpValSpace =
+         _lhsOconstantPropagation =
              ({-# LINE 72 "ConstantProp.ag" #-}
-              \env -> cIIB (<) (_leftIexpValSpace env) (_rightIexpValSpace env)
+              \env -> cIIB (<) (_leftIconstantPropagation env) (_rightIconstantPropagation env)
               {-# LINE 196 "AttributeGrammar.hs" #-}
               )
          _lhsOpretty =
@@ -213,33 +213,33 @@ sem_BExpr_LessThan left_ right_ =
              LessThan _leftIself _rightIself
          _lhsOself =
              _self
-         ( _leftIexpValSpace,_leftIfreeVars,_leftIprecedence,_leftIpretty,_leftIself) =
+         ( _leftIconstantPropagation,_leftIfreeVars,_leftIprecedence,_leftIpretty,_leftIself) =
              left_
-         ( _rightIexpValSpace,_rightIfreeVars,_rightIprecedence,_rightIpretty,_rightIself) =
+         ( _rightIconstantPropagation,_rightIfreeVars,_rightIprecedence,_rightIpretty,_rightIself) =
              right_
-     in  ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
+     in  ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
 sem_BExpr_GreaterThan :: T_IExpr ->
                          T_IExpr ->
                          T_BExpr
 sem_BExpr_GreaterThan left_ right_ =
-    (let _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+    (let _lhsOconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _lhsOpretty :: String
          _lhsOprecedence :: Int
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: BExpr
-         _leftIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _leftIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _leftIfreeVars :: ( Set String )
          _leftIprecedence :: Int
          _leftIpretty :: String
          _leftIself :: IExpr
-         _rightIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _rightIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _rightIfreeVars :: ( Set String )
          _rightIprecedence :: Int
          _rightIpretty :: String
          _rightIself :: IExpr
-         _lhsOexpValSpace =
+         _lhsOconstantPropagation =
              ({-# LINE 74 "ConstantProp.ag" #-}
-              \env -> cIIB (>) (_leftIexpValSpace env) (_rightIexpValSpace env)
+              \env -> cIIB (>) (_leftIconstantPropagation env) (_rightIconstantPropagation env)
               {-# LINE 244 "AttributeGrammar.hs" #-}
               )
          _lhsOpretty =
@@ -261,33 +261,33 @@ sem_BExpr_GreaterThan left_ right_ =
              GreaterThan _leftIself _rightIself
          _lhsOself =
              _self
-         ( _leftIexpValSpace,_leftIfreeVars,_leftIprecedence,_leftIpretty,_leftIself) =
+         ( _leftIconstantPropagation,_leftIfreeVars,_leftIprecedence,_leftIpretty,_leftIself) =
              left_
-         ( _rightIexpValSpace,_rightIfreeVars,_rightIprecedence,_rightIpretty,_rightIself) =
+         ( _rightIconstantPropagation,_rightIfreeVars,_rightIprecedence,_rightIpretty,_rightIself) =
              right_
-     in  ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
+     in  ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
 sem_BExpr_LessEqual :: T_IExpr ->
                        T_IExpr ->
                        T_BExpr
 sem_BExpr_LessEqual left_ right_ =
-    (let _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+    (let _lhsOconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _lhsOpretty :: String
          _lhsOprecedence :: Int
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: BExpr
-         _leftIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _leftIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _leftIfreeVars :: ( Set String )
          _leftIprecedence :: Int
          _leftIpretty :: String
          _leftIself :: IExpr
-         _rightIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _rightIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _rightIfreeVars :: ( Set String )
          _rightIprecedence :: Int
          _rightIpretty :: String
          _rightIself :: IExpr
-         _lhsOexpValSpace =
+         _lhsOconstantPropagation =
              ({-# LINE 76 "ConstantProp.ag" #-}
-              \env -> cIIB (<=) (_leftIexpValSpace env) (_rightIexpValSpace env)
+              \env -> cIIB (<=) (_leftIconstantPropagation env) (_rightIconstantPropagation env)
               {-# LINE 292 "AttributeGrammar.hs" #-}
               )
          _lhsOpretty =
@@ -309,33 +309,33 @@ sem_BExpr_LessEqual left_ right_ =
              LessEqual _leftIself _rightIself
          _lhsOself =
              _self
-         ( _leftIexpValSpace,_leftIfreeVars,_leftIprecedence,_leftIpretty,_leftIself) =
+         ( _leftIconstantPropagation,_leftIfreeVars,_leftIprecedence,_leftIpretty,_leftIself) =
              left_
-         ( _rightIexpValSpace,_rightIfreeVars,_rightIprecedence,_rightIpretty,_rightIself) =
+         ( _rightIconstantPropagation,_rightIfreeVars,_rightIprecedence,_rightIpretty,_rightIself) =
              right_
-     in  ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
+     in  ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
 sem_BExpr_GreaterEqual :: T_IExpr ->
                           T_IExpr ->
                           T_BExpr
 sem_BExpr_GreaterEqual left_ right_ =
-    (let _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+    (let _lhsOconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _lhsOpretty :: String
          _lhsOprecedence :: Int
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: BExpr
-         _leftIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _leftIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _leftIfreeVars :: ( Set String )
          _leftIprecedence :: Int
          _leftIpretty :: String
          _leftIself :: IExpr
-         _rightIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _rightIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _rightIfreeVars :: ( Set String )
          _rightIprecedence :: Int
          _rightIpretty :: String
          _rightIself :: IExpr
-         _lhsOexpValSpace =
+         _lhsOconstantPropagation =
              ({-# LINE 78 "ConstantProp.ag" #-}
-              \env -> cIIB (>=) (_leftIexpValSpace env) (_rightIexpValSpace env)
+              \env -> cIIB (>=) (_leftIconstantPropagation env) (_rightIconstantPropagation env)
               {-# LINE 340 "AttributeGrammar.hs" #-}
               )
          _lhsOpretty =
@@ -357,33 +357,33 @@ sem_BExpr_GreaterEqual left_ right_ =
              GreaterEqual _leftIself _rightIself
          _lhsOself =
              _self
-         ( _leftIexpValSpace,_leftIfreeVars,_leftIprecedence,_leftIpretty,_leftIself) =
+         ( _leftIconstantPropagation,_leftIfreeVars,_leftIprecedence,_leftIpretty,_leftIself) =
              left_
-         ( _rightIexpValSpace,_rightIfreeVars,_rightIprecedence,_rightIpretty,_rightIself) =
+         ( _rightIconstantPropagation,_rightIfreeVars,_rightIprecedence,_rightIpretty,_rightIself) =
              right_
-     in  ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
+     in  ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
 sem_BExpr_IEqual :: T_IExpr ->
                     T_IExpr ->
                     T_BExpr
 sem_BExpr_IEqual left_ right_ =
-    (let _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+    (let _lhsOconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _lhsOpretty :: String
          _lhsOprecedence :: Int
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: BExpr
-         _leftIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _leftIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _leftIfreeVars :: ( Set String )
          _leftIprecedence :: Int
          _leftIpretty :: String
          _leftIself :: IExpr
-         _rightIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _rightIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _rightIfreeVars :: ( Set String )
          _rightIprecedence :: Int
          _rightIpretty :: String
          _rightIself :: IExpr
-         _lhsOexpValSpace =
+         _lhsOconstantPropagation =
              ({-# LINE 80 "ConstantProp.ag" #-}
-              \env -> cIIB (==) (_leftIexpValSpace env) (_rightIexpValSpace env)
+              \env -> cIIB (==) (_leftIconstantPropagation env) (_rightIconstantPropagation env)
               {-# LINE 388 "AttributeGrammar.hs" #-}
               )
          _lhsOpretty =
@@ -405,33 +405,33 @@ sem_BExpr_IEqual left_ right_ =
              IEqual _leftIself _rightIself
          _lhsOself =
              _self
-         ( _leftIexpValSpace,_leftIfreeVars,_leftIprecedence,_leftIpretty,_leftIself) =
+         ( _leftIconstantPropagation,_leftIfreeVars,_leftIprecedence,_leftIpretty,_leftIself) =
              left_
-         ( _rightIexpValSpace,_rightIfreeVars,_rightIprecedence,_rightIpretty,_rightIself) =
+         ( _rightIconstantPropagation,_rightIfreeVars,_rightIprecedence,_rightIpretty,_rightIself) =
              right_
-     in  ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
+     in  ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
 sem_BExpr_BEqual :: T_BExpr ->
                     T_BExpr ->
                     T_BExpr
 sem_BExpr_BEqual left_ right_ =
-    (let _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+    (let _lhsOconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _lhsOpretty :: String
          _lhsOprecedence :: Int
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: BExpr
-         _leftIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _leftIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _leftIfreeVars :: ( Set String )
          _leftIprecedence :: Int
          _leftIpretty :: String
          _leftIself :: BExpr
-         _rightIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _rightIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _rightIfreeVars :: ( Set String )
          _rightIprecedence :: Int
          _rightIpretty :: String
          _rightIself :: BExpr
-         _lhsOexpValSpace =
+         _lhsOconstantPropagation =
              ({-# LINE 82 "ConstantProp.ag" #-}
-              \env -> cBBB (==) (_leftIexpValSpace env) (_rightIexpValSpace env)
+              \env -> cBBB (==) (_leftIconstantPropagation env) (_rightIconstantPropagation env)
               {-# LINE 436 "AttributeGrammar.hs" #-}
               )
          _lhsOpretty =
@@ -453,33 +453,33 @@ sem_BExpr_BEqual left_ right_ =
              BEqual _leftIself _rightIself
          _lhsOself =
              _self
-         ( _leftIexpValSpace,_leftIfreeVars,_leftIprecedence,_leftIpretty,_leftIself) =
+         ( _leftIconstantPropagation,_leftIfreeVars,_leftIprecedence,_leftIpretty,_leftIself) =
              left_
-         ( _rightIexpValSpace,_rightIfreeVars,_rightIprecedence,_rightIpretty,_rightIself) =
+         ( _rightIconstantPropagation,_rightIfreeVars,_rightIprecedence,_rightIpretty,_rightIself) =
              right_
-     in  ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
+     in  ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
 sem_BExpr_And :: T_BExpr ->
                  T_BExpr ->
                  T_BExpr
 sem_BExpr_And left_ right_ =
-    (let _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+    (let _lhsOconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _lhsOpretty :: String
          _lhsOprecedence :: Int
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: BExpr
-         _leftIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _leftIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _leftIfreeVars :: ( Set String )
          _leftIprecedence :: Int
          _leftIpretty :: String
          _leftIself :: BExpr
-         _rightIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _rightIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _rightIfreeVars :: ( Set String )
          _rightIprecedence :: Int
          _rightIpretty :: String
          _rightIself :: BExpr
-         _lhsOexpValSpace =
+         _lhsOconstantPropagation =
              ({-# LINE 84 "ConstantProp.ag" #-}
-              \env -> constAnd (_leftIexpValSpace env) (_rightIexpValSpace env)
+              \env -> constAnd (_leftIconstantPropagation env) (_rightIconstantPropagation env)
               {-# LINE 484 "AttributeGrammar.hs" #-}
               )
          _lhsOpretty =
@@ -501,33 +501,33 @@ sem_BExpr_And left_ right_ =
              And _leftIself _rightIself
          _lhsOself =
              _self
-         ( _leftIexpValSpace,_leftIfreeVars,_leftIprecedence,_leftIpretty,_leftIself) =
+         ( _leftIconstantPropagation,_leftIfreeVars,_leftIprecedence,_leftIpretty,_leftIself) =
              left_
-         ( _rightIexpValSpace,_rightIfreeVars,_rightIprecedence,_rightIpretty,_rightIself) =
+         ( _rightIconstantPropagation,_rightIfreeVars,_rightIprecedence,_rightIpretty,_rightIself) =
              right_
-     in  ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
+     in  ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
 sem_BExpr_Or :: T_BExpr ->
                 T_BExpr ->
                 T_BExpr
 sem_BExpr_Or left_ right_ =
-    (let _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+    (let _lhsOconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _lhsOpretty :: String
          _lhsOprecedence :: Int
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: BExpr
-         _leftIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _leftIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _leftIfreeVars :: ( Set String )
          _leftIprecedence :: Int
          _leftIpretty :: String
          _leftIself :: BExpr
-         _rightIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _rightIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _rightIfreeVars :: ( Set String )
          _rightIprecedence :: Int
          _rightIpretty :: String
          _rightIself :: BExpr
-         _lhsOexpValSpace =
+         _lhsOconstantPropagation =
              ({-# LINE 86 "ConstantProp.ag" #-}
-              \env -> constOr (_leftIexpValSpace env) (_rightIexpValSpace env)
+              \env -> constOr (_leftIconstantPropagation env) (_rightIconstantPropagation env)
               {-# LINE 532 "AttributeGrammar.hs" #-}
               )
          _lhsOpretty =
@@ -549,27 +549,27 @@ sem_BExpr_Or left_ right_ =
              Or _leftIself _rightIself
          _lhsOself =
              _self
-         ( _leftIexpValSpace,_leftIfreeVars,_leftIprecedence,_leftIpretty,_leftIself) =
+         ( _leftIconstantPropagation,_leftIfreeVars,_leftIprecedence,_leftIpretty,_leftIself) =
              left_
-         ( _rightIexpValSpace,_rightIfreeVars,_rightIprecedence,_rightIpretty,_rightIself) =
+         ( _rightIconstantPropagation,_rightIfreeVars,_rightIprecedence,_rightIpretty,_rightIself) =
              right_
-     in  ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
+     in  ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
 sem_BExpr_Not :: T_BExpr ->
                  T_BExpr
 sem_BExpr_Not val_ =
-    (let _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+    (let _lhsOconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _lhsOpretty :: String
          _lhsOprecedence :: Int
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: BExpr
-         _valIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _valIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _valIfreeVars :: ( Set String )
          _valIprecedence :: Int
          _valIpretty :: String
          _valIself :: BExpr
-         _lhsOexpValSpace =
+         _lhsOconstantPropagation =
              ({-# LINE 88 "ConstantProp.ag" #-}
-              \env -> cBB not (_valIexpValSpace env)
+              \env -> cBB not (_valIconstantPropagation env)
               {-# LINE 574 "AttributeGrammar.hs" #-}
               )
          _lhsOpretty =
@@ -591,9 +591,9 @@ sem_BExpr_Not val_ =
              Not _valIself
          _lhsOself =
              _self
-         ( _valIexpValSpace,_valIfreeVars,_valIprecedence,_valIpretty,_valIself) =
+         ( _valIconstantPropagation,_valIfreeVars,_valIprecedence,_valIpretty,_valIself) =
              val_
-     in  ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
+     in  ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
 -- Expr --------------------------------------------------------
 data Expr = B (BExpr)
           | I (IExpr)
@@ -608,21 +608,21 @@ sem_Expr (I _expr) =
 -- semantic domain
 type T_Expr = ( ( ConstEnv -> Maybe ConstLat ),( Set String ),String,Expr)
 data Inh_Expr = Inh_Expr {}
-data Syn_Expr = Syn_Expr {expValSpace_Syn_Expr :: ( ConstEnv -> Maybe ConstLat ),freeVars_Syn_Expr :: ( Set String ),pretty_Syn_Expr :: String,self_Syn_Expr :: Expr}
+data Syn_Expr = Syn_Expr {constantPropagation_Syn_Expr :: ( ConstEnv -> Maybe ConstLat ),freeVars_Syn_Expr :: ( Set String ),pretty_Syn_Expr :: String,self_Syn_Expr :: Expr}
 wrap_Expr :: T_Expr ->
              Inh_Expr ->
              Syn_Expr
 wrap_Expr sem (Inh_Expr) =
-    (let ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOpretty,_lhsOself) = sem
-     in  (Syn_Expr _lhsOexpValSpace _lhsOfreeVars _lhsOpretty _lhsOself))
+    (let ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOpretty,_lhsOself) = sem
+     in  (Syn_Expr _lhsOconstantPropagation _lhsOfreeVars _lhsOpretty _lhsOself))
 sem_Expr_B :: T_BExpr ->
               T_Expr
 sem_Expr_B expr_ =
     (let _lhsOpretty :: String
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: Expr
-         _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
-         _exprIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _lhsOconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
+         _exprIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _exprIfreeVars :: ( Set String )
          _exprIprecedence :: Int
          _exprIpretty :: String
@@ -641,22 +641,22 @@ sem_Expr_B expr_ =
              B _exprIself
          _lhsOself =
              _self
-         _lhsOexpValSpace =
+         _lhsOconstantPropagation =
              ({-# LINE 6 "ConstantProp.ag" #-}
-              _exprIexpValSpace
+              _exprIconstantPropagation
               {-# LINE 648 "AttributeGrammar.hs" #-}
               )
-         ( _exprIexpValSpace,_exprIfreeVars,_exprIprecedence,_exprIpretty,_exprIself) =
+         ( _exprIconstantPropagation,_exprIfreeVars,_exprIprecedence,_exprIpretty,_exprIself) =
              expr_
-     in  ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOpretty,_lhsOself))
+     in  ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOpretty,_lhsOself))
 sem_Expr_I :: T_IExpr ->
               T_Expr
 sem_Expr_I expr_ =
     (let _lhsOpretty :: String
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: Expr
-         _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
-         _exprIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _lhsOconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
+         _exprIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _exprIfreeVars :: ( Set String )
          _exprIprecedence :: Int
          _exprIpretty :: String
@@ -675,14 +675,14 @@ sem_Expr_I expr_ =
              I _exprIself
          _lhsOself =
              _self
-         _lhsOexpValSpace =
+         _lhsOconstantPropagation =
              ({-# LINE 6 "ConstantProp.ag" #-}
-              _exprIexpValSpace
+              _exprIconstantPropagation
               {-# LINE 682 "AttributeGrammar.hs" #-}
               )
-         ( _exprIexpValSpace,_exprIfreeVars,_exprIprecedence,_exprIpretty,_exprIself) =
+         ( _exprIconstantPropagation,_exprIfreeVars,_exprIprecedence,_exprIpretty,_exprIself) =
              expr_
-     in  ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOpretty,_lhsOself))
+     in  ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOpretty,_lhsOself))
 -- Exprs -------------------------------------------------------
 type Exprs = [Expr]
 -- cata
@@ -693,26 +693,26 @@ sem_Exprs list =
 -- semantic domain
 type T_Exprs = ( ( [ConstEnv -> Maybe ConstLat] ),( [Set String] ),String,Exprs)
 data Inh_Exprs = Inh_Exprs {}
-data Syn_Exprs = Syn_Exprs {expValSpace_Syn_Exprs :: ( [ConstEnv -> Maybe ConstLat] ),freeVars_Syn_Exprs :: ( [Set String] ),pretty_Syn_Exprs :: String,self_Syn_Exprs :: Exprs}
+data Syn_Exprs = Syn_Exprs {constantPropagation_Syn_Exprs :: ( [ConstEnv -> Maybe ConstLat] ),freeVars_Syn_Exprs :: ( [Set String] ),pretty_Syn_Exprs :: String,self_Syn_Exprs :: Exprs}
 wrap_Exprs :: T_Exprs ->
               Inh_Exprs ->
               Syn_Exprs
 wrap_Exprs sem (Inh_Exprs) =
-    (let ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOpretty,_lhsOself) = sem
-     in  (Syn_Exprs _lhsOexpValSpace _lhsOfreeVars _lhsOpretty _lhsOself))
+    (let ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOpretty,_lhsOself) = sem
+     in  (Syn_Exprs _lhsOconstantPropagation _lhsOfreeVars _lhsOpretty _lhsOself))
 sem_Exprs_Cons :: T_Expr ->
                   T_Exprs ->
                   T_Exprs
 sem_Exprs_Cons hd_ tl_ =
     (let _lhsOpretty :: String
-         _lhsOexpValSpace :: ( [ConstEnv -> Maybe ConstLat] )
+         _lhsOconstantPropagation :: ( [ConstEnv -> Maybe ConstLat] )
          _lhsOfreeVars :: ( [Set String] )
          _lhsOself :: Exprs
-         _hdIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _hdIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _hdIfreeVars :: ( Set String )
          _hdIpretty :: String
          _hdIself :: Expr
-         _tlIexpValSpace :: ( [ConstEnv -> Maybe ConstLat] )
+         _tlIconstantPropagation :: ( [ConstEnv -> Maybe ConstLat] )
          _tlIfreeVars :: ( [Set String] )
          _tlIpretty :: String
          _tlIself :: Exprs
@@ -721,9 +721,9 @@ sem_Exprs_Cons hd_ tl_ =
               _hdIpretty ++ ", " ++ _tlIpretty
               {-# LINE 723 "AttributeGrammar.hs" #-}
               )
-         _lhsOexpValSpace =
+         _lhsOconstantPropagation =
              ({-# LINE 7 "ConstantProp.ag" #-}
-              _hdIexpValSpace : _tlIexpValSpace
+              _hdIconstantPropagation : _tlIconstantPropagation
               {-# LINE 728 "AttributeGrammar.hs" #-}
               )
          _lhsOfreeVars =
@@ -735,15 +735,15 @@ sem_Exprs_Cons hd_ tl_ =
              (:) _hdIself _tlIself
          _lhsOself =
              _self
-         ( _hdIexpValSpace,_hdIfreeVars,_hdIpretty,_hdIself) =
+         ( _hdIconstantPropagation,_hdIfreeVars,_hdIpretty,_hdIself) =
              hd_
-         ( _tlIexpValSpace,_tlIfreeVars,_tlIpretty,_tlIself) =
+         ( _tlIconstantPropagation,_tlIfreeVars,_tlIpretty,_tlIself) =
              tl_
-     in  ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOpretty,_lhsOself))
+     in  ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOpretty,_lhsOself))
 sem_Exprs_Nil :: T_Exprs
 sem_Exprs_Nil =
     (let _lhsOpretty :: String
-         _lhsOexpValSpace :: ( [ConstEnv -> Maybe ConstLat] )
+         _lhsOconstantPropagation :: ( [ConstEnv -> Maybe ConstLat] )
          _lhsOfreeVars :: ( [Set String] )
          _lhsOself :: Exprs
          _lhsOpretty =
@@ -751,7 +751,7 @@ sem_Exprs_Nil =
               ""
               {-# LINE 753 "AttributeGrammar.hs" #-}
               )
-         _lhsOexpValSpace =
+         _lhsOconstantPropagation =
              ({-# LINE 7 "ConstantProp.ag" #-}
               []
               {-# LINE 758 "AttributeGrammar.hs" #-}
@@ -765,7 +765,7 @@ sem_Exprs_Nil =
              []
          _lhsOself =
              _self
-     in  ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOpretty,_lhsOself))
+     in  ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOpretty,_lhsOself))
 -- IExpr -------------------------------------------------------
 data IExpr = IConst (Int)
            | Var (String)
@@ -795,22 +795,22 @@ sem_IExpr (Deref _ptr) =
 -- semantic domain
 type T_IExpr = ( ( ConstEnv -> Maybe ConstLat ),( Set String ),Int,String,IExpr)
 data Inh_IExpr = Inh_IExpr {}
-data Syn_IExpr = Syn_IExpr {expValSpace_Syn_IExpr :: ( ConstEnv -> Maybe ConstLat ),freeVars_Syn_IExpr :: ( Set String ),precedence_Syn_IExpr :: Int,pretty_Syn_IExpr :: String,self_Syn_IExpr :: IExpr}
+data Syn_IExpr = Syn_IExpr {constantPropagation_Syn_IExpr :: ( ConstEnv -> Maybe ConstLat ),freeVars_Syn_IExpr :: ( Set String ),precedence_Syn_IExpr :: Int,pretty_Syn_IExpr :: String,self_Syn_IExpr :: IExpr}
 wrap_IExpr :: T_IExpr ->
               Inh_IExpr ->
               Syn_IExpr
 wrap_IExpr sem (Inh_IExpr) =
-    (let ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself) = sem
-     in  (Syn_IExpr _lhsOexpValSpace _lhsOfreeVars _lhsOprecedence _lhsOpretty _lhsOself))
+    (let ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself) = sem
+     in  (Syn_IExpr _lhsOconstantPropagation _lhsOfreeVars _lhsOprecedence _lhsOpretty _lhsOself))
 sem_IExpr_IConst :: Int ->
                     T_IExpr
 sem_IExpr_IConst val_ =
-    (let _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+    (let _lhsOconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _lhsOpretty :: String
          _lhsOprecedence :: Int
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: IExpr
-         _lhsOexpValSpace =
+         _lhsOconstantPropagation =
              ({-# LINE 53 "ConstantProp.ag" #-}
               \_ -> Just $ CI val_
               {-# LINE 817 "AttributeGrammar.hs" #-}
@@ -834,16 +834,16 @@ sem_IExpr_IConst val_ =
              IConst val_
          _lhsOself =
              _self
-     in  ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
+     in  ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
 sem_IExpr_Var :: String ->
                  T_IExpr
 sem_IExpr_Var name_ =
-    (let _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+    (let _lhsOconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _lhsOpretty :: String
          _lhsOprecedence :: Int
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: IExpr
-         _lhsOexpValSpace =
+         _lhsOconstantPropagation =
              ({-# LINE 55 "ConstantProp.ag" #-}
               getConst name_
               {-# LINE 850 "AttributeGrammar.hs" #-}
@@ -867,29 +867,29 @@ sem_IExpr_Var name_ =
              Var name_
          _lhsOself =
              _self
-     in  ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
+     in  ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
 sem_IExpr_Plus :: T_IExpr ->
                   T_IExpr ->
                   T_IExpr
 sem_IExpr_Plus left_ right_ =
-    (let _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+    (let _lhsOconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _lhsOpretty :: String
          _lhsOprecedence :: Int
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: IExpr
-         _leftIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _leftIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _leftIfreeVars :: ( Set String )
          _leftIprecedence :: Int
          _leftIpretty :: String
          _leftIself :: IExpr
-         _rightIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _rightIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _rightIfreeVars :: ( Set String )
          _rightIprecedence :: Int
          _rightIpretty :: String
          _rightIself :: IExpr
-         _lhsOexpValSpace =
+         _lhsOconstantPropagation =
              ({-# LINE 57 "ConstantProp.ag" #-}
-              \env -> cIII (+) (_leftIexpValSpace env) (_rightIexpValSpace env)
+              \env -> cIII (+) (_leftIconstantPropagation env) (_rightIconstantPropagation env)
               {-# LINE 894 "AttributeGrammar.hs" #-}
               )
          _lhsOpretty =
@@ -911,33 +911,33 @@ sem_IExpr_Plus left_ right_ =
              Plus _leftIself _rightIself
          _lhsOself =
              _self
-         ( _leftIexpValSpace,_leftIfreeVars,_leftIprecedence,_leftIpretty,_leftIself) =
+         ( _leftIconstantPropagation,_leftIfreeVars,_leftIprecedence,_leftIpretty,_leftIself) =
              left_
-         ( _rightIexpValSpace,_rightIfreeVars,_rightIprecedence,_rightIpretty,_rightIself) =
+         ( _rightIconstantPropagation,_rightIfreeVars,_rightIprecedence,_rightIpretty,_rightIself) =
              right_
-     in  ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
+     in  ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
 sem_IExpr_Minus :: T_IExpr ->
                    T_IExpr ->
                    T_IExpr
 sem_IExpr_Minus left_ right_ =
-    (let _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+    (let _lhsOconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _lhsOpretty :: String
          _lhsOprecedence :: Int
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: IExpr
-         _leftIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _leftIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _leftIfreeVars :: ( Set String )
          _leftIprecedence :: Int
          _leftIpretty :: String
          _leftIself :: IExpr
-         _rightIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _rightIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _rightIfreeVars :: ( Set String )
          _rightIprecedence :: Int
          _rightIpretty :: String
          _rightIself :: IExpr
-         _lhsOexpValSpace =
+         _lhsOconstantPropagation =
              ({-# LINE 59 "ConstantProp.ag" #-}
-              \env -> cIII (-) (_leftIexpValSpace env) (_rightIexpValSpace env)
+              \env -> cIII (-) (_leftIconstantPropagation env) (_rightIconstantPropagation env)
               {-# LINE 942 "AttributeGrammar.hs" #-}
               )
          _lhsOpretty =
@@ -959,33 +959,33 @@ sem_IExpr_Minus left_ right_ =
              Minus _leftIself _rightIself
          _lhsOself =
              _self
-         ( _leftIexpValSpace,_leftIfreeVars,_leftIprecedence,_leftIpretty,_leftIself) =
+         ( _leftIconstantPropagation,_leftIfreeVars,_leftIprecedence,_leftIpretty,_leftIself) =
              left_
-         ( _rightIexpValSpace,_rightIfreeVars,_rightIprecedence,_rightIpretty,_rightIself) =
+         ( _rightIconstantPropagation,_rightIfreeVars,_rightIprecedence,_rightIpretty,_rightIself) =
              right_
-     in  ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
+     in  ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
 sem_IExpr_Times :: T_IExpr ->
                    T_IExpr ->
                    T_IExpr
 sem_IExpr_Times left_ right_ =
-    (let _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+    (let _lhsOconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _lhsOpretty :: String
          _lhsOprecedence :: Int
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: IExpr
-         _leftIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _leftIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _leftIfreeVars :: ( Set String )
          _leftIprecedence :: Int
          _leftIpretty :: String
          _leftIself :: IExpr
-         _rightIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _rightIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _rightIfreeVars :: ( Set String )
          _rightIprecedence :: Int
          _rightIpretty :: String
          _rightIself :: IExpr
-         _lhsOexpValSpace =
+         _lhsOconstantPropagation =
              ({-# LINE 61 "ConstantProp.ag" #-}
-              \env -> constMul (_leftIexpValSpace env) (_rightIexpValSpace env)
+              \env -> constMul (_leftIconstantPropagation env) (_rightIconstantPropagation env)
               {-# LINE 990 "AttributeGrammar.hs" #-}
               )
          _lhsOpretty =
@@ -1007,33 +1007,33 @@ sem_IExpr_Times left_ right_ =
              Times _leftIself _rightIself
          _lhsOself =
              _self
-         ( _leftIexpValSpace,_leftIfreeVars,_leftIprecedence,_leftIpretty,_leftIself) =
+         ( _leftIconstantPropagation,_leftIfreeVars,_leftIprecedence,_leftIpretty,_leftIself) =
              left_
-         ( _rightIexpValSpace,_rightIfreeVars,_rightIprecedence,_rightIpretty,_rightIself) =
+         ( _rightIconstantPropagation,_rightIfreeVars,_rightIprecedence,_rightIpretty,_rightIself) =
              right_
-     in  ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
+     in  ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
 sem_IExpr_Divide :: T_IExpr ->
                     T_IExpr ->
                     T_IExpr
 sem_IExpr_Divide left_ right_ =
-    (let _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+    (let _lhsOconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _lhsOpretty :: String
          _lhsOprecedence :: Int
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: IExpr
-         _leftIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _leftIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _leftIfreeVars :: ( Set String )
          _leftIprecedence :: Int
          _leftIpretty :: String
          _leftIself :: IExpr
-         _rightIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _rightIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _rightIfreeVars :: ( Set String )
          _rightIprecedence :: Int
          _rightIpretty :: String
          _rightIself :: IExpr
-         _lhsOexpValSpace =
+         _lhsOconstantPropagation =
              ({-# LINE 63 "ConstantProp.ag" #-}
-              \env -> cIII div (_leftIexpValSpace env) (_rightIexpValSpace env)
+              \env -> cIII div (_leftIconstantPropagation env) (_rightIconstantPropagation env)
               {-# LINE 1038 "AttributeGrammar.hs" #-}
               )
          _lhsOpretty =
@@ -1055,11 +1055,11 @@ sem_IExpr_Divide left_ right_ =
              Divide _leftIself _rightIself
          _lhsOself =
              _self
-         ( _leftIexpValSpace,_leftIfreeVars,_leftIprecedence,_leftIpretty,_leftIself) =
+         ( _leftIconstantPropagation,_leftIfreeVars,_leftIprecedence,_leftIpretty,_leftIself) =
              left_
-         ( _rightIexpValSpace,_rightIfreeVars,_rightIprecedence,_rightIpretty,_rightIself) =
+         ( _rightIconstantPropagation,_rightIfreeVars,_rightIprecedence,_rightIpretty,_rightIself) =
              right_
-     in  ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
+     in  ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
 sem_IExpr_Deref :: T_IExpr ->
                    T_IExpr
 sem_IExpr_Deref ptr_ =
@@ -1067,8 +1067,8 @@ sem_IExpr_Deref ptr_ =
          _lhsOprecedence :: Int
          _lhsOfreeVars :: ( Set String )
          _lhsOself :: IExpr
-         _lhsOexpValSpace :: ( ConstEnv -> Maybe ConstLat )
-         _ptrIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+         _lhsOconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
+         _ptrIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
          _ptrIfreeVars :: ( Set String )
          _ptrIprecedence :: Int
          _ptrIpretty :: String
@@ -1092,14 +1092,14 @@ sem_IExpr_Deref ptr_ =
              Deref _ptrIself
          _lhsOself =
              _self
-         _lhsOexpValSpace =
+         _lhsOconstantPropagation =
              ({-# LINE 6 "ConstantProp.ag" #-}
-              _ptrIexpValSpace
+              _ptrIconstantPropagation
               {-# LINE 1099 "AttributeGrammar.hs" #-}
               )
-         ( _ptrIexpValSpace,_ptrIfreeVars,_ptrIprecedence,_ptrIpretty,_ptrIself) =
+         ( _ptrIconstantPropagation,_ptrIfreeVars,_ptrIprecedence,_ptrIpretty,_ptrIself) =
              ptr_
-     in  ( _lhsOexpValSpace,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
+     in  ( _lhsOconstantPropagation,_lhsOfreeVars,_lhsOprecedence,_lhsOpretty,_lhsOself))
 -- Proc --------------------------------------------------------
 data Proc = Proc (String) (([String])) (String) (Stat)
           deriving ( Show)
@@ -1171,15 +1171,15 @@ sem_Proc' (Proc' _labelEntry _labelExit _name _inp _out _stat) =
     (sem_Proc'_Proc' _labelEntry _labelExit _name _inp _out (sem_Stat' _stat))
 -- semantic domain
 type T_Proc' = DStar ->
-               ( ( DifTrans ConstBranchLat ),( Set Int ),( Set Edge ),Int,( Set Inter ),( [String] ),Proc',( DifTrans (Set String) ),( DifTrans PtConstLat ))
+               ( ( DifTrans ConstBranchLat ),( DifTrans PtConstLat ),( Set Int ),( Set Edge ),Int,( Set Inter ),( [String] ),Proc',( DifTrans (Set String) ))
 data Inh_Proc' = Inh_Proc' {dStar_Inh_Proc' :: DStar}
-data Syn_Proc' = Syn_Proc' {constBranchT_Syn_Proc' :: ( DifTrans ConstBranchLat ),final_Syn_Proc' :: ( Set Int ),flow_Syn_Proc' :: ( Set Edge ),init_Syn_Proc' :: Int,interflow_Syn_Proc' :: ( Set Inter ),pretty_Syn_Proc' :: ( [String] ),self_Syn_Proc' :: Proc',strongLive_Syn_Proc' :: ( DifTrans (Set String) ),valSpace_Syn_Proc' :: ( DifTrans PtConstLat )}
+data Syn_Proc' = Syn_Proc' {constBranchT_Syn_Proc' :: ( DifTrans ConstBranchLat ),constantPropagation_Syn_Proc' :: ( DifTrans PtConstLat ),final_Syn_Proc' :: ( Set Int ),flow_Syn_Proc' :: ( Set Edge ),init_Syn_Proc' :: Int,interflow_Syn_Proc' :: ( Set Inter ),pretty_Syn_Proc' :: ( [String] ),self_Syn_Proc' :: Proc',strongLive_Syn_Proc' :: ( DifTrans (Set String) )}
 wrap_Proc' :: (T_Proc') ->
               (Inh_Proc') ->
               (Syn_Proc')
 wrap_Proc' sem (Inh_Proc' _lhsIdStar) =
-    (let ( _lhsOconstBranchT,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOpretty,_lhsOself,_lhsOstrongLive,_lhsOvalSpace) = sem _lhsIdStar
-     in  (Syn_Proc' _lhsOconstBranchT _lhsOfinal _lhsOflow _lhsOinit _lhsOinterflow _lhsOpretty _lhsOself _lhsOstrongLive _lhsOvalSpace))
+    (let ( _lhsOconstBranchT,_lhsOconstantPropagation,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOpretty,_lhsOself,_lhsOstrongLive) = sem _lhsIdStar
+     in  (Syn_Proc' _lhsOconstBranchT _lhsOconstantPropagation _lhsOfinal _lhsOflow _lhsOinit _lhsOinterflow _lhsOpretty _lhsOself _lhsOstrongLive))
 sem_Proc'_Proc' :: Int ->
                    Int ->
                    String ->
@@ -1191,7 +1191,7 @@ sem_Proc'_Proc' labelEntry_ labelExit_ name_ inp_ out_ stat_ =
     (\ _lhsIdStar ->
          (let _lhsOstrongLive :: ( DifTrans (Set String) )
               _lhsOconstBranchT :: ( DifTrans ConstBranchLat )
-              _lhsOvalSpace :: ( DifTrans PtConstLat )
+              _lhsOconstantPropagation :: ( DifTrans PtConstLat )
               _lhsOpretty :: ( [String] )
               _lhsOinit :: Int
               _lhsOfinal :: ( Set Int )
@@ -1203,6 +1203,7 @@ sem_Proc'_Proc' labelEntry_ labelExit_ name_ inp_ out_ stat_ =
               _lhsOself :: Proc'
               _statIbreakLabels :: ( Set Int )
               _statIconstBranchT :: ( DifTrans ConstBranchLat )
+              _statIconstantPropagation :: ( DifTrans PtConstLat )
               _statIfinal :: ( Set Int )
               _statIflow :: ( Set Edge )
               _statIinit :: Int
@@ -1212,7 +1213,6 @@ sem_Proc'_Proc' labelEntry_ labelExit_ name_ inp_ out_ stat_ =
               _statIpretty :: ( [String] )
               _statIself :: Stat'
               _statIstrongLive :: ( DifTrans (Set String) )
-              _statIvalSpace :: ( DifTrans PtConstLat )
               _lhsOstrongLive =
                   ({-# LINE 20 "StrongLive.ag" #-}
                    insertL labelEntry_ id $ insertL labelExit_ id _statIstrongLive
@@ -1223,9 +1223,9 @@ sem_Proc'_Proc' labelEntry_ labelExit_ name_ inp_ out_ stat_ =
                    insertL labelEntry_ id $ insertL labelExit_ id _statIconstBranchT
                    {-# LINE 1225 "AttributeGrammar.hs" #-}
                    )
-              _lhsOvalSpace =
+              _lhsOconstantPropagation =
                   ({-# LINE 21 "ConstantProp.ag" #-}
-                   insertL labelEntry_ id $ insertL labelExit_ id _statIvalSpace
+                   insertL labelEntry_ id $ insertL labelExit_ id _statIconstantPropagation
                    {-# LINE 1230 "AttributeGrammar.hs" #-}
                    )
               _lhsOpretty =
@@ -1274,9 +1274,9 @@ sem_Proc'_Proc' labelEntry_ labelExit_ name_ inp_ out_ stat_ =
                   Proc' labelEntry_ labelExit_ name_ inp_ out_ _statIself
               _lhsOself =
                   _self
-              ( _statIbreakLabels,_statIconstBranchT,_statIfinal,_statIflow,_statIinit,_statIinterflow,_statIisSingle,_statIisSkip,_statIpretty,_statIself,_statIstrongLive,_statIvalSpace) =
+              ( _statIbreakLabels,_statIconstBranchT,_statIconstantPropagation,_statIfinal,_statIflow,_statIinit,_statIinterflow,_statIisSingle,_statIisSkip,_statIpretty,_statIself,_statIstrongLive) =
                   stat_ _statOcontinueLabel _statOdStar _statOsuccessor
-          in  ( _lhsOconstBranchT,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOpretty,_lhsOself,_lhsOstrongLive,_lhsOvalSpace)))
+          in  ( _lhsOconstBranchT,_lhsOconstantPropagation,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOpretty,_lhsOself,_lhsOstrongLive)))
 -- Procs -------------------------------------------------------
 type Procs = [Proc]
 -- cata
@@ -1384,15 +1384,15 @@ sem_Procs' list =
     (Prelude.foldr sem_Procs'_Cons sem_Procs'_Nil (Prelude.map sem_Proc' list))
 -- semantic domain
 type T_Procs' = DStar ->
-                ( ( DifTrans ConstBranchLat ),( Set Edge ),( Set Inter ),( [String] ),Procs',( DifTrans (Set String) ),( DifTrans PtConstLat ))
+                ( ( DifTrans ConstBranchLat ),( DifTrans PtConstLat ),( Set Edge ),( Set Inter ),( [String] ),Procs',( DifTrans (Set String) ))
 data Inh_Procs' = Inh_Procs' {dStar_Inh_Procs' :: DStar}
-data Syn_Procs' = Syn_Procs' {constBranchT_Syn_Procs' :: ( DifTrans ConstBranchLat ),flow_Syn_Procs' :: ( Set Edge ),interflow_Syn_Procs' :: ( Set Inter ),pretty_Syn_Procs' :: ( [String] ),self_Syn_Procs' :: Procs',strongLive_Syn_Procs' :: ( DifTrans (Set String) ),valSpace_Syn_Procs' :: ( DifTrans PtConstLat )}
+data Syn_Procs' = Syn_Procs' {constBranchT_Syn_Procs' :: ( DifTrans ConstBranchLat ),constantPropagation_Syn_Procs' :: ( DifTrans PtConstLat ),flow_Syn_Procs' :: ( Set Edge ),interflow_Syn_Procs' :: ( Set Inter ),pretty_Syn_Procs' :: ( [String] ),self_Syn_Procs' :: Procs',strongLive_Syn_Procs' :: ( DifTrans (Set String) )}
 wrap_Procs' :: (T_Procs') ->
                (Inh_Procs') ->
                (Syn_Procs')
 wrap_Procs' sem (Inh_Procs' _lhsIdStar) =
-    (let ( _lhsOconstBranchT,_lhsOflow,_lhsOinterflow,_lhsOpretty,_lhsOself,_lhsOstrongLive,_lhsOvalSpace) = sem _lhsIdStar
-     in  (Syn_Procs' _lhsOconstBranchT _lhsOflow _lhsOinterflow _lhsOpretty _lhsOself _lhsOstrongLive _lhsOvalSpace))
+    (let ( _lhsOconstBranchT,_lhsOconstantPropagation,_lhsOflow,_lhsOinterflow,_lhsOpretty,_lhsOself,_lhsOstrongLive) = sem _lhsIdStar
+     in  (Syn_Procs' _lhsOconstBranchT _lhsOconstantPropagation _lhsOflow _lhsOinterflow _lhsOpretty _lhsOself _lhsOstrongLive))
 sem_Procs'_Cons :: (T_Proc') ->
                    (T_Procs') ->
                    (T_Procs')
@@ -1400,7 +1400,7 @@ sem_Procs'_Cons hd_ tl_ =
     (\ _lhsIdStar ->
          (let _lhsOstrongLive :: ( DifTrans (Set String) )
               _lhsOconstBranchT :: ( DifTrans ConstBranchLat )
-              _lhsOvalSpace :: ( DifTrans PtConstLat )
+              _lhsOconstantPropagation :: ( DifTrans PtConstLat )
               _lhsOpretty :: ( [String] )
               _lhsOflow :: ( Set Edge )
               _lhsOinterflow :: ( Set Inter )
@@ -1408,6 +1408,7 @@ sem_Procs'_Cons hd_ tl_ =
               _hdOdStar :: DStar
               _tlOdStar :: DStar
               _hdIconstBranchT :: ( DifTrans ConstBranchLat )
+              _hdIconstantPropagation :: ( DifTrans PtConstLat )
               _hdIfinal :: ( Set Int )
               _hdIflow :: ( Set Edge )
               _hdIinit :: Int
@@ -1415,14 +1416,13 @@ sem_Procs'_Cons hd_ tl_ =
               _hdIpretty :: ( [String] )
               _hdIself :: Proc'
               _hdIstrongLive :: ( DifTrans (Set String) )
-              _hdIvalSpace :: ( DifTrans PtConstLat )
               _tlIconstBranchT :: ( DifTrans ConstBranchLat )
+              _tlIconstantPropagation :: ( DifTrans PtConstLat )
               _tlIflow :: ( Set Edge )
               _tlIinterflow :: ( Set Inter )
               _tlIpretty :: ( [String] )
               _tlIself :: Procs'
               _tlIstrongLive :: ( DifTrans (Set String) )
-              _tlIvalSpace :: ( DifTrans PtConstLat )
               _lhsOstrongLive =
                   ({-# LINE 16 "StrongLive.ag" #-}
                    _hdIstrongLive <> _tlIstrongLive
@@ -1433,9 +1433,9 @@ sem_Procs'_Cons hd_ tl_ =
                    _hdIconstBranchT <> _tlIconstBranchT
                    {-# LINE 1435 "AttributeGrammar.hs" #-}
                    )
-              _lhsOvalSpace =
+              _lhsOconstantPropagation =
                   ({-# LINE 17 "ConstantProp.ag" #-}
-                   _hdIvalSpace <> _tlIvalSpace
+                   _hdIconstantPropagation <> _tlIconstantPropagation
                    {-# LINE 1440 "AttributeGrammar.hs" #-}
                    )
               _lhsOpretty =
@@ -1467,17 +1467,17 @@ sem_Procs'_Cons hd_ tl_ =
                    _lhsIdStar
                    {-# LINE 1469 "AttributeGrammar.hs" #-}
                    )
-              ( _hdIconstBranchT,_hdIfinal,_hdIflow,_hdIinit,_hdIinterflow,_hdIpretty,_hdIself,_hdIstrongLive,_hdIvalSpace) =
+              ( _hdIconstBranchT,_hdIconstantPropagation,_hdIfinal,_hdIflow,_hdIinit,_hdIinterflow,_hdIpretty,_hdIself,_hdIstrongLive) =
                   hd_ _hdOdStar
-              ( _tlIconstBranchT,_tlIflow,_tlIinterflow,_tlIpretty,_tlIself,_tlIstrongLive,_tlIvalSpace) =
+              ( _tlIconstBranchT,_tlIconstantPropagation,_tlIflow,_tlIinterflow,_tlIpretty,_tlIself,_tlIstrongLive) =
                   tl_ _tlOdStar
-          in  ( _lhsOconstBranchT,_lhsOflow,_lhsOinterflow,_lhsOpretty,_lhsOself,_lhsOstrongLive,_lhsOvalSpace)))
+          in  ( _lhsOconstBranchT,_lhsOconstantPropagation,_lhsOflow,_lhsOinterflow,_lhsOpretty,_lhsOself,_lhsOstrongLive)))
 sem_Procs'_Nil :: (T_Procs')
 sem_Procs'_Nil =
     (\ _lhsIdStar ->
          (let _lhsOstrongLive :: ( DifTrans (Set String) )
               _lhsOconstBranchT :: ( DifTrans ConstBranchLat )
-              _lhsOvalSpace :: ( DifTrans PtConstLat )
+              _lhsOconstantPropagation :: ( DifTrans PtConstLat )
               _lhsOpretty :: ( [String] )
               _lhsOflow :: ( Set Edge )
               _lhsOinterflow :: ( Set Inter )
@@ -1492,7 +1492,7 @@ sem_Procs'_Nil =
                    mempty
                    {-# LINE 1494 "AttributeGrammar.hs" #-}
                    )
-              _lhsOvalSpace =
+              _lhsOconstantPropagation =
                   ({-# LINE 15 "ConstantProp.ag" #-}
                    mempty
                    {-# LINE 1499 "AttributeGrammar.hs" #-}
@@ -1516,7 +1516,7 @@ sem_Procs'_Nil =
                   []
               _lhsOself =
                   _self
-          in  ( _lhsOconstBranchT,_lhsOflow,_lhsOinterflow,_lhsOpretty,_lhsOself,_lhsOstrongLive,_lhsOvalSpace)))
+          in  ( _lhsOconstBranchT,_lhsOconstantPropagation,_lhsOflow,_lhsOinterflow,_lhsOpretty,_lhsOself,_lhsOstrongLive)))
 -- Program -----------------------------------------------------
 data Program = Program (Procs) (Stat)
              deriving ( Show)
@@ -1583,15 +1583,15 @@ sem_Program' :: (Program') ->
 sem_Program' (Program' _procs _stat _dStar) =
     (sem_Program'_Program' (sem_Procs' _procs) (sem_Stat' _stat) _dStar)
 -- semantic domain
-type T_Program' = ( ( DifTrans ConstBranchLat ),( Set Int ),( Set Edge ),Int,( Set Inter ),String,Program',( DifTrans (Set String) ),( DifTrans PtConstLat ))
+type T_Program' = ( ( DifTrans ConstBranchLat ),( DifTrans PtConstLat ),( Set Int ),( Set Edge ),Int,( Set Inter ),String,Program',( DifTrans (Set String) ))
 data Inh_Program' = Inh_Program' {}
-data Syn_Program' = Syn_Program' {constBranchT_Syn_Program' :: ( DifTrans ConstBranchLat ),final_Syn_Program' :: ( Set Int ),flow_Syn_Program' :: ( Set Edge ),init_Syn_Program' :: Int,interflow_Syn_Program' :: ( Set Inter ),pretty_Syn_Program' :: String,self_Syn_Program' :: Program',strongLive_Syn_Program' :: ( DifTrans (Set String) ),valSpace_Syn_Program' :: ( DifTrans PtConstLat )}
+data Syn_Program' = Syn_Program' {constBranchT_Syn_Program' :: ( DifTrans ConstBranchLat ),constantPropagation_Syn_Program' :: ( DifTrans PtConstLat ),final_Syn_Program' :: ( Set Int ),flow_Syn_Program' :: ( Set Edge ),init_Syn_Program' :: Int,interflow_Syn_Program' :: ( Set Inter ),pretty_Syn_Program' :: String,self_Syn_Program' :: Program',strongLive_Syn_Program' :: ( DifTrans (Set String) )}
 wrap_Program' :: (T_Program') ->
                  (Inh_Program') ->
                  (Syn_Program')
 wrap_Program' sem (Inh_Program') =
-    (let ( _lhsOconstBranchT,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOpretty,_lhsOself,_lhsOstrongLive,_lhsOvalSpace) = sem
-     in  (Syn_Program' _lhsOconstBranchT _lhsOfinal _lhsOflow _lhsOinit _lhsOinterflow _lhsOpretty _lhsOself _lhsOstrongLive _lhsOvalSpace))
+    (let ( _lhsOconstBranchT,_lhsOconstantPropagation,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOpretty,_lhsOself,_lhsOstrongLive) = sem
+     in  (Syn_Program' _lhsOconstBranchT _lhsOconstantPropagation _lhsOfinal _lhsOflow _lhsOinit _lhsOinterflow _lhsOpretty _lhsOself _lhsOstrongLive))
 sem_Program'_Program' :: (T_Procs') ->
                          (T_Stat') ->
                          DStar ->
@@ -1599,7 +1599,7 @@ sem_Program'_Program' :: (T_Procs') ->
 sem_Program'_Program' procs_ stat_ dStar_ =
     (let _lhsOstrongLive :: ( DifTrans (Set String) )
          _lhsOconstBranchT :: ( DifTrans ConstBranchLat )
-         _lhsOvalSpace :: ( DifTrans PtConstLat )
+         _lhsOconstantPropagation :: ( DifTrans PtConstLat )
          _lhsOpretty :: String
          _lhsOinit :: Int
          _lhsOfinal :: ( Set Int )
@@ -1611,14 +1611,15 @@ sem_Program'_Program' procs_ stat_ dStar_ =
          _statOcontinueLabel :: ( Maybe Int )
          _lhsOself :: Program'
          _procsIconstBranchT :: ( DifTrans ConstBranchLat )
+         _procsIconstantPropagation :: ( DifTrans PtConstLat )
          _procsIflow :: ( Set Edge )
          _procsIinterflow :: ( Set Inter )
          _procsIpretty :: ( [String] )
          _procsIself :: Procs'
          _procsIstrongLive :: ( DifTrans (Set String) )
-         _procsIvalSpace :: ( DifTrans PtConstLat )
          _statIbreakLabels :: ( Set Int )
          _statIconstBranchT :: ( DifTrans ConstBranchLat )
+         _statIconstantPropagation :: ( DifTrans PtConstLat )
          _statIfinal :: ( Set Int )
          _statIflow :: ( Set Edge )
          _statIinit :: Int
@@ -1628,7 +1629,6 @@ sem_Program'_Program' procs_ stat_ dStar_ =
          _statIpretty :: ( [String] )
          _statIself :: Stat'
          _statIstrongLive :: ( DifTrans (Set String) )
-         _statIvalSpace :: ( DifTrans PtConstLat )
          _lhsOstrongLive =
              ({-# LINE 10 "StrongLive.ag" #-}
               _procsIstrongLive <> _statIstrongLive
@@ -1639,9 +1639,9 @@ sem_Program'_Program' procs_ stat_ dStar_ =
               _procsIconstBranchT <> _statIconstBranchT
               {-# LINE 1641 "AttributeGrammar.hs" #-}
               )
-         _lhsOvalSpace =
+         _lhsOconstantPropagation =
              ({-# LINE 11 "ConstantProp.ag" #-}
-              _procsIvalSpace <> _statIvalSpace
+              _procsIconstantPropagation <> _statIconstantPropagation
               {-# LINE 1646 "AttributeGrammar.hs" #-}
               )
          _lhsOpretty =
@@ -1693,11 +1693,11 @@ sem_Program'_Program' procs_ stat_ dStar_ =
              Program' _procsIself _statIself dStar_
          _lhsOself =
              _self
-         ( _procsIconstBranchT,_procsIflow,_procsIinterflow,_procsIpretty,_procsIself,_procsIstrongLive,_procsIvalSpace) =
+         ( _procsIconstBranchT,_procsIconstantPropagation,_procsIflow,_procsIinterflow,_procsIpretty,_procsIself,_procsIstrongLive) =
              procs_ _procsOdStar
-         ( _statIbreakLabels,_statIconstBranchT,_statIfinal,_statIflow,_statIinit,_statIinterflow,_statIisSingle,_statIisSkip,_statIpretty,_statIself,_statIstrongLive,_statIvalSpace) =
+         ( _statIbreakLabels,_statIconstBranchT,_statIconstantPropagation,_statIfinal,_statIflow,_statIinit,_statIinterflow,_statIisSingle,_statIisSkip,_statIpretty,_statIself,_statIstrongLive) =
              stat_ _statOcontinueLabel _statOdStar _statOsuccessor
-     in  ( _lhsOconstBranchT,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOpretty,_lhsOself,_lhsOstrongLive,_lhsOvalSpace))
+     in  ( _lhsOconstBranchT,_lhsOconstantPropagation,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOpretty,_lhsOself,_lhsOstrongLive))
 -- Stat --------------------------------------------------------
 data Stat = Skip
           | IfThenElse (BExpr) (Stat) (Stat)
@@ -2149,15 +2149,15 @@ sem_Stat' (Break' _label) =
 type T_Stat' = ( Maybe Int ) ->
                DStar ->
                ( Maybe Int ) ->
-               ( ( Set Int ),( DifTrans ConstBranchLat ),( Set Int ),( Set Edge ),Int,( Set Inter ),Bool,Bool,( [String] ),Stat',( DifTrans (Set String) ),( DifTrans PtConstLat ))
+               ( ( Set Int ),( DifTrans ConstBranchLat ),( DifTrans PtConstLat ),( Set Int ),( Set Edge ),Int,( Set Inter ),Bool,Bool,( [String] ),Stat',( DifTrans (Set String) ))
 data Inh_Stat' = Inh_Stat' {continueLabel_Inh_Stat' :: ( Maybe Int ),dStar_Inh_Stat' :: DStar,successor_Inh_Stat' :: ( Maybe Int )}
-data Syn_Stat' = Syn_Stat' {breakLabels_Syn_Stat' :: ( Set Int ),constBranchT_Syn_Stat' :: ( DifTrans ConstBranchLat ),final_Syn_Stat' :: ( Set Int ),flow_Syn_Stat' :: ( Set Edge ),init_Syn_Stat' :: Int,interflow_Syn_Stat' :: ( Set Inter ),isSingle_Syn_Stat' :: Bool,isSkip_Syn_Stat' :: Bool,pretty_Syn_Stat' :: ( [String] ),self_Syn_Stat' :: Stat',strongLive_Syn_Stat' :: ( DifTrans (Set String) ),valSpace_Syn_Stat' :: ( DifTrans PtConstLat )}
+data Syn_Stat' = Syn_Stat' {breakLabels_Syn_Stat' :: ( Set Int ),constBranchT_Syn_Stat' :: ( DifTrans ConstBranchLat ),constantPropagation_Syn_Stat' :: ( DifTrans PtConstLat ),final_Syn_Stat' :: ( Set Int ),flow_Syn_Stat' :: ( Set Edge ),init_Syn_Stat' :: Int,interflow_Syn_Stat' :: ( Set Inter ),isSingle_Syn_Stat' :: Bool,isSkip_Syn_Stat' :: Bool,pretty_Syn_Stat' :: ( [String] ),self_Syn_Stat' :: Stat',strongLive_Syn_Stat' :: ( DifTrans (Set String) )}
 wrap_Stat' :: (T_Stat') ->
               (Inh_Stat') ->
               (Syn_Stat')
 wrap_Stat' sem (Inh_Stat' _lhsIcontinueLabel _lhsIdStar _lhsIsuccessor) =
-    (let ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive,_lhsOvalSpace) = sem _lhsIcontinueLabel _lhsIdStar _lhsIsuccessor
-     in  (Syn_Stat' _lhsObreakLabels _lhsOconstBranchT _lhsOfinal _lhsOflow _lhsOinit _lhsOinterflow _lhsOisSingle _lhsOisSkip _lhsOpretty _lhsOself _lhsOstrongLive _lhsOvalSpace))
+    (let ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOconstantPropagation,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive) = sem _lhsIcontinueLabel _lhsIdStar _lhsIsuccessor
+     in  (Syn_Stat' _lhsObreakLabels _lhsOconstBranchT _lhsOconstantPropagation _lhsOfinal _lhsOflow _lhsOinit _lhsOinterflow _lhsOisSingle _lhsOisSkip _lhsOpretty _lhsOself _lhsOstrongLive))
 sem_Stat'_Skip' :: Int ->
                    (T_Stat')
 sem_Stat'_Skip' label_ =
@@ -2166,7 +2166,7 @@ sem_Stat'_Skip' label_ =
        _lhsIsuccessor ->
          (let _lhsOstrongLive :: ( DifTrans (Set String) )
               _lhsOconstBranchT :: ( DifTrans ConstBranchLat )
-              _lhsOvalSpace :: ( DifTrans PtConstLat )
+              _lhsOconstantPropagation :: ( DifTrans PtConstLat )
               _lhsOpretty :: ( [String] )
               _lhsOisSkip :: Bool
               _lhsOisSingle :: Bool
@@ -2186,7 +2186,7 @@ sem_Stat'_Skip' label_ =
                    singleL label_ (constBranchId label_)
                    {-# LINE 2188 "AttributeGrammar.hs" #-}
                    )
-              _lhsOvalSpace =
+              _lhsOconstantPropagation =
                   ({-# LINE 25 "ConstantProp.ag" #-}
                    singleL label_ id
                    {-# LINE 2193 "AttributeGrammar.hs" #-}
@@ -2235,7 +2235,7 @@ sem_Stat'_Skip' label_ =
                   Skip' label_
               _lhsOself =
                   _self
-          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive,_lhsOvalSpace)))
+          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOconstantPropagation,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive)))
 sem_Stat'_IfThenElse' :: Int ->
                          T_BExpr ->
                          (T_Stat') ->
@@ -2247,7 +2247,7 @@ sem_Stat'_IfThenElse' labelc_ cond_ stat1_ stat2_ =
        _lhsIsuccessor ->
          (let _lhsOstrongLive :: ( DifTrans (Set String) )
               _lhsOconstBranchT :: ( DifTrans ConstBranchLat )
-              _lhsOvalSpace :: ( DifTrans PtConstLat )
+              _lhsOconstantPropagation :: ( DifTrans PtConstLat )
               _lhsOpretty :: ( [String] )
               _lhsOisSkip :: Bool
               _lhsOisSingle :: Bool
@@ -2263,13 +2263,14 @@ sem_Stat'_IfThenElse' labelc_ cond_ stat1_ stat2_ =
               _stat2OcontinueLabel :: ( Maybe Int )
               _stat2OdStar :: DStar
               _stat2Osuccessor :: ( Maybe Int )
-              _condIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+              _condIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
               _condIfreeVars :: ( Set String )
               _condIprecedence :: Int
               _condIpretty :: String
               _condIself :: BExpr
               _stat1IbreakLabels :: ( Set Int )
               _stat1IconstBranchT :: ( DifTrans ConstBranchLat )
+              _stat1IconstantPropagation :: ( DifTrans PtConstLat )
               _stat1Ifinal :: ( Set Int )
               _stat1Iflow :: ( Set Edge )
               _stat1Iinit :: Int
@@ -2279,9 +2280,9 @@ sem_Stat'_IfThenElse' labelc_ cond_ stat1_ stat2_ =
               _stat1Ipretty :: ( [String] )
               _stat1Iself :: Stat'
               _stat1IstrongLive :: ( DifTrans (Set String) )
-              _stat1IvalSpace :: ( DifTrans PtConstLat )
               _stat2IbreakLabels :: ( Set Int )
               _stat2IconstBranchT :: ( DifTrans ConstBranchLat )
+              _stat2IconstantPropagation :: ( DifTrans PtConstLat )
               _stat2Ifinal :: ( Set Int )
               _stat2Iflow :: ( Set Edge )
               _stat2Iinit :: Int
@@ -2291,7 +2292,6 @@ sem_Stat'_IfThenElse' labelc_ cond_ stat1_ stat2_ =
               _stat2Ipretty :: ( [String] )
               _stat2Iself :: Stat'
               _stat2IstrongLive :: ( DifTrans (Set String) )
-              _stat2IvalSpace :: ( DifTrans PtConstLat )
               _lhsOstrongLive =
                   ({-# LINE 26 "StrongLive.ag" #-}
                    insertL labelc_ (<> _condIfreeVars) $ _stat1IstrongLive <> _stat2IstrongLive
@@ -2299,12 +2299,12 @@ sem_Stat'_IfThenElse' labelc_ cond_ stat1_ stat2_ =
                    )
               _lhsOconstBranchT =
                   ({-# LINE 28 "ConstantBranch.ag" #-}
-                   insertL labelc_ (constBranchIf (_condIexpValSpace) _stat1Iinit _stat2Iinit) $ _stat1IconstBranchT <> _stat2IconstBranchT
+                   insertL labelc_ (constBranchIf (_condIconstantPropagation) _stat1Iinit _stat2Iinit) $ _stat1IconstBranchT <> _stat2IconstBranchT
                    {-# LINE 2304 "AttributeGrammar.hs" #-}
                    )
-              _lhsOvalSpace =
+              _lhsOconstantPropagation =
                   ({-# LINE 27 "ConstantProp.ag" #-}
-                   insertL labelc_ id $ _stat1IvalSpace <> _stat2IvalSpace
+                   insertL labelc_ id $ _stat1IconstantPropagation <> _stat2IconstantPropagation
                    {-# LINE 2309 "AttributeGrammar.hs" #-}
                    )
               _lhsOpretty =
@@ -2387,13 +2387,13 @@ sem_Stat'_IfThenElse' labelc_ cond_ stat1_ stat2_ =
                    _lhsIsuccessor
                    {-# LINE 2389 "AttributeGrammar.hs" #-}
                    )
-              ( _condIexpValSpace,_condIfreeVars,_condIprecedence,_condIpretty,_condIself) =
+              ( _condIconstantPropagation,_condIfreeVars,_condIprecedence,_condIpretty,_condIself) =
                   cond_
-              ( _stat1IbreakLabels,_stat1IconstBranchT,_stat1Ifinal,_stat1Iflow,_stat1Iinit,_stat1Iinterflow,_stat1IisSingle,_stat1IisSkip,_stat1Ipretty,_stat1Iself,_stat1IstrongLive,_stat1IvalSpace) =
+              ( _stat1IbreakLabels,_stat1IconstBranchT,_stat1IconstantPropagation,_stat1Ifinal,_stat1Iflow,_stat1Iinit,_stat1Iinterflow,_stat1IisSingle,_stat1IisSkip,_stat1Ipretty,_stat1Iself,_stat1IstrongLive) =
                   stat1_ _stat1OcontinueLabel _stat1OdStar _stat1Osuccessor
-              ( _stat2IbreakLabels,_stat2IconstBranchT,_stat2Ifinal,_stat2Iflow,_stat2Iinit,_stat2Iinterflow,_stat2IisSingle,_stat2IisSkip,_stat2Ipretty,_stat2Iself,_stat2IstrongLive,_stat2IvalSpace) =
+              ( _stat2IbreakLabels,_stat2IconstBranchT,_stat2IconstantPropagation,_stat2Ifinal,_stat2Iflow,_stat2Iinit,_stat2Iinterflow,_stat2IisSingle,_stat2IisSkip,_stat2Ipretty,_stat2Iself,_stat2IstrongLive) =
                   stat2_ _stat2OcontinueLabel _stat2OdStar _stat2Osuccessor
-          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive,_lhsOvalSpace)))
+          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOconstantPropagation,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive)))
 sem_Stat'_While' :: Int ->
                     T_BExpr ->
                     (T_Stat') ->
@@ -2404,7 +2404,7 @@ sem_Stat'_While' labelc_ cond_ stat_ =
        _lhsIsuccessor ->
          (let _lhsOstrongLive :: ( DifTrans (Set String) )
               _lhsOconstBranchT :: ( DifTrans ConstBranchLat )
-              _lhsOvalSpace :: ( DifTrans PtConstLat )
+              _lhsOconstantPropagation :: ( DifTrans PtConstLat )
               _lhsOpretty :: ( [String] )
               _lhsOisSkip :: Bool
               _lhsOisSingle :: Bool
@@ -2417,13 +2417,14 @@ sem_Stat'_While' labelc_ cond_ stat_ =
               _lhsOself :: Stat'
               _statOdStar :: DStar
               _statOsuccessor :: ( Maybe Int )
-              _condIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+              _condIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
               _condIfreeVars :: ( Set String )
               _condIprecedence :: Int
               _condIpretty :: String
               _condIself :: BExpr
               _statIbreakLabels :: ( Set Int )
               _statIconstBranchT :: ( DifTrans ConstBranchLat )
+              _statIconstantPropagation :: ( DifTrans PtConstLat )
               _statIfinal :: ( Set Int )
               _statIflow :: ( Set Edge )
               _statIinit :: Int
@@ -2433,7 +2434,6 @@ sem_Stat'_While' labelc_ cond_ stat_ =
               _statIpretty :: ( [String] )
               _statIself :: Stat'
               _statIstrongLive :: ( DifTrans (Set String) )
-              _statIvalSpace :: ( DifTrans PtConstLat )
               _lhsOstrongLive =
                   ({-# LINE 28 "StrongLive.ag" #-}
                    insertL labelc_ (<> _condIfreeVars) $ _statIstrongLive
@@ -2441,12 +2441,12 @@ sem_Stat'_While' labelc_ cond_ stat_ =
                    )
               _lhsOconstBranchT =
                   ({-# LINE 30 "ConstantBranch.ag" #-}
-                   insertL labelc_ (constBranchWhile _lhsIsuccessor (_condIexpValSpace) _statIinit labelc_)  _statIconstBranchT
+                   insertL labelc_ (constBranchWhile _lhsIsuccessor (_condIconstantPropagation) _statIinit labelc_)  _statIconstBranchT
                    {-# LINE 2446 "AttributeGrammar.hs" #-}
                    )
-              _lhsOvalSpace =
+              _lhsOconstantPropagation =
                   ({-# LINE 29 "ConstantProp.ag" #-}
-                   insertL labelc_ id _statIvalSpace
+                   insertL labelc_ id _statIconstantPropagation
                    {-# LINE 2451 "AttributeGrammar.hs" #-}
                    )
               _lhsOpretty =
@@ -2510,11 +2510,11 @@ sem_Stat'_While' labelc_ cond_ stat_ =
                    _lhsIsuccessor
                    {-# LINE 2512 "AttributeGrammar.hs" #-}
                    )
-              ( _condIexpValSpace,_condIfreeVars,_condIprecedence,_condIpretty,_condIself) =
+              ( _condIconstantPropagation,_condIfreeVars,_condIprecedence,_condIpretty,_condIself) =
                   cond_
-              ( _statIbreakLabels,_statIconstBranchT,_statIfinal,_statIflow,_statIinit,_statIinterflow,_statIisSingle,_statIisSkip,_statIpretty,_statIself,_statIstrongLive,_statIvalSpace) =
+              ( _statIbreakLabels,_statIconstBranchT,_statIconstantPropagation,_statIfinal,_statIflow,_statIinit,_statIinterflow,_statIisSingle,_statIisSkip,_statIpretty,_statIself,_statIstrongLive) =
                   stat_ _statOcontinueLabel _statOdStar _statOsuccessor
-          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive,_lhsOvalSpace)))
+          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOconstantPropagation,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive)))
 sem_Stat'_Print' :: Int ->
                     T_Expr ->
                     (T_Stat')
@@ -2524,7 +2524,7 @@ sem_Stat'_Print' label_ param_ =
        _lhsIsuccessor ->
          (let _lhsOstrongLive :: ( DifTrans (Set String) )
               _lhsOconstBranchT :: ( DifTrans ConstBranchLat )
-              _lhsOvalSpace :: ( DifTrans PtConstLat )
+              _lhsOconstantPropagation :: ( DifTrans PtConstLat )
               _lhsOpretty :: ( [String] )
               _lhsOisSkip :: Bool
               _lhsOisSingle :: Bool
@@ -2534,7 +2534,7 @@ sem_Stat'_Print' label_ param_ =
               _lhsObreakLabels :: ( Set Int )
               _lhsOinterflow :: ( Set Inter )
               _lhsOself :: Stat'
-              _paramIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+              _paramIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
               _paramIfreeVars :: ( Set String )
               _paramIpretty :: String
               _paramIself :: Expr
@@ -2548,7 +2548,7 @@ sem_Stat'_Print' label_ param_ =
                    singleL label_ (constBranchId label_)
                    {-# LINE 2550 "AttributeGrammar.hs" #-}
                    )
-              _lhsOvalSpace =
+              _lhsOconstantPropagation =
                   ({-# LINE 31 "ConstantProp.ag" #-}
                    singleL label_ id
                    {-# LINE 2555 "AttributeGrammar.hs" #-}
@@ -2597,9 +2597,9 @@ sem_Stat'_Print' label_ param_ =
                   Print' label_ _paramIself
               _lhsOself =
                   _self
-              ( _paramIexpValSpace,_paramIfreeVars,_paramIpretty,_paramIself) =
+              ( _paramIconstantPropagation,_paramIfreeVars,_paramIpretty,_paramIself) =
                   param_
-          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive,_lhsOvalSpace)))
+          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOconstantPropagation,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive)))
 sem_Stat'_Call' :: Int ->
                    Int ->
                    String ->
@@ -2612,7 +2612,7 @@ sem_Stat'_Call' labelCall_ labelReturn_ name_ params_ out_ =
        _lhsIsuccessor ->
          (let _lhsOstrongLive :: ( DifTrans (Set String) )
               _lhsOconstBranchT :: ( DifTrans ConstBranchLat )
-              _lhsOvalSpace :: ( DifTrans PtConstLat )
+              _lhsOconstantPropagation :: ( DifTrans PtConstLat )
               _lhsOpretty :: ( [String] )
               _lhsOisSkip :: Bool
               _lhsOisSingle :: Bool
@@ -2622,7 +2622,7 @@ sem_Stat'_Call' labelCall_ labelReturn_ name_ params_ out_ =
               _lhsOflow :: ( Set Edge )
               _lhsObreakLabels :: ( Set Int )
               _lhsOself :: Stat'
-              _paramsIexpValSpace :: ( [ConstEnv -> Maybe ConstLat] )
+              _paramsIconstantPropagation :: ( [ConstEnv -> Maybe ConstLat] )
               _paramsIfreeVars :: ( [Set String] )
               _paramsIpretty :: String
               _paramsIself :: Exprs
@@ -2633,12 +2633,12 @@ sem_Stat'_Call' labelCall_ labelReturn_ name_ params_ out_ =
                    )
               _lhsOconstBranchT =
                   ({-# LINE 34 "ConstantBranch.ag" #-}
-                   insertL labelCall_ (ignoreDead labelCall_ $ fmap $ callConst (procInp _proc    ) (procOut _proc    ) _paramsIexpValSpace) $ singleR labelReturn_ (ignoreDead2 labelReturn_ $ ((<*>) .: fmap $ retConst out_ (procInp _proc    ) (procOut _proc    )))
+                   insertL labelCall_ (ignoreDead labelCall_ $ fmap $ callConst (procInp _proc    ) (procOut _proc    ) _paramsIconstantPropagation) $ singleR labelReturn_ (ignoreDead2 labelReturn_ $ ((<*>) .: fmap $ retConst out_ (procInp _proc    ) (procOut _proc    )))
                    {-# LINE 2638 "AttributeGrammar.hs" #-}
                    )
-              _lhsOvalSpace =
+              _lhsOconstantPropagation =
                   ({-# LINE 33 "ConstantProp.ag" #-}
-                   insertL labelCall_ (fmap $ callConst (procInp _proc    ) (procOut _proc    ) _paramsIexpValSpace) $ singleR labelReturn_ (liftA2 $ retConst out_ (procInp _proc    ) (procOut _proc    ))
+                   insertL labelCall_ (fmap $ callConst (procInp _proc    ) (procOut _proc    ) _paramsIconstantPropagation) $ singleR labelReturn_ (liftA2 $ retConst out_ (procInp _proc    ) (procOut _proc    ))
                    {-# LINE 2643 "AttributeGrammar.hs" #-}
                    )
               _lhsOpretty =
@@ -2690,9 +2690,9 @@ sem_Stat'_Call' labelCall_ labelReturn_ name_ params_ out_ =
                   Call' labelCall_ labelReturn_ name_ _paramsIself out_
               _lhsOself =
                   _self
-              ( _paramsIexpValSpace,_paramsIfreeVars,_paramsIpretty,_paramsIself) =
+              ( _paramsIconstantPropagation,_paramsIfreeVars,_paramsIpretty,_paramsIself) =
                   params_
-          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive,_lhsOvalSpace)))
+          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOconstantPropagation,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive)))
 sem_Stat'_IAssign' :: Int ->
                       String ->
                       T_IExpr ->
@@ -2703,7 +2703,7 @@ sem_Stat'_IAssign' label_ name_ val_ =
        _lhsIsuccessor ->
          (let _lhsOstrongLive :: ( DifTrans (Set String) )
               _lhsOconstBranchT :: ( DifTrans ConstBranchLat )
-              _lhsOvalSpace :: ( DifTrans PtConstLat )
+              _lhsOconstantPropagation :: ( DifTrans PtConstLat )
               _lhsOpretty :: ( [String] )
               _lhsOisSkip :: Bool
               _lhsOisSingle :: Bool
@@ -2713,7 +2713,7 @@ sem_Stat'_IAssign' label_ name_ val_ =
               _lhsObreakLabels :: ( Set Int )
               _lhsOinterflow :: ( Set Inter )
               _lhsOself :: Stat'
-              _valIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+              _valIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
               _valIfreeVars :: ( Set String )
               _valIprecedence :: Int
               _valIpretty :: String
@@ -2725,12 +2725,12 @@ sem_Stat'_IAssign' label_ name_ val_ =
                    )
               _lhsOconstBranchT =
                   ({-# LINE 36 "ConstantBranch.ag" #-}
-                   singleL label_ (ignoreDead label_ $ fmap $ updateConst name_ _valIexpValSpace)
+                   singleL label_ (ignoreDead label_ $ fmap $ updateConst name_ _valIconstantPropagation)
                    {-# LINE 2730 "AttributeGrammar.hs" #-}
                    )
-              _lhsOvalSpace =
+              _lhsOconstantPropagation =
                   ({-# LINE 35 "ConstantProp.ag" #-}
-                   singleL label_ (fmap $ updateConst name_ _valIexpValSpace)
+                   singleL label_ (fmap $ updateConst name_ _valIconstantPropagation)
                    {-# LINE 2735 "AttributeGrammar.hs" #-}
                    )
               _lhsOpretty =
@@ -2777,9 +2777,9 @@ sem_Stat'_IAssign' label_ name_ val_ =
                   IAssign' label_ name_ _valIself
               _lhsOself =
                   _self
-              ( _valIexpValSpace,_valIfreeVars,_valIprecedence,_valIpretty,_valIself) =
+              ( _valIconstantPropagation,_valIfreeVars,_valIprecedence,_valIpretty,_valIself) =
                   val_
-          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive,_lhsOvalSpace)))
+          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOconstantPropagation,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive)))
 sem_Stat'_BAssign' :: Int ->
                       String ->
                       T_BExpr ->
@@ -2790,7 +2790,7 @@ sem_Stat'_BAssign' label_ name_ val_ =
        _lhsIsuccessor ->
          (let _lhsOstrongLive :: ( DifTrans (Set String) )
               _lhsOconstBranchT :: ( DifTrans ConstBranchLat )
-              _lhsOvalSpace :: ( DifTrans PtConstLat )
+              _lhsOconstantPropagation :: ( DifTrans PtConstLat )
               _lhsOpretty :: ( [String] )
               _lhsOisSkip :: Bool
               _lhsOisSingle :: Bool
@@ -2800,7 +2800,7 @@ sem_Stat'_BAssign' label_ name_ val_ =
               _lhsObreakLabels :: ( Set Int )
               _lhsOinterflow :: ( Set Inter )
               _lhsOself :: Stat'
-              _valIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+              _valIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
               _valIfreeVars :: ( Set String )
               _valIprecedence :: Int
               _valIpretty :: String
@@ -2812,12 +2812,12 @@ sem_Stat'_BAssign' label_ name_ val_ =
                    )
               _lhsOconstBranchT =
                   ({-# LINE 38 "ConstantBranch.ag" #-}
-                   singleL label_ (ignoreDead label_ $ fmap $ updateConst name_ _valIexpValSpace)
+                   singleL label_ (ignoreDead label_ $ fmap $ updateConst name_ _valIconstantPropagation)
                    {-# LINE 2817 "AttributeGrammar.hs" #-}
                    )
-              _lhsOvalSpace =
+              _lhsOconstantPropagation =
                   ({-# LINE 37 "ConstantProp.ag" #-}
-                   singleL label_ (fmap $ updateConst name_ _valIexpValSpace)
+                   singleL label_ (fmap $ updateConst name_ _valIconstantPropagation)
                    {-# LINE 2822 "AttributeGrammar.hs" #-}
                    )
               _lhsOpretty =
@@ -2864,9 +2864,9 @@ sem_Stat'_BAssign' label_ name_ val_ =
                   BAssign' label_ name_ _valIself
               _lhsOself =
                   _self
-              ( _valIexpValSpace,_valIfreeVars,_valIprecedence,_valIpretty,_valIself) =
+              ( _valIconstantPropagation,_valIfreeVars,_valIprecedence,_valIpretty,_valIself) =
                   val_
-          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive,_lhsOvalSpace)))
+          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOconstantPropagation,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive)))
 sem_Stat'_Seq' :: (T_Stat') ->
                   (T_Stat') ->
                   (T_Stat')
@@ -2876,7 +2876,7 @@ sem_Stat'_Seq' stat1_ stat2_ =
        _lhsIsuccessor ->
          (let _lhsOstrongLive :: ( DifTrans (Set String) )
               _lhsOconstBranchT :: ( DifTrans ConstBranchLat )
-              _lhsOvalSpace :: ( DifTrans PtConstLat )
+              _lhsOconstantPropagation :: ( DifTrans PtConstLat )
               _lhsOpretty :: ( [String] )
               _lhsOisSkip :: Bool
               _lhsOisSingle :: Bool
@@ -2894,6 +2894,7 @@ sem_Stat'_Seq' stat1_ stat2_ =
               _stat2OdStar :: DStar
               _stat1IbreakLabels :: ( Set Int )
               _stat1IconstBranchT :: ( DifTrans ConstBranchLat )
+              _stat1IconstantPropagation :: ( DifTrans PtConstLat )
               _stat1Ifinal :: ( Set Int )
               _stat1Iflow :: ( Set Edge )
               _stat1Iinit :: Int
@@ -2903,9 +2904,9 @@ sem_Stat'_Seq' stat1_ stat2_ =
               _stat1Ipretty :: ( [String] )
               _stat1Iself :: Stat'
               _stat1IstrongLive :: ( DifTrans (Set String) )
-              _stat1IvalSpace :: ( DifTrans PtConstLat )
               _stat2IbreakLabels :: ( Set Int )
               _stat2IconstBranchT :: ( DifTrans ConstBranchLat )
+              _stat2IconstantPropagation :: ( DifTrans PtConstLat )
               _stat2Ifinal :: ( Set Int )
               _stat2Iflow :: ( Set Edge )
               _stat2Iinit :: Int
@@ -2915,7 +2916,6 @@ sem_Stat'_Seq' stat1_ stat2_ =
               _stat2Ipretty :: ( [String] )
               _stat2Iself :: Stat'
               _stat2IstrongLive :: ( DifTrans (Set String) )
-              _stat2IvalSpace :: ( DifTrans PtConstLat )
               _lhsOstrongLive =
                   ({-# LINE 38 "StrongLive.ag" #-}
                    _stat1IstrongLive <> _stat2IstrongLive
@@ -2926,9 +2926,9 @@ sem_Stat'_Seq' stat1_ stat2_ =
                    _stat1IconstBranchT <> _stat2IconstBranchT
                    {-# LINE 2928 "AttributeGrammar.hs" #-}
                    )
-              _lhsOvalSpace =
+              _lhsOconstantPropagation =
                   ({-# LINE 39 "ConstantProp.ag" #-}
-                   _stat1IvalSpace <> _stat2IvalSpace
+                   _stat1IconstantPropagation <> _stat2IconstantPropagation
                    {-# LINE 2933 "AttributeGrammar.hs" #-}
                    )
               _lhsOpretty =
@@ -3005,11 +3005,11 @@ sem_Stat'_Seq' stat1_ stat2_ =
                    _lhsIdStar
                    {-# LINE 3007 "AttributeGrammar.hs" #-}
                    )
-              ( _stat1IbreakLabels,_stat1IconstBranchT,_stat1Ifinal,_stat1Iflow,_stat1Iinit,_stat1Iinterflow,_stat1IisSingle,_stat1IisSkip,_stat1Ipretty,_stat1Iself,_stat1IstrongLive,_stat1IvalSpace) =
+              ( _stat1IbreakLabels,_stat1IconstBranchT,_stat1IconstantPropagation,_stat1Ifinal,_stat1Iflow,_stat1Iinit,_stat1Iinterflow,_stat1IisSingle,_stat1IisSkip,_stat1Ipretty,_stat1Iself,_stat1IstrongLive) =
                   stat1_ _stat1OcontinueLabel _stat1OdStar _stat1Osuccessor
-              ( _stat2IbreakLabels,_stat2IconstBranchT,_stat2Ifinal,_stat2Iflow,_stat2Iinit,_stat2Iinterflow,_stat2IisSingle,_stat2IisSkip,_stat2Ipretty,_stat2Iself,_stat2IstrongLive,_stat2IvalSpace) =
+              ( _stat2IbreakLabels,_stat2IconstBranchT,_stat2IconstantPropagation,_stat2Ifinal,_stat2Iflow,_stat2Iinit,_stat2Iinterflow,_stat2IisSingle,_stat2IisSkip,_stat2Ipretty,_stat2Iself,_stat2IstrongLive) =
                   stat2_ _stat2OcontinueLabel _stat2OdStar _stat2Osuccessor
-          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive,_lhsOvalSpace)))
+          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOconstantPropagation,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive)))
 sem_Stat'_Malloc' :: Int ->
                      String ->
                      T_IExpr ->
@@ -3020,7 +3020,7 @@ sem_Stat'_Malloc' label_ name_ size_ =
        _lhsIsuccessor ->
          (let _lhsOstrongLive :: ( DifTrans (Set String) )
               _lhsOconstBranchT :: ( DifTrans ConstBranchLat )
-              _lhsOvalSpace :: ( DifTrans PtConstLat )
+              _lhsOconstantPropagation :: ( DifTrans PtConstLat )
               _lhsOpretty :: ( [String] )
               _lhsOisSkip :: Bool
               _lhsOisSingle :: Bool
@@ -3030,7 +3030,7 @@ sem_Stat'_Malloc' label_ name_ size_ =
               _lhsObreakLabels :: ( Set Int )
               _lhsOinterflow :: ( Set Inter )
               _lhsOself :: Stat'
-              _sizeIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+              _sizeIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
               _sizeIfreeVars :: ( Set String )
               _sizeIprecedence :: Int
               _sizeIpretty :: String
@@ -3045,7 +3045,7 @@ sem_Stat'_Malloc' label_ name_ size_ =
                    singleL label_ (constBranchId label_)
                    {-# LINE 3047 "AttributeGrammar.hs" #-}
                    )
-              _lhsOvalSpace =
+              _lhsOconstantPropagation =
                   ({-# LINE 41 "ConstantProp.ag" #-}
                    singleL label_ id
                    {-# LINE 3052 "AttributeGrammar.hs" #-}
@@ -3094,9 +3094,9 @@ sem_Stat'_Malloc' label_ name_ size_ =
                   Malloc' label_ name_ _sizeIself
               _lhsOself =
                   _self
-              ( _sizeIexpValSpace,_sizeIfreeVars,_sizeIprecedence,_sizeIpretty,_sizeIself) =
+              ( _sizeIconstantPropagation,_sizeIfreeVars,_sizeIprecedence,_sizeIpretty,_sizeIself) =
                   size_
-          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive,_lhsOvalSpace)))
+          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOconstantPropagation,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive)))
 sem_Stat'_Free' :: Int ->
                    T_IExpr ->
                    (T_Stat')
@@ -3106,7 +3106,7 @@ sem_Stat'_Free' label_ ptr_ =
        _lhsIsuccessor ->
          (let _lhsOstrongLive :: ( DifTrans (Set String) )
               _lhsOconstBranchT :: ( DifTrans ConstBranchLat )
-              _lhsOvalSpace :: ( DifTrans PtConstLat )
+              _lhsOconstantPropagation :: ( DifTrans PtConstLat )
               _lhsOpretty :: ( [String] )
               _lhsOisSkip :: Bool
               _lhsOisSingle :: Bool
@@ -3116,7 +3116,7 @@ sem_Stat'_Free' label_ ptr_ =
               _lhsObreakLabels :: ( Set Int )
               _lhsOinterflow :: ( Set Inter )
               _lhsOself :: Stat'
-              _ptrIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+              _ptrIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
               _ptrIfreeVars :: ( Set String )
               _ptrIprecedence :: Int
               _ptrIpretty :: String
@@ -3131,7 +3131,7 @@ sem_Stat'_Free' label_ ptr_ =
                    singleL label_ (constBranchId label_)
                    {-# LINE 3133 "AttributeGrammar.hs" #-}
                    )
-              _lhsOvalSpace =
+              _lhsOconstantPropagation =
                   ({-# LINE 43 "ConstantProp.ag" #-}
                    singleL label_ id
                    {-# LINE 3138 "AttributeGrammar.hs" #-}
@@ -3180,9 +3180,9 @@ sem_Stat'_Free' label_ ptr_ =
                   Free' label_ _ptrIself
               _lhsOself =
                   _self
-              ( _ptrIexpValSpace,_ptrIfreeVars,_ptrIprecedence,_ptrIpretty,_ptrIself) =
+              ( _ptrIconstantPropagation,_ptrIfreeVars,_ptrIprecedence,_ptrIpretty,_ptrIself) =
                   ptr_
-          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive,_lhsOvalSpace)))
+          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOconstantPropagation,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive)))
 sem_Stat'_RefAssign' :: Int ->
                         T_IExpr ->
                         T_IExpr ->
@@ -3193,7 +3193,7 @@ sem_Stat'_RefAssign' label_ ptr_ val_ =
        _lhsIsuccessor ->
          (let _lhsOstrongLive :: ( DifTrans (Set String) )
               _lhsOconstBranchT :: ( DifTrans ConstBranchLat )
-              _lhsOvalSpace :: ( DifTrans PtConstLat )
+              _lhsOconstantPropagation :: ( DifTrans PtConstLat )
               _lhsOpretty :: ( [String] )
               _lhsOisSkip :: Bool
               _lhsOisSingle :: Bool
@@ -3203,12 +3203,12 @@ sem_Stat'_RefAssign' label_ ptr_ val_ =
               _lhsObreakLabels :: ( Set Int )
               _lhsOinterflow :: ( Set Inter )
               _lhsOself :: Stat'
-              _ptrIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+              _ptrIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
               _ptrIfreeVars :: ( Set String )
               _ptrIprecedence :: Int
               _ptrIpretty :: String
               _ptrIself :: IExpr
-              _valIexpValSpace :: ( ConstEnv -> Maybe ConstLat )
+              _valIconstantPropagation :: ( ConstEnv -> Maybe ConstLat )
               _valIfreeVars :: ( Set String )
               _valIprecedence :: Int
               _valIpretty :: String
@@ -3223,7 +3223,7 @@ sem_Stat'_RefAssign' label_ ptr_ val_ =
                    singleL label_ (constBranchId label_)
                    {-# LINE 3225 "AttributeGrammar.hs" #-}
                    )
-              _lhsOvalSpace =
+              _lhsOconstantPropagation =
                   ({-# LINE 45 "ConstantProp.ag" #-}
                    singleL label_ id
                    {-# LINE 3230 "AttributeGrammar.hs" #-}
@@ -3272,11 +3272,11 @@ sem_Stat'_RefAssign' label_ ptr_ val_ =
                   RefAssign' label_ _ptrIself _valIself
               _lhsOself =
                   _self
-              ( _ptrIexpValSpace,_ptrIfreeVars,_ptrIprecedence,_ptrIpretty,_ptrIself) =
+              ( _ptrIconstantPropagation,_ptrIfreeVars,_ptrIprecedence,_ptrIpretty,_ptrIself) =
                   ptr_
-              ( _valIexpValSpace,_valIfreeVars,_valIprecedence,_valIpretty,_valIself) =
+              ( _valIconstantPropagation,_valIfreeVars,_valIprecedence,_valIpretty,_valIself) =
                   val_
-          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive,_lhsOvalSpace)))
+          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOconstantPropagation,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive)))
 sem_Stat'_Continue' :: Int ->
                        (T_Stat')
 sem_Stat'_Continue' label_ =
@@ -3285,7 +3285,7 @@ sem_Stat'_Continue' label_ =
        _lhsIsuccessor ->
          (let _lhsOstrongLive :: ( DifTrans (Set String) )
               _lhsOconstBranchT :: ( DifTrans ConstBranchLat )
-              _lhsOvalSpace :: ( DifTrans PtConstLat )
+              _lhsOconstantPropagation :: ( DifTrans PtConstLat )
               _lhsOpretty :: ( [String] )
               _lhsOisSkip :: Bool
               _lhsOisSingle :: Bool
@@ -3305,7 +3305,7 @@ sem_Stat'_Continue' label_ =
                    singleL label_ (constBranchId label_)
                    {-# LINE 3307 "AttributeGrammar.hs" #-}
                    )
-              _lhsOvalSpace =
+              _lhsOconstantPropagation =
                   ({-# LINE 47 "ConstantProp.ag" #-}
                    singleL label_ id
                    {-# LINE 3312 "AttributeGrammar.hs" #-}
@@ -3354,7 +3354,7 @@ sem_Stat'_Continue' label_ =
                   Continue' label_
               _lhsOself =
                   _self
-          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive,_lhsOvalSpace)))
+          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOconstantPropagation,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive)))
 sem_Stat'_Break' :: Int ->
                     (T_Stat')
 sem_Stat'_Break' label_ =
@@ -3363,7 +3363,7 @@ sem_Stat'_Break' label_ =
        _lhsIsuccessor ->
          (let _lhsOstrongLive :: ( DifTrans (Set String) )
               _lhsOconstBranchT :: ( DifTrans ConstBranchLat )
-              _lhsOvalSpace :: ( DifTrans PtConstLat )
+              _lhsOconstantPropagation :: ( DifTrans PtConstLat )
               _lhsOpretty :: ( [String] )
               _lhsOisSkip :: Bool
               _lhsOisSingle :: Bool
@@ -3383,7 +3383,7 @@ sem_Stat'_Break' label_ =
                    singleL label_ (constBranchId label_)
                    {-# LINE 3385 "AttributeGrammar.hs" #-}
                    )
-              _lhsOvalSpace =
+              _lhsOconstantPropagation =
                   ({-# LINE 49 "ConstantProp.ag" #-}
                    singleL label_ id
                    {-# LINE 3390 "AttributeGrammar.hs" #-}
@@ -3432,4 +3432,4 @@ sem_Stat'_Break' label_ =
                   Break' label_
               _lhsOself =
                   _self
-          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive,_lhsOvalSpace)))
+          in  ( _lhsObreakLabels,_lhsOconstBranchT,_lhsOconstantPropagation,_lhsOfinal,_lhsOflow,_lhsOinit,_lhsOinterflow,_lhsOisSingle,_lhsOisSkip,_lhsOpretty,_lhsOself,_lhsOstrongLive)))
