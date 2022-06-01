@@ -2628,7 +2628,7 @@ sem_Stat'_Call' labelCall_ labelReturn_ name_ params_ out_ =
               _paramsIself :: Exprs
               _lhsOstrongLive =
                   ({-# LINE 32 "StrongLive.ag" #-}
-                   insertL labelReturn_ (aliveInExit out_ (procOut _proc    )) $ singleR labelCall_ (aliveInCall (procInp _proc    ) (procOut _proc    ) _paramsIfreeVars)
+                   insertL labelReturn_ (aliveInExit (procInp _proc    ) out_ (procOut _proc    )) $ singleR labelCall_ (aliveInCall (procInp _proc    ) (procOut _proc    ) _paramsIfreeVars)
                    {-# LINE 2633 "AttributeGrammar.hs" #-}
                    )
               _lhsOconstBranchT =

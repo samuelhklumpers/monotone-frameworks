@@ -33,6 +33,8 @@ library
       Compiler
       ConstantBranch
       ConstantProp
+      Latex
+      AnalysesConversion
       ContextSensitive
       Lexer
       MonotoneFrameworks

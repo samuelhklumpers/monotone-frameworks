@@ -23,6 +23,7 @@ import qualified Data.Set as S
 import Std (Map, Set, intercalate, intersperse)
     
 data Dir = Forward | Backward deriving (Show, Eq)
+
 data Flow = Flow {
   initial   :: Int,
   finals    :: Set Int,
@@ -39,6 +40,8 @@ data Analysis p = Analysis {
 swap :: (a, b) -> (b, a)
 swap (a, b) = (b, a)
 
+-- | Unpack a flow into a tuple of extremals, edges, and interflow edges.
+-- Reverses the necessary components for backwards flows.
 unpackFlow :: Bool -> Flow -> (Set Int, Set Edge, Set Inter)
 unpackFlow backward flow = (a, b, c)
   where
@@ -51,6 +54,7 @@ unpackFlow backward flow = (a, b, c)
     is = interflow flow
     c = if backward then S.map swapInter is else is
 
+-- | Equivalent of python's groupby: for each @fst@ element occuring in the list, gather all @snd@'s belonging to tuples with matching @fst@ into a list
 group :: (Ord a, Ord b) => [(a, b)] -> M.Map a (Set b)
 group []          = mempty
 group ((a, b):xs) = M.alter h a $ group xs
@@ -58,8 +62,9 @@ group ((a, b):xs) = M.alter h a $ group xs
     h Nothing  = Just $ S.singleton b
     h (Just u) = Just $ S.insert b u
 
-prepare :: Analysis p -> Flow -> MonotoneFramework p
-prepare ana flow =
+-- | Combine an analysis and a flow into a monotone framework
+analysisToFramework :: Analysis p -> Flow -> MonotoneFramework p
+analysisToFramework ana flow =
   MonotoneFramework
     outgoing
     exL

@@ -29,7 +29,7 @@ sem Stat'
   | Print'
     lhs.strongLive = singleL @label (<> @param.freeVars)
   | Call'
-    lhs.strongLive = insertL @labelReturn (aliveInExit @out (procOut @loc.proc)) $ singleR @labelCall (aliveInCall (procInp @loc.proc) (procOut @loc.proc) @params.freeVars)
+    lhs.strongLive = insertL @labelReturn (aliveInExit (procInp @loc.proc) @out (procOut @loc.proc)) $ singleR @labelCall (aliveInCall (procInp @loc.proc) (procOut @loc.proc) @params.freeVars)
   | IAssign'
     lhs.strongLive = singleL @label (keepAlive @name @val.freeVars)
   | BAssign'

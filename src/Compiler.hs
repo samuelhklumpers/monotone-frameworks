@@ -1,6 +1,6 @@
 module Compiler where
 
-import Analyses (DifTrans, Edge, Inter (..), lookupR)
+import Analyses (DifTrans, Edge, Inter (..), lookupR, flipMap)
 import AnalysesConversion
 import AttributeGrammar
 import ConstantBranch (ConstBranchLat, Intersect(..))
@@ -62,10 +62,10 @@ compile source = do
 
   let
     constantPropA =
-      Analysis Forward (valSpace_Syn_Program' synProgram') (Just constEmpty)
+      Analysis Forward (constantPropagation_Syn_Program' synProgram') (Just constEmpty)
   let
     constantPropagationMonotoneFramework :: MonotoneFramework PtConstLat
-    constantPropagationMonotoneFramework = prepare constantPropA flow
+    constantPropagationMonotoneFramework = analysisToFramework constantPropA flow
   let
     constantPropagationEmbellishedMonotoneFramework ::
       MonotoneFramework (ContextSensitive PtConstLat)
@@ -77,7 +77,7 @@ compile source = do
       Analysis Forward (constBranchT_Syn_Program' synProgram') (Just constEmpty, Just (Intersect mempty))
   let
     constantPropagationBranchAwareMonotoneFramework :: MonotoneFramework ConstBranchLat
-    constantPropagationBranchAwareMonotoneFramework = prepare constantBranchA flow
+    constantPropagationBranchAwareMonotoneFramework = analysisToFramework constantBranchA flow
   let
     constantPropagationBranchAwareEmbellishedMonotoneFramework ::
       MonotoneFramework (ContextSensitive ConstBranchLat)
@@ -89,7 +89,7 @@ compile source = do
       Analysis Backward (strongLive_Syn_Program' synProgram') mempty
   let
     stronglyLiveVariablesMonotoneFramework :: MonotoneFramework (Set String)
-    stronglyLiveVariablesMonotoneFramework = prepare strongLiveA flow
+    stronglyLiveVariablesMonotoneFramework = analysisToFramework strongLiveA flow
   let
     stronglyLiveVariablesEmbellishedMonotoneFramework ::
       MonotoneFramework (ContextSensitive (Set String))
@@ -106,7 +106,7 @@ compile source = do
   putStrLn "`Map`s will be printed as lists."
   putStrLn "So the printed result will look as of type `[([Label], [(Label, propertySpace)])]`."
   putStrLn "## Constant Propagation"
-  prettyPrint constantPropA $
+  latexPrint constantPropagationTex $
     mfpSolution constantPropagationEmbellishedMonotoneFramework
 
   putStrLn "## Reachable Constant Propagation"
@@ -115,10 +115,10 @@ compile source = do
 
   putStrLn ""
   putStrLn "## Strongly Live Variables"
-  prettyPrint strongLiveA $
+  latexPrint strongLiveTex $
     mfpSolution stronglyLiveVariablesEmbellishedMonotoneFramework
 
-
+-- | "pretty" print a solution to a monotone framework
 prettyPrint ::
   (Show propertySpace) =>
   Analysis propertySpace ->
@@ -153,21 +153,6 @@ prettyPrint (Analysis {direction}) (solution_circ, solution_bullet, _steps) =
       flipMap .
       fmap runTotalMap
 
-flipMap :: (Ord k, Ord m) => M.Map k (M.Map m v) -> M.Map m (M.Map k v)
-flipMap = fmap M.fromList . groupBy' h . rotate . M.toList . fmap M.toList
-  where
-    h (k, (m, v)) = (m, (k, v))
-
-groupBy :: Ord k => (a -> k) -> [a] -> M.Map k [a]
-groupBy f = M.fromListWith (++) . map (f &&& pure)
-
-groupBy' :: Ord k => (a -> (k, b)) -> [a] -> M.Map k [b]
-groupBy' f = M.fromListWith (++) . map (fst . f &&& pure . (snd . f))
-
-rotate :: [(k, [(m, v)])] -> [(k, (m, v))]
-rotate = (h =<<)
-  where
-    h (k, xs) = fmap (k, ) xs
 
 secondOf3 :: (a, b, c) -> b
 secondOf3 (_, b, _) = b

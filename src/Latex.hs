@@ -1,6 +1,6 @@
 module Latex where
 
-import Analyses (DifTrans, Edge, Inter (..), lookupR)
+import Analyses (DifTrans, Edge, Inter (..), lookupR, flipMap)
 import AnalysesConversion
 import AttributeGrammar
 import ConstantBranch (ConstBranchLat, Intersect(..))
@@ -23,7 +23,7 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import Std (Map, Set, intercalate, intersperse)
 
-    
+-- | Format and print an analysis result as a latex array
 latexPrint ::
   (Maybe propertySpace -> String) ->
   (
@@ -40,6 +40,7 @@ latexPrint p (entry, exit, _steps) =
   putStrLn "\\]" *>
   putStrLn ""
 
+-- | Format a table of properties as a latex array, with the given name and property formatter
 latexPrinter :: String -> (Maybe propertySpace -> String) -> Map Label (ContextSensitive propertySpace) -> String
 latexPrinter name p a = unlines (header : "\\hline" : labels :  body ++ [footer])
   where
