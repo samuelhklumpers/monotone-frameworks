@@ -18,3 +18,7 @@ Implemented extensions:
 - handle `break` and `continue`
 - handle boolean assignment `b=`
 - introduce constants for operations that are sometimes constant in one parameter (e.g. `x && false == false`)
+
+Documentation:
+- can be built using `stack haddock`, or viewed at https://htmlpreview.github.io/?https://github.com/samuelhklumpers/monotone-frameworks/blob/main/docs/index.html
+- in your_tex_output_here.html
