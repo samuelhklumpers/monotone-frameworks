@@ -4,10 +4,10 @@ import System.Environment
 
 import Compiler
 
-import Path (splitExtension, parseRelDir, fileExtension)
+import Path (parseRelDir, fileExtension)
 import Path.IO (listDir)
 import Data.List (isSuffixOf)
-import Std (throwString, traverse_, catMaybes, readFileUtf8, fromMaybe)
+import Std (traverse_, readFileUtf8, fromMaybe)
 
 main :: IO ()
 main = do

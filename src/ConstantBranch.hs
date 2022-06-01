@@ -1,19 +1,9 @@
-{-# LANGUAGE FlexibleInstances #-}
-
 module ConstantBranch where
 
-import Data.Bifunctor
-import Data.Set
+import ConstantProp (ConstEnv, ConstLat (CB), PtConstLat)
+import MonotoneFrameworks (BoundedSemiLattice)
 
-import qualified Data.Map.Strict as M
-import qualified Data.Map.Merge.Strict as MM
-import qualified Data.Maybe as Maybe
-
-import Std (intercalate, join, compose)
-import MonotoneFrameworks
-import ConstantProp
-import Analyses
-
+import Data.Set (Set, insert, member)
 
 -- Set Int records the dead labels
 -- Nothing indicates unreachable

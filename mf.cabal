@@ -53,7 +53,8 @@ library
       DerivingVia
       LambdaCase
       FlexibleContexts
-  ghc-options: -O0
+      FlexibleInstances
+  ghc-options: -O0 -Wunused-imports
   build-tools:
       alex
     , happy
@@ -86,7 +87,8 @@ executable mf-exe
       DerivingVia
       LambdaCase
       FlexibleContexts
-  ghc-options: -O0 -threaded -rtsopts -with-rtsopts=-N
+      FlexibleInstances
+  ghc-options: -O0 -Wunused-imports -threaded -rtsopts -with-rtsopts=-N
   build-tools:
       alex
     , happy
@@ -119,7 +121,8 @@ test-suite mf-test
       DerivingVia
       LambdaCase
       FlexibleContexts
-  ghc-options: -O0 -threaded -rtsopts -with-rtsopts=-N
+      FlexibleInstances
+  ghc-options: -O0 -Wunused-imports -threaded -rtsopts -with-rtsopts=-N
   build-tools:
       alex
     , happy

@@ -1,7 +1,5 @@
 {
-import qualified Data.Map as M
 import qualified Data.Maybe as Maybe
-import qualified Data.List as L
 import Data.Set
 
 import Std((.:))

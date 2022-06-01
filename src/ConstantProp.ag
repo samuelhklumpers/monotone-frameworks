@@ -1,5 +1,4 @@
 {
-import ConstantProp
 import Std (liftA2)
 }
 

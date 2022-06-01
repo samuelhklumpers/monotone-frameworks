@@ -36,6 +36,7 @@ build-tools:
 
 ghc-options:
 - -O0
+- -Wunused-imports
 
 default-extensions:
 - ImportQualifiedPost
@@ -47,6 +48,7 @@ default-extensions:
 - DerivingVia
 - LambdaCase
 - FlexibleContexts
+- FlexibleInstances
 
 library:
   source-dirs: src

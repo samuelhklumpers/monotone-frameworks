@@ -1,18 +1,10 @@
-{-# LANGUAGE FlexibleInstances #-}
-
 module ConstantProp where
 
-import Data.Bifunctor
-import Data.Set
+import MonotoneFrameworks (BoundedSemiLattice)
 
-import qualified Data.Map.Strict as M
-import qualified Data.Map.Merge.Strict as MM
-import qualified Data.Maybe as Maybe
-
-import Std (intercalate, join, compose)
-import MonotoneFrameworks
-import Analyses
-
+import Data.Map.Merge.Strict qualified as MM
+import Data.Map.Strict qualified as M
+import Std (compose, intercalate)
 
 data ConstLat = CI Int | CB Bool deriving (Show, Eq)
 newtype ConstEnv = ConstEnv (M.Map String ConstLat) deriving Eq

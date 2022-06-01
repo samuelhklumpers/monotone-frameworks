@@ -2,8 +2,8 @@
 
 module MonotoneFrameworks where
 
-import Data.Set qualified as S
 import Data.Map.Strict qualified as M
+import Data.Set qualified as S
 import Std
 
 class (Monoid m, Eq m) => BoundedSemiLattice m where

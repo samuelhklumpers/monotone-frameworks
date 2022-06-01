@@ -1,18 +1,9 @@
-{-# LANGUAGE FlexibleInstances #-}
-
 module StrongLive where
 
-import Data.Bifunctor
-import Data.Set
+import MonotoneFrameworks (BoundedSemiLattice)
 
-import qualified Data.Map.Strict as M
-import qualified Data.Map.Merge.Strict as MM
-import qualified Data.Maybe as Maybe
-
-import Std (intercalate, join, compose)
-import MonotoneFrameworks
-import Analyses
-
+import Data.Set (Set, delete, member, singleton)
+import Std (compose)
 
 instance BoundedSemiLattice (Set String)
 

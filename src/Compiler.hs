@@ -1,27 +1,27 @@
 module Compiler where
 
--- to-do. explicify
-
 import Analyses (DifTrans, Dir (..), Edge, Inter (..), lookupR)
 import AttributeGrammar
 import ConstantBranch (ConstBranchLat)
-import ConstantProp (PtConstLat, constEmpty, ConstLat (..), ConstEnv (ConstEnv))
-import Control.Arrow (Arrow ((&&&)))
-import Data.Map qualified as M
-import Data.Set qualified as S
+import ConstantProp (ConstEnv (ConstEnv), ConstLat (..), PtConstLat, constEmpty)
+import ContextSensitive
+  ( ContextSensitive (runTotalMap),
+    contextSensitize,
+  )
 import Lexer (alex)
 import MonotoneFrameworks
-  (
-    InterproceduralFragment (..),
+  ( InterproceduralFragment (..),
     Label,
     MonotoneFramework (MonotoneFramework),
     mfpSolution,
   )
-import ContextSensitive
 import Parser (happy)
+
+import Control.Arrow (Arrow ((&&&)))
+import Data.Map qualified as M
+import Data.Set qualified as S
 import Std (Map, Set, intercalate, intersperse)
 import Text.Pretty.Simple (pPrintLightBg)
-
 
 callStringLimit :: Int
 callStringLimit = 2

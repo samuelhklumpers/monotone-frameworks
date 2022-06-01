@@ -1,18 +1,8 @@
-{-# LANGUAGE FlexibleInstances #-}
-
-
 module Analyses where
 
-import Data.Bifunctor
-import Data.Set
-
-import qualified Data.Map.Strict as M
-import qualified Data.Map.Merge.Strict as MM
-import qualified Data.Maybe as Maybe
-
-import Std (intercalate, join, compose)
-import MonotoneFrameworks
-
+import Data.Map.Strict qualified as M
+import Data.Maybe qualified as Maybe
+import Std (first, second)
 
 data Dir = Forward | Backward deriving (Show, Eq)
 

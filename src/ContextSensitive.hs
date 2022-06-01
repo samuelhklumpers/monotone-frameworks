@@ -1,6 +1,15 @@
+{-# language NoImplicitPrelude #-}
+
 module ContextSensitive where
 
 import MonotoneFrameworks
+  ( BoundedSemiLattice,
+    Label,
+    MonotoneFramework (MonotoneFramework),
+    bottom,
+    lookupCall,
+    mapFunctionWithCallLabel,
+  )
 
 import Data.Map.Strict qualified as M
 import Std
