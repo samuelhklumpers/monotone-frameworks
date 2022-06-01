@@ -207,7 +207,7 @@ attr IExpr BExpr        [ | | pretty :: String  precedence :: Int  freeVars use 
 attr Expr               [ | | freeVars use {<>} {empty} :: { Set String } ]
 attr Exprs              [ | | freeVars use {:} {[]} :: { [Set String] } ]  
 attr Expr Exprs         [ | | pretty :: String ]
-attr Stat'              [ continueLabel :: { Maybe Int } | | isSkip :: Bool  isSingle :: Bool  breakLabels use {<>} {empty} :: { Set Int }  ]
+attr Stat'              [ continueLabel :: { Maybe Int }  successor :: { Maybe Int } | | isSkip :: Bool  isSingle :: Bool  breakLabels use {<>} {empty} :: { Set Int }  ]
 
 {
 indent :: [String] -> [String]
@@ -243,6 +243,7 @@ sem Program'
     
     -- inherit
     stat.dStar = @dStar
+    stat.successor = Nothing
     procs.dStar = @dStar
     stat.continueLabel = Nothing
 
@@ -265,6 +266,7 @@ sem Proc'
     lhs.final = @stat.final
     lhs.flow = singleton (@labelEntry, @stat.init) <> @stat.flow <> fromList [(label, @labelExit) | label <- toList @stat.final] 
     stat.dStar = @lhs.dStar
+    stat.successor = Nothing
     stat.continueLabel = Nothing
     lhs.interflow = @stat.interflow
 
@@ -337,6 +339,8 @@ sem Stat'
     lhs.init = @stat1.init
     lhs.final = @stat2.final
     lhs.flow = @stat1.flow <> @stat2.flow <> fromList [(label, @stat2.init) | label <- toList @stat1.final]
+    stat1.successor = Just @stat2.init
+    stat2.successor = @lhs.successor
   | Malloc'
     lhs.pretty   = ["malloc(" ++ @name ++ ", " ++ @size.pretty ++ ")" ++ showLabel @label]
     lhs.isSkip   = False

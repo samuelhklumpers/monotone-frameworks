@@ -3,7 +3,7 @@ module ConstantBranch where
 import ConstantProp (ConstEnv, ConstLat (CB), PtConstLat)
 import MonotoneFrameworks (BoundedSemiLattice)
 
-import Data.Set (Set, insert, member)
+import Data.Set (Set, insert, member, delete)
 
 -- Set Int records the dead labels
 -- Nothing indicates unreachable
@@ -28,15 +28,19 @@ constBranchIf :: (ConstEnv -> Maybe ConstLat) -> Int -> Int -> ConstBranchLat ->
 constBranchIf cond t f (lat, dead) = case lat of
   Nothing  -> (Nothing, dead)
   Just env -> case cond env of
-    Just (CB True)  -> (lat, insert f dead)
-    Just (CB False) -> (lat, insert t dead)
-    _               -> (lat, dead)
+    Just (CB True)  -> (lat, insert f $ delete t dead)
+    Just (CB False) -> (lat, insert t $ delete f dead)
+    _               -> (lat, delete t $ delete f dead)
 
-constBranchWhile :: (ConstEnv -> Maybe ConstLat) -> Int -> Int -> ConstBranchLat -> ConstBranchLat
-constBranchWhile cond label labelc (lat, dead) = case lat of
+constBranchWhile :: Maybe Int -> (ConstEnv -> Maybe ConstLat) -> Int -> Int -> ConstBranchLat -> ConstBranchLat
+constBranchWhile succ cond label labelc (lat, dead) = case lat of
   Nothing  -> (Nothing, dead)
   Just env -> case cond env of
-    Just (CB False) -> (lat, insert label dead)
-    Just (CB True) -> (lat, insert label $ insert labelc dead)
-    _               -> (lat, dead)
-    -- we would like to mark the statement after the while block as dead when the condition is Just (CB True), but we can't
+    Just (CB False) -> (lat, doIf delete succ $ insert label dead)
+    Just (CB True)  -> (lat, doIf insert succ $ delete label dead)
+    _               -> (lat, doIf delete succ $ delete label dead)
+    -- we would like to mark the statement after the while block as dead when the condition is Just (CB True), but we can't (yet)
+
+doIf :: (a -> b -> b) -> Maybe a -> b -> b
+doIf _ Nothing  = id
+doIf f (Just x) = f x

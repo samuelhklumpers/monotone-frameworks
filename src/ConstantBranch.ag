@@ -27,7 +27,7 @@ sem Stat'
   | IfThenElse'
     lhs.constBranchT = insertL @labelc (constBranchIf (@cond.expValSpace) @stat1.init @stat2.init) $ @stat1.constBranchT <> @stat2.constBranchT 
   | While'
-    lhs.constBranchT = insertL @labelc (constBranchWhile (@cond.expValSpace) @stat.init @labelc)  @stat.constBranchT
+    lhs.constBranchT = insertL @labelc (constBranchWhile @lhs.successor (@cond.expValSpace) @stat.init @labelc)  @stat.constBranchT
   | Print'
     lhs.constBranchT = singleL @label (constBranchId @label)
   | Call'

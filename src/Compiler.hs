@@ -221,7 +221,7 @@ latexPrint p (entry, exit, _steps) =
   putStrLn "\\]" *>
   putStrLn ""
 
-latexPrinter :: String -> (Maybe propertySpace -> String) -> Map Label (ContextSensitive propertySpace)-> String
+latexPrinter :: String -> (Maybe propertySpace -> String) -> Map Label (ContextSensitive propertySpace) -> String
 latexPrinter name p a = unlines (header : "\\hline" : labels :  body ++ [footer])
   where
   analysis  = fmap runTotalMap a
@@ -238,12 +238,30 @@ latexPrinter name p a = unlines (header : "\\hline" : labels :  body ++ [footer]
   footer = "\\end{array}"
 
 constantPropagationTex :: Maybe PtConstLat -> String
-constantPropagationTex (Just (Just (ConstEnv e))) = intercalate ", " $ p <$> M.toList e
+constantPropagationTex (Just (Just e)) = constEnvTex e
+constantPropagationTex _                          = ""
+
+constEnvTex :: ConstEnv -> String
+constEnvTex (ConstEnv e) = intercalate ", " $ p <$> M.toList e
   where
     p (k, CI n) = k ++ " \\mapsto " ++ show n
     p (k, CB n) = k ++ " \\mapsto " ++ show n
-constantPropagationTex _             = ""
 
+constantBranchTex :: Maybe (PtConstLat, Set Int) -> String
+constantBranchTex Nothing       = ""
+constantBranchTex (Just (c, d)) = pc c ++ "; " ++ setTex show d
+  where
+    pc Nothing  = "\\bot"
+    pc (Just e) = constEnvTex e
+
+setTex :: (a -> String) -> Set a -> String
+setTex p s
+  | S.null s = "\\emptyset"
+  | otherwise   = "\\{" ++ intercalate ", " (p <$> S.toList s) ++ "\\}"
+
+strongLiveTex :: Maybe (Set String) -> String
+strongLiveTex Nothing  = "\\bot"
+strongLiveTex (Just x) = setTex id x
 
 flipMap :: (Ord k, Ord m) => M.Map k (M.Map m v) -> M.Map m (M.Map k v)
 flipMap = fmap M.fromList . groupBy' h . rotate . M.toList . fmap M.toList

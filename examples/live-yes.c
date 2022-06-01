@@ -1,11 +1,8 @@
 begin
-    skip;
-    y := 1;
-    if z < 3 then
-        skip;
-    else
-        skip;
+    x := z;
     while x > 0 do
         skip;
-    print(y);
+    z := y * z;
+    y := y - w;
+    print(z);
 end
