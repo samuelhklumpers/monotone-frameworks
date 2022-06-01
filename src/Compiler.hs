@@ -2,7 +2,7 @@ module Compiler where
 
 import Analyses (DifTrans, Dir (..), Edge, Inter (..), lookupR)
 import AttributeGrammar
-import ConstantBranch (ConstBranchLat)
+import ConstantBranch (ConstBranchLat, Intersect(..))
 import ConstantProp (ConstEnv (ConstEnv), ConstLat (..), PtConstLat, constEmpty)
 import ContextSensitive
   ( ContextSensitive (runTotalMap),
@@ -126,7 +126,7 @@ compile source = do
 
   let
     constantBranchA =
-      Analysis Forward (constBranchT_Syn_Program' synProgram') (Just constEmpty, mempty)
+      Analysis Forward (constBranchT_Syn_Program' synProgram') (Just constEmpty, Just (Intersect mempty))
   let
     constantPropagationBranchAwareMonotoneFramework :: MonotoneFramework ConstBranchLat
     constantPropagationBranchAwareMonotoneFramework = prepare constantBranchA flow
@@ -162,7 +162,7 @@ compile source = do
     mfpSolution constantPropagationEmbellishedMonotoneFramework
 
   putStrLn "## Reachable Constant Propagation"
-  prettyPrint constantBranchA $
+  latexPrint constantBranchTex $
     mfpSolution constantPropagationBranchAwareEmbellishedMonotoneFramework
 
   putStrLn ""
@@ -247,12 +247,15 @@ constEnvTex (ConstEnv e) = intercalate ", " $ p <$> M.toList e
     p (k, CI n) = k ++ " \\mapsto " ++ show n
     p (k, CB n) = k ++ " \\mapsto " ++ show n
 
-constantBranchTex :: Maybe (PtConstLat, Set Int) -> String
+constantBranchTex :: Maybe ConstBranchLat -> String
 constantBranchTex Nothing       = ""
-constantBranchTex (Just (c, d)) = pc c ++ "; " ++ setTex show d
+constantBranchTex (Just (c, d)) = pc c ++ "; " ++ pd d
   where
     pc Nothing  = "\\bot"
     pc (Just e) = constEnvTex e
+
+    pd Nothing              = "U"
+    pd (Just (Intersect x)) = setTex show x
 
 setTex :: (a -> String) -> Set a -> String
 setTex p s
