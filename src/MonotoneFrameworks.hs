@@ -18,6 +18,8 @@ type Label = Int
 data MonotoneFramework propertySpace =
   MonotoneFramework
     {
+      -- | map of labels to the set of destination labels of all outgoing
+      -- flow from the first label
       flow :: Map Label (Set Label),
       extremalLabels :: Set Label,
       extremalValue :: propertySpace,
