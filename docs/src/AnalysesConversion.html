@@ -1,0 +1,270 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AnalysesConversion</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Analyses.html"><span class="hs-identifier">Analyses</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Analyses.html#DifTrans"><span class="hs-identifier">DifTrans</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Analyses.html#Edge"><span class="hs-identifier">Edge</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Analyses.html#Inter"><span class="hs-identifier">Inter</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Analyses.html#lookupR"><span class="hs-identifier">lookupR</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-4"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="AttributeGrammar.html"><span class="hs-identifier">AttributeGrammar</span></a></span><span>
+</span><span id="line-5"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ConstantBranch.html"><span class="hs-identifier">ConstantBranch</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ConstantBranch.html#ConstBranchLat"><span class="hs-identifier">ConstBranchLat</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="ConstantBranch.html#Intersect"><span class="hs-identifier">Intersect</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-6"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ConstantProp.html"><span class="hs-identifier">ConstantProp</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ConstantProp.html#ConstEnv"><span class="hs-identifier">ConstEnv</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ConstantProp.html#ConstEnv"><span class="hs-identifier">ConstEnv</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="ConstantProp.html#ConstLat"><span class="hs-identifier">ConstLat</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="ConstantProp.html#PtConstLat"><span class="hs-identifier">PtConstLat</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="ConstantProp.html#constEmpty"><span class="hs-identifier">constEmpty</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ContextSensitive.html"><span class="hs-identifier">ContextSensitive</span></a></span><span>
+</span><span id="line-8"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="ContextSensitive.html#ContextSensitive"><span class="hs-identifier">ContextSensitive</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ContextSensitive.html#runTotalMap"><span class="hs-identifier">runTotalMap</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="ContextSensitive.html#contextSensitize"><span class="hs-identifier">contextSensitize</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Lexer.html"><span class="hs-identifier">Lexer</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Lexer.html#alex"><span class="hs-identifier">alex</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="MonotoneFrameworks.html"><span class="hs-identifier">MonotoneFrameworks</span></a></span><span>
+</span><span id="line-13"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#InterproceduralFragment"><span class="hs-identifier">InterproceduralFragment</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>    </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier">Label</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>    </span><span class="annot"><a href="MonotoneFrameworks.html#MonotoneFramework"><span class="hs-identifier">MonotoneFramework</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="MonotoneFrameworks.html#MonotoneFramework"><span class="hs-identifier">MonotoneFramework</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>    </span><span class="annot"><a href="MonotoneFrameworks.html#mfpSolution"><span class="hs-identifier">mfpSolution</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Parser.html"><span class="hs-identifier">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Parser.html#happy"><span class="hs-identifier">happy</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Arrow</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Arrow</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-operator">(&amp;&amp;&amp;)</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Map</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">M</span></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Set</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">S</span></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Std.html"><span class="hs-identifier">Std</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Map</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">Set</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Std.html#intercalate"><span class="hs-identifier">intercalate</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">intersperse</span></span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span>    </span><span>
+</span><span id="line-25"></span><span class="hs-keyword">data</span><span> </span><span id="Dir"><span class="annot"><a href="AnalysesConversion.html#Dir"><span class="hs-identifier hs-var">Dir</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Forward"><span class="annot"><a href="AnalysesConversion.html#Forward"><span class="hs-identifier hs-var">Forward</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="Backward"><span class="annot"><a href="AnalysesConversion.html#Backward"><span class="hs-identifier hs-var">Backward</span></a></span></span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679151539"><span id="local-6989586621679151541"><span id="local-6989586621679151543"><span class="annot"><span class="annottext">Int -&gt; Dir -&gt; ShowS
+[Dir] -&gt; ShowS
+Dir -&gt; String
+(Int -&gt; Dir -&gt; ShowS)
+-&gt; (Dir -&gt; String) -&gt; ([Dir] -&gt; ShowS) -&gt; Show Dir
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [Dir] -&gt; ShowS
+$cshowList :: [Dir] -&gt; ShowS
+show :: Dir -&gt; String
+$cshow :: Dir -&gt; String
+showsPrec :: Int -&gt; Dir -&gt; ShowS
+$cshowsPrec :: Int -&gt; Dir -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679151534"><span id="local-6989586621679151536"><span class="annot"><span class="annottext">Dir -&gt; Dir -&gt; Bool
+(Dir -&gt; Dir -&gt; Bool) -&gt; (Dir -&gt; Dir -&gt; Bool) -&gt; Eq Dir
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: Dir -&gt; Dir -&gt; Bool
+$c/= :: Dir -&gt; Dir -&gt; Bool
+== :: Dir -&gt; Dir -&gt; Bool
+$c== :: Dir -&gt; Dir -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span>
+</span><span id="line-27"></span><span class="hs-keyword">data</span><span> </span><span id="Flow"><span class="annot"><a href="AnalysesConversion.html#Flow"><span class="hs-identifier hs-var">Flow</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Flow"><span class="annot"><a href="AnalysesConversion.html#Flow"><span class="hs-identifier hs-var">Flow</span></a></span></span><span> </span><span class="hs-special">{</span><span>
+</span><span id="line-28"></span><span>  </span><span id="initial"><span class="annot"><span class="annottext">Flow -&gt; Int
+</span><a href="AnalysesConversion.html#initial"><span class="hs-identifier hs-var hs-var">initial</span></a></span></span><span>   </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>  </span><span id="finals"><span class="annot"><span class="annottext">Flow -&gt; Set Int
+</span><a href="AnalysesConversion.html#finals"><span class="hs-identifier hs-var hs-var">finals</span></a></span></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Set</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>  </span><span id="edges"><span class="annot"><span class="annottext">Flow -&gt; Set Edge
+</span><a href="AnalysesConversion.html#edges"><span class="hs-identifier hs-var hs-var">edges</span></a></span></span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Set</span></span><span> </span><span class="annot"><a href="Analyses.html#Edge"><span class="hs-identifier hs-type">Edge</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-31"></span><span>  </span><span id="interflow"><span class="annot"><span class="annottext">Flow -&gt; Set Inter
+</span><a href="AnalysesConversion.html#interflow"><span class="hs-identifier hs-var hs-var">interflow</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Set</span></span><span> </span><span class="annot"><a href="Analyses.html#Inter"><span class="hs-identifier hs-type">Inter</span></a></span><span>
+</span><span id="line-32"></span><span class="hs-special">}</span><span>
+</span><span id="line-33"></span><span>
+</span><span id="line-34"></span><span class="hs-keyword">data</span><span> </span><span id="Analysis"><span class="annot"><a href="AnalysesConversion.html#Analysis"><span class="hs-identifier hs-var">Analysis</span></a></span></span><span> </span><span id="local-6989586621679151567"><span class="annot"><a href="#local-6989586621679151567"><span class="hs-identifier hs-type">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Analysis"><span class="annot"><a href="AnalysesConversion.html#Analysis"><span class="hs-identifier hs-var">Analysis</span></a></span></span><span> </span><span class="hs-special">{</span><span>
+</span><span id="line-35"></span><span>  </span><span id="direction"><span class="annot"><span class="annottext">Analysis p -&gt; Dir
+</span><a href="AnalysesConversion.html#direction"><span class="hs-identifier hs-var hs-var">direction</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="AnalysesConversion.html#Dir"><span class="hs-identifier hs-type">Dir</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-36"></span><span>  </span><span id="difTrans"><span class="annot"><span class="annottext">Analysis p -&gt; DifTrans p
+</span><a href="AnalysesConversion.html#difTrans"><span class="hs-identifier hs-var hs-var">difTrans</span></a></span></span><span>   </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Analyses.html#DifTrans"><span class="hs-identifier hs-type">DifTrans</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679151567"><span class="hs-identifier hs-type">p</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-37"></span><span>  </span><span id="extremal"><span class="annot"><span class="annottext">Analysis p -&gt; p
+</span><a href="AnalysesConversion.html#extremal"><span class="hs-identifier hs-var hs-var">extremal</span></a></span></span><span>   </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679151567"><span class="hs-identifier hs-type">p</span></a></span><span>
+</span><span id="line-38"></span><span class="hs-special">}</span><span>
+</span><span id="line-39"></span><span>
+</span><span id="line-40"></span><span id="local-6989586621679151590"><span id="local-6989586621679151591"><span class="annot"><a href="AnalysesConversion.html#swap"><span class="hs-identifier hs-type">swap</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679151591"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679151590"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679151590"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679151591"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-41"></span><span id="swap"><span class="annot"><span class="annottext">swap :: (a, b) -&gt; (b, a)
+</span><a href="AnalysesConversion.html#swap"><span class="hs-identifier hs-var hs-var">swap</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679151522"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679151522"><span class="hs-identifier hs-var">a</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679151521"><span class="annot"><span class="annottext">b
+</span><a href="#local-6989586621679151521"><span class="hs-identifier hs-var">b</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">b
+</span><a href="#local-6989586621679151521"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679151522"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-42"></span><span>
+</span><span id="line-43"></span><span class="hs-comment">-- | Unpack a flow into a tuple of extremals, edges, and interflow edges.</span><span>
+</span><span id="line-44"></span><span class="hs-comment">-- Reverses the necessary components for backwards flows.</span><span>
+</span><span id="line-45"></span><span class="annot"><a href="AnalysesConversion.html#unpackFlow"><span class="hs-identifier hs-type">unpackFlow</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="AnalysesConversion.html#Flow"><span class="hs-identifier hs-type">Flow</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Set</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Set</span></span><span> </span><span class="annot"><a href="Analyses.html#Edge"><span class="hs-identifier hs-type">Edge</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Set</span></span><span> </span><span class="annot"><a href="Analyses.html#Inter"><span class="hs-identifier hs-type">Inter</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-46"></span><span id="unpackFlow"><span class="annot"><span class="annottext">unpackFlow :: Bool -&gt; Flow -&gt; (Set Int, Set Edge, Set Inter)
+</span><a href="AnalysesConversion.html#unpackFlow"><span class="hs-identifier hs-var hs-var">unpackFlow</span></a></span></span><span> </span><span id="local-6989586621679151519"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679151519"><span class="hs-identifier hs-var">backward</span></a></span></span><span> </span><span id="local-6989586621679151518"><span class="annot"><span class="annottext">Flow
+</span><a href="#local-6989586621679151518"><span class="hs-identifier hs-var">flow</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Set Int
+</span><a href="#local-6989586621679151517"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Set Edge
+</span><a href="#local-6989586621679151516"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Set Inter
+</span><a href="#local-6989586621679151515"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-47"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-48"></span><span>    </span><span id="local-6989586621679151517"><span class="annot"><span class="annottext">a :: Set Int
+</span><a href="#local-6989586621679151517"><span class="hs-identifier hs-var hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679151519"><span class="hs-identifier hs-var">backward</span></a></span><span> </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">Flow -&gt; Set Int
+</span><a href="AnalysesConversion.html#finals"><span class="hs-identifier hs-var hs-var">finals</span></a></span><span> </span><span class="annot"><span class="annottext">Flow
+</span><a href="#local-6989586621679151518"><span class="hs-identifier hs-var">flow</span></a></span><span> </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Set Int
+forall a. a -&gt; Set a
+</span><span class="hs-identifier hs-var">S.singleton</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Flow -&gt; Int
+</span><a href="AnalysesConversion.html#initial"><span class="hs-identifier hs-var hs-var">initial</span></a></span><span> </span><span class="annot"><span class="annottext">Flow
+</span><a href="#local-6989586621679151518"><span class="hs-identifier hs-var">flow</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span>
+</span><span id="line-50"></span><span>    </span><span id="local-6989586621679151513"><span class="annot"><span class="annottext">es :: Set Edge
+</span><a href="#local-6989586621679151513"><span class="hs-identifier hs-var hs-var">es</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Flow -&gt; Set Edge
+</span><a href="AnalysesConversion.html#edges"><span class="hs-identifier hs-var hs-var">edges</span></a></span><span> </span><span class="annot"><span class="annottext">Flow
+</span><a href="#local-6989586621679151518"><span class="hs-identifier hs-var">flow</span></a></span><span>
+</span><span id="line-51"></span><span>    </span><span id="local-6989586621679151516"><span class="annot"><span class="annottext">b :: Set Edge
+</span><a href="#local-6989586621679151516"><span class="hs-identifier hs-var hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679151519"><span class="hs-identifier hs-var">backward</span></a></span><span> </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">(Edge -&gt; Edge) -&gt; Set Edge -&gt; Set Edge
+forall b a. Ord b =&gt; (a -&gt; b) -&gt; Set a -&gt; Set b
+</span><span class="hs-identifier hs-var">S.map</span></span><span> </span><span class="annot"><span class="annottext">Edge -&gt; Edge
+forall a b. (a, b) -&gt; (b, a)
+</span><a href="AnalysesConversion.html#swap"><span class="hs-identifier hs-var">swap</span></a></span><span> </span><span class="annot"><span class="annottext">Set Edge
+</span><a href="#local-6989586621679151513"><span class="hs-identifier hs-var">es</span></a></span><span> </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">Set Edge
+</span><a href="#local-6989586621679151513"><span class="hs-identifier hs-var">es</span></a></span><span>
+</span><span id="line-52"></span><span>
+</span><span id="line-53"></span><span>    </span><span id="local-6989586621679151511"><span class="annot"><span class="annottext">swapInter :: Inter -&gt; Inter
+</span><a href="#local-6989586621679151511"><span class="hs-identifier hs-var hs-var">swapInter</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Analyses.html#Inter"><span class="hs-identifier hs-type">Inter</span></a></span><span> </span><span id="local-6989586621679151509"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679151509"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679151508"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679151508"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span id="local-6989586621679151507"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679151507"><span class="hs-identifier hs-var">z</span></a></span></span><span> </span><span id="local-6989586621679151506"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679151506"><span class="hs-identifier hs-var">w</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int -&gt; Int -&gt; Inter
+</span><a href="Analyses.html#Inter"><span class="hs-identifier hs-var">Inter</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679151506"><span class="hs-identifier hs-var">w</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679151507"><span class="hs-identifier hs-var">z</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679151508"><span class="hs-identifier hs-var">y</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679151509"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-54"></span><span>    </span><span id="local-6989586621679151505"><span class="annot"><span class="annottext">is :: Set Inter
+</span><a href="#local-6989586621679151505"><span class="hs-identifier hs-var hs-var">is</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Flow -&gt; Set Inter
+</span><a href="AnalysesConversion.html#interflow"><span class="hs-identifier hs-var hs-var">interflow</span></a></span><span> </span><span class="annot"><span class="annottext">Flow
+</span><a href="#local-6989586621679151518"><span class="hs-identifier hs-var">flow</span></a></span><span>
+</span><span id="line-55"></span><span>    </span><span id="local-6989586621679151515"><span class="annot"><span class="annottext">c :: Set Inter
+</span><a href="#local-6989586621679151515"><span class="hs-identifier hs-var hs-var">c</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679151519"><span class="hs-identifier hs-var">backward</span></a></span><span> </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">(Inter -&gt; Inter) -&gt; Set Inter -&gt; Set Inter
+forall b a. Ord b =&gt; (a -&gt; b) -&gt; Set a -&gt; Set b
+</span><span class="hs-identifier hs-var">S.map</span></span><span> </span><span class="annot"><span class="annottext">Inter -&gt; Inter
+</span><a href="#local-6989586621679151511"><span class="hs-identifier hs-var">swapInter</span></a></span><span> </span><span class="annot"><span class="annottext">Set Inter
+</span><a href="#local-6989586621679151505"><span class="hs-identifier hs-var">is</span></a></span><span> </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">Set Inter
+</span><a href="#local-6989586621679151505"><span class="hs-identifier hs-var">is</span></a></span><span>
+</span><span id="line-56"></span><span>
+</span><span id="line-57"></span><span class="hs-comment">-- | Equivalent of python's groupby: for each @fst@ element occuring in the list, gather all @snd@'s belonging to tuples with matching @fst@ into a list</span><span>
+</span><span id="line-58"></span><span id="local-6989586621679151579"><span id="local-6989586621679151580"><span class="annot"><a href="AnalysesConversion.html#group"><span class="hs-identifier hs-type">group</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Ord</span></span><span> </span><span class="annot"><a href="#local-6989586621679151580"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ord</span></span><span> </span><span class="annot"><a href="#local-6989586621679151579"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679151580"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679151579"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">)</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">M.Map</span></span><span> </span><span class="annot"><a href="#local-6989586621679151580"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Set</span></span><span> </span><span class="annot"><a href="#local-6989586621679151579"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-59"></span><span id="group"><span class="annot"><span class="annottext">group :: [(a, b)] -&gt; Map a (Set b)
+</span><a href="AnalysesConversion.html#group"><span class="hs-identifier hs-var hs-var">group</span></a></span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>          </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Map a (Set b)
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span>
+</span><span id="line-60"></span><span class="annot"><a href="AnalysesConversion.html#group"><span class="hs-identifier hs-var">group</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">(</span><span id="local-6989586621679151503"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679151503"><span class="hs-identifier hs-var">a</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679151502"><span class="annot"><span class="annottext">b
+</span><a href="#local-6989586621679151502"><span class="hs-identifier hs-var">b</span></a></span></span><span class="hs-special">)</span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span id="local-6989586621679151501"><span class="annot"><span class="annottext">[(a, b)]
+</span><a href="#local-6989586621679151501"><span class="hs-identifier hs-var">xs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Maybe (Set b) -&gt; Maybe (Set b))
+-&gt; a -&gt; Map a (Set b) -&gt; Map a (Set b)
+forall k a.
+Ord k =&gt;
+(Maybe a -&gt; Maybe a) -&gt; k -&gt; Map k a -&gt; Map k a
+</span><span class="hs-identifier hs-var">M.alter</span></span><span> </span><span class="annot"><span class="annottext">Maybe (Set b) -&gt; Maybe (Set b)
+</span><a href="#local-6989586621679151499"><span class="hs-identifier hs-var">h</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679151503"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">(Map a (Set b) -&gt; Map a (Set b)) -&gt; Map a (Set b) -&gt; Map a (Set b)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[(a, b)] -&gt; Map a (Set b)
+forall a b. (Ord a, Ord b) =&gt; [(a, b)] -&gt; Map a (Set b)
+</span><a href="AnalysesConversion.html#group"><span class="hs-identifier hs-var">group</span></a></span><span> </span><span class="annot"><span class="annottext">[(a, b)]
+</span><a href="#local-6989586621679151501"><span class="hs-identifier hs-var">xs</span></a></span><span>
+</span><span id="line-61"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-62"></span><span>    </span><span id="local-6989586621679151499"><span class="annot"><span class="annottext">h :: Maybe (Set b) -&gt; Maybe (Set b)
+</span><a href="#local-6989586621679151499"><span class="hs-identifier hs-var hs-var">h</span></a></span></span><span> </span><span class="annot"><span class="annottext">Maybe (Set b)
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Set b -&gt; Maybe (Set b)
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">(Set b -&gt; Maybe (Set b)) -&gt; Set b -&gt; Maybe (Set b)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">b -&gt; Set b
+forall a. a -&gt; Set a
+</span><span class="hs-identifier hs-var">S.singleton</span></span><span> </span><span class="annot"><span class="annottext">b
+</span><a href="#local-6989586621679151502"><span class="hs-identifier hs-var">b</span></a></span><span>
+</span><span id="line-63"></span><span>    </span><span class="annot"><a href="#local-6989586621679151499"><span class="hs-identifier hs-var">h</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679151498"><span class="annot"><span class="annottext">Set b
+</span><a href="#local-6989586621679151498"><span class="hs-identifier hs-var">u</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Set b -&gt; Maybe (Set b)
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">(Set b -&gt; Maybe (Set b)) -&gt; Set b -&gt; Maybe (Set b)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">b -&gt; Set b -&gt; Set b
+forall a. Ord a =&gt; a -&gt; Set a -&gt; Set a
+</span><span class="hs-identifier hs-var">S.insert</span></span><span> </span><span class="annot"><span class="annottext">b
+</span><a href="#local-6989586621679151502"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">Set b
+</span><a href="#local-6989586621679151498"><span class="hs-identifier hs-var">u</span></a></span><span>
+</span><span id="line-64"></span><span>
+</span><span id="line-65"></span><span class="hs-comment">-- | Combine an analysis and a flow into a monotone framework</span><span>
+</span><span id="line-66"></span><span id="local-6989586621679151496"><span class="annot"><a href="AnalysesConversion.html#analysisToFramework"><span class="hs-identifier hs-type">analysisToFramework</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="AnalysesConversion.html#Analysis"><span class="hs-identifier hs-type">Analysis</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679151496"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="AnalysesConversion.html#Flow"><span class="hs-identifier hs-type">Flow</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#MonotoneFramework"><span class="hs-identifier hs-type">MonotoneFramework</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679151496"><span class="hs-identifier hs-type">p</span></a></span></span><span>
+</span><span id="line-67"></span><span id="analysisToFramework"><span class="annot"><span class="annottext">analysisToFramework :: Analysis p -&gt; Flow -&gt; MonotoneFramework p
+</span><a href="AnalysesConversion.html#analysisToFramework"><span class="hs-identifier hs-var hs-var">analysisToFramework</span></a></span></span><span> </span><span id="local-6989586621679151494"><span class="annot"><span class="annottext">Analysis p
+</span><a href="#local-6989586621679151494"><span class="hs-identifier hs-var">ana</span></a></span></span><span> </span><span id="local-6989586621679151493"><span class="annot"><span class="annottext">Flow
+</span><a href="#local-6989586621679151493"><span class="hs-identifier hs-var">flow</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-68"></span><span>  </span><span class="annot"><span class="annottext">Map Int (Set Int)
+-&gt; Set Int
+-&gt; p
+-&gt; Map Int (p -&gt; p)
+-&gt; InterproceduralFragment p
+-&gt; MonotoneFramework p
+forall propertySpace.
+Map Int (Set Int)
+-&gt; Set Int
+-&gt; propertySpace
+-&gt; Map Int (propertySpace -&gt; propertySpace)
+-&gt; InterproceduralFragment propertySpace
+-&gt; MonotoneFramework propertySpace
+</span><a href="MonotoneFrameworks.html#MonotoneFramework"><span class="hs-identifier hs-var">MonotoneFramework</span></a></span><span>
+</span><span id="line-69"></span><span>    </span><span class="annot"><span class="annottext">Map Int (Set Int)
+</span><a href="#local-6989586621679151492"><span class="hs-identifier hs-var">outgoing</span></a></span><span>
+</span><span id="line-70"></span><span>    </span><span class="annot"><span class="annottext">Set Int
+</span><a href="#local-6989586621679151491"><span class="hs-identifier hs-var">exL</span></a></span><span>
+</span><span id="line-71"></span><span>    </span><span class="annot"><span class="annottext">p
+</span><a href="#local-6989586621679151490"><span class="hs-identifier hs-var">exV</span></a></span><span>
+</span><span id="line-72"></span><span>    </span><span class="annot"><span class="annottext">Map Int (p -&gt; p)
+</span><a href="#local-6989586621679151489"><span class="hs-identifier hs-var">transferFunctions'</span></a></span><span>
+</span><span id="line-73"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Map Int (Int, p -&gt; p -&gt; p) -&gt; InterproceduralFragment p
+forall propertySpace.
+Map Int (Int, propertySpace -&gt; propertySpace -&gt; propertySpace)
+-&gt; InterproceduralFragment propertySpace
+</span><a href="MonotoneFrameworks.html#InterproceduralFragment"><span class="hs-identifier hs-var">InterproceduralFragment</span></a></span><span> </span><span class="annot"><span class="annottext">(Map Int (Int, p -&gt; p -&gt; p) -&gt; InterproceduralFragment p)
+-&gt; Map Int (Int, p -&gt; p -&gt; p) -&gt; InterproceduralFragment p
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-74"></span><span>      </span><span class="annot"><span class="annottext">[(Int, (Int, p -&gt; p -&gt; p))] -&gt; Map Int (Int, p -&gt; p -&gt; p)
+forall k a. Ord k =&gt; [(k, a)] -&gt; Map k a
+</span><span class="hs-identifier hs-var">M.fromList</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679151486"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679151485"><span class="hs-identifier hs-var">r</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int -&gt; DifTrans p -&gt; p -&gt; p -&gt; p
+forall p. Int -&gt; DifTrans p -&gt; p -&gt; p -&gt; p
+</span><a href="Analyses.html#lookupR"><span class="hs-identifier hs-var">lookupR</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679151485"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">DifTrans p
+</span><a href="#local-6989586621679151484"><span class="hs-identifier hs-var">trans</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">|</span><span> </span><span class="annot"><a href="Analyses.html#Inter"><span class="hs-identifier hs-type">Inter</span></a></span><span> </span><span id="local-6989586621679151486"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679151486"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679151485"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679151485"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Set Inter -&gt; [Inter]
+forall a. Set a -&gt; [a]
+</span><span class="hs-identifier hs-var">S.toList</span></span><span> </span><span class="annot"><span class="annottext">Set Inter
+</span><a href="#local-6989586621679151482"><span class="hs-identifier hs-var">inter</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-75"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-76"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-77"></span><span>    </span><span id="local-6989586621679151490"><span class="annot"><span class="annottext">exV :: p
+</span><a href="#local-6989586621679151490"><span class="hs-identifier hs-var hs-var">exV</span></a></span></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Analysis p -&gt; p
+forall p. Analysis p -&gt; p
+</span><a href="AnalysesConversion.html#extremal"><span class="hs-identifier hs-var hs-var">extremal</span></a></span><span> </span><span class="annot"><span class="annottext">Analysis p
+</span><a href="#local-6989586621679151494"><span class="hs-identifier hs-var">ana</span></a></span><span>
+</span><span id="line-78"></span><span>    </span><span id="local-6989586621679151484"><span class="annot"><span class="annottext">trans :: DifTrans p
+</span><a href="#local-6989586621679151484"><span class="hs-identifier hs-var hs-var">trans</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Analysis p -&gt; DifTrans p
+forall p. Analysis p -&gt; DifTrans p
+</span><a href="AnalysesConversion.html#difTrans"><span class="hs-identifier hs-var hs-var">difTrans</span></a></span><span> </span><span class="annot"><span class="annottext">Analysis p
+</span><a href="#local-6989586621679151494"><span class="hs-identifier hs-var">ana</span></a></span><span>
+</span><span id="line-79"></span><span>
+</span><span id="line-80"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679151491"><span class="annot"><span class="annottext">Set Int
+</span><a href="#local-6989586621679151491"><span class="hs-identifier hs-var">exL</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679151481"><span class="annot"><span class="annottext">Set Edge
+</span><a href="#local-6989586621679151481"><span class="hs-identifier hs-var">flow'</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679151482"><span class="annot"><span class="annottext">Set Inter
+</span><a href="#local-6989586621679151482"><span class="hs-identifier hs-var">inter</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Flow -&gt; (Set Int, Set Edge, Set Inter)
+</span><a href="AnalysesConversion.html#unpackFlow"><span class="hs-identifier hs-var">unpackFlow</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Analysis p -&gt; Dir
+forall p. Analysis p -&gt; Dir
+</span><a href="AnalysesConversion.html#direction"><span class="hs-identifier hs-var hs-var">direction</span></a></span><span> </span><span class="annot"><span class="annottext">Analysis p
+</span><a href="#local-6989586621679151494"><span class="hs-identifier hs-var">ana</span></a></span><span> </span><span class="annot"><span class="annottext">Dir -&gt; Dir -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Dir
+</span><a href="AnalysesConversion.html#Backward"><span class="hs-identifier hs-var">Backward</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Flow
+</span><a href="#local-6989586621679151493"><span class="hs-identifier hs-var">flow</span></a></span><span>
+</span><span id="line-81"></span><span>
+</span><span id="line-82"></span><span>    </span><span id="local-6989586621679151492"><span class="annot"><span class="annottext">outgoing :: Map Int (Set Int)
+</span><a href="#local-6989586621679151492"><span class="hs-identifier hs-var hs-var">outgoing</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Edge] -&gt; Map Int (Set Int)
+forall a b. (Ord a, Ord b) =&gt; [(a, b)] -&gt; Map a (Set b)
+</span><a href="AnalysesConversion.html#group"><span class="hs-identifier hs-var">group</span></a></span><span> </span><span class="annot"><span class="annottext">([Edge] -&gt; Map Int (Set Int)) -&gt; [Edge] -&gt; Map Int (Set Int)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Set Edge -&gt; [Edge]
+forall a. Set a -&gt; [a]
+</span><span class="hs-identifier hs-var">S.toList</span></span><span> </span><span class="annot"><span class="annottext">Set Edge
+</span><a href="#local-6989586621679151481"><span class="hs-identifier hs-var">flow'</span></a></span><span>
+</span><span id="line-83"></span><span>
+</span><span id="line-84"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679151489"><span class="annot"><span class="annottext">Map Int (p -&gt; p)
+</span><a href="#local-6989586621679151489"><span class="hs-identifier hs-var">transferFunctions'</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Map Int (p -&gt; p -&gt; p)
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">DifTrans p
+</span><a href="#local-6989586621679151484"><span class="hs-identifier hs-var">trans</span></a></span><span>
+</span><span id="line-85"></span></pre></body></html>

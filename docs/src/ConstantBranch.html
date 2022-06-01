@@ -1,0 +1,333 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">ConstantBranch</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ConstantProp.html"><span class="hs-identifier">ConstantProp</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ConstantProp.html#ConstEnv"><span class="hs-identifier">ConstEnv</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="ConstantProp.html#ConstLat"><span class="hs-identifier">ConstLat</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ConstantProp.html#CB"><span class="hs-identifier">CB</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="ConstantProp.html#PtConstLat"><span class="hs-identifier">PtConstLat</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-4"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="MonotoneFrameworks.html"><span class="hs-identifier">MonotoneFrameworks</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="MonotoneFrameworks.html#BoundedSemiLattice"><span class="hs-identifier">BoundedSemiLattice</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-5"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Lens</span></span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">under</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">coerced</span></span><span class="hs-special">)</span><span>
+</span><span id="line-6"></span><span>
+</span><span id="line-7"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Set</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Set</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">insert</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">intersection</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">member</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">delete</span></span><span class="hs-special">)</span><span>
+</span><span id="line-8"></span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-comment">-- | Newtype for sets with the intersection semigroup (as opposed to union).</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">newtype</span><span> </span><span id="Intersect"><span class="annot"><a href="ConstantBranch.html#Intersect"><span class="hs-identifier hs-var">Intersect</span></a></span></span><span> </span><span id="local-6989586621679147059"><span class="annot"><a href="#local-6989586621679147059"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Intersect"><span class="annot"><a href="ConstantBranch.html#Intersect"><span class="hs-identifier hs-var">Intersect</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Set</span></span><span> </span><span class="annot"><a href="#local-6989586621679147059"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679147008"><span id="local-6989586621679147010"><span class="annot"><span class="annottext">Intersect a -&gt; Intersect a -&gt; Bool
+(Intersect a -&gt; Intersect a -&gt; Bool)
+-&gt; (Intersect a -&gt; Intersect a -&gt; Bool) -&gt; Eq (Intersect a)
+forall a. Eq a =&gt; Intersect a -&gt; Intersect a -&gt; Bool
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: Intersect a -&gt; Intersect a -&gt; Bool
+$c/= :: forall a. Eq a =&gt; Intersect a -&gt; Intersect a -&gt; Bool
+== :: Intersect a -&gt; Intersect a -&gt; Bool
+$c== :: forall a. Eq a =&gt; Intersect a -&gt; Intersect a -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679147001"><span id="local-6989586621679147003"><span id="local-6989586621679147005"><span class="annot"><span class="annottext">Int -&gt; Intersect a -&gt; ShowS
+[Intersect a] -&gt; ShowS
+Intersect a -&gt; String
+(Int -&gt; Intersect a -&gt; ShowS)
+-&gt; (Intersect a -&gt; String)
+-&gt; ([Intersect a] -&gt; ShowS)
+-&gt; Show (Intersect a)
+forall a. Show a =&gt; Int -&gt; Intersect a -&gt; ShowS
+forall a. Show a =&gt; [Intersect a] -&gt; ShowS
+forall a. Show a =&gt; Intersect a -&gt; String
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [Intersect a] -&gt; ShowS
+$cshowList :: forall a. Show a =&gt; [Intersect a] -&gt; ShowS
+show :: Intersect a -&gt; String
+$cshow :: forall a. Show a =&gt; Intersect a -&gt; String
+showsPrec :: Int -&gt; Intersect a -&gt; ShowS
+$cshowsPrec :: forall a. Show a =&gt; Int -&gt; Intersect a -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span id="local-6989586621679146999"><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679146994"><span id="local-6989586621679146996"><span class="annot"><span class="hs-identifier hs-type">Ord</span></span><span> </span><span class="annot"><a href="#local-6989586621679146999"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Semigroup</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ConstantBranch.html#Intersect"><span class="hs-identifier hs-type">Intersect</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679146999"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-14"></span><span>  </span><span class="annot"><a href="ConstantBranch.html#Intersect"><span class="hs-identifier hs-type">Intersect</span></a></span><span> </span><span id="local-6989586621679146992"><span class="annot"><span class="annottext">Set a
+</span><a href="#local-6989586621679146992"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679146991"><span class="annot"><span class="annottext">&lt;&gt; :: Intersect a -&gt; Intersect a -&gt; Intersect a
+</span><span class="hs-operator hs-var hs-var hs-var hs-var">&lt;&gt;</span></span></span><span> </span><span class="annot"><a href="ConstantBranch.html#Intersect"><span class="hs-identifier hs-type">Intersect</span></a></span><span> </span><span id="local-6989586621679146990"><span class="annot"><span class="annottext">Set a
+</span><a href="#local-6989586621679146990"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Set a -&gt; Intersect a
+forall a. Set a -&gt; Intersect a
+</span><a href="ConstantBranch.html#Intersect"><span class="hs-identifier hs-var">Intersect</span></a></span><span> </span><span class="annot"><span class="annottext">(Set a -&gt; Intersect a) -&gt; Set a -&gt; Intersect a
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Set a -&gt; Set a -&gt; Set a
+forall a. Ord a =&gt; Set a -&gt; Set a -&gt; Set a
+</span><span class="hs-identifier hs-var">intersection</span></span><span> </span><span class="annot"><span class="annottext">Set a
+</span><a href="#local-6989586621679146992"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">Set a
+</span><a href="#local-6989586621679146990"><span class="hs-identifier hs-var">b</span></a></span></span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="hs-comment">-- | Lattice for branch aware constant propagation</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">type</span><span> </span><span id="ConstBranchLat"><span class="annot"><a href="ConstantBranch.html#ConstBranchLat"><span class="hs-identifier hs-var">ConstBranchLat</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ConstantProp.html#PtConstLat"><span class="hs-identifier hs-type">PtConstLat</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ConstantBranch.html#Intersect"><span class="hs-identifier hs-type">Intersect</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679146986"><span class="annot"><a href="MonotoneFrameworks.html#BoundedSemiLattice"><span class="hs-identifier hs-type">BoundedSemiLattice</span></a></span><span> </span><span class="annot"><a href="ConstantBranch.html#ConstBranchLat"><span class="hs-identifier hs-type">ConstBranchLat</span></a></span></span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span class="hs-comment">-- | Element relation for sets with an universal set adjoined: everything is in the universe (@Nothing@)</span><span>
+</span><span id="line-22"></span><span id="local-6989586621679147048"><span class="annot"><a href="ConstantBranch.html#element"><span class="hs-identifier hs-type">element</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ord</span></span><span> </span><span class="annot"><a href="#local-6989586621679147048"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679147048"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ConstantBranch.html#Intersect"><span class="hs-identifier hs-type">Intersect</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679147048"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span></span><span>
+</span><span id="line-23"></span><span id="element"><span class="annot"><span class="annottext">element :: a -&gt; Maybe (Intersect a) -&gt; Bool
+</span><a href="ConstantBranch.html#element"><span class="hs-identifier hs-var hs-var">element</span></a></span></span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Maybe (Intersect a)
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>              </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span>
+</span><span id="line-24"></span><span class="annot"><a href="ConstantBranch.html#element"><span class="hs-identifier hs-var">element</span></a></span><span> </span><span id="local-6989586621679146983"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679146983"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ConstantBranch.html#Intersect"><span class="hs-identifier hs-type">Intersect</span></a></span><span> </span><span id="local-6989586621679146982"><span class="annot"><span class="annottext">Set a
+</span><a href="#local-6989586621679146982"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679146983"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; Set a -&gt; Bool
+forall a. Ord a =&gt; a -&gt; Set a -&gt; Bool
+</span><span class="hs-operator hs-var">`member`</span></span><span> </span><span class="annot"><span class="annottext">Set a
+</span><a href="#local-6989586621679146982"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span class="hs-comment">-- | Ignore the unary transfer function at this label if it is dead</span><span>
+</span><span id="line-27"></span><span class="annot"><a href="ConstantBranch.html#ignoreDead"><span class="hs-identifier hs-type">ignoreDead</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ConstantProp.html#PtConstLat"><span class="hs-identifier hs-type">PtConstLat</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="ConstantProp.html#PtConstLat"><span class="hs-identifier hs-type">PtConstLat</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="ConstantBranch.html#ConstBranchLat"><span class="hs-identifier hs-type">ConstBranchLat</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="ConstantBranch.html#ConstBranchLat"><span class="hs-identifier hs-type">ConstBranchLat</span></a></span><span>
+</span><span id="line-28"></span><span id="ignoreDead"><span class="annot"><span class="annottext">ignoreDead :: Int
+-&gt; (PtConstLat -&gt; PtConstLat) -&gt; ConstBranchLat -&gt; ConstBranchLat
+</span><a href="ConstantBranch.html#ignoreDead"><span class="hs-identifier hs-var hs-var">ignoreDead</span></a></span></span><span> </span><span id="local-6989586621679146980"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679146980"><span class="hs-keyword hs-var">label</span></a></span></span><span> </span><span id="local-6989586621679146979"><span class="annot"><span class="annottext">PtConstLat -&gt; PtConstLat
+</span><a href="#local-6989586621679146979"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679146978"><span class="annot"><span class="annottext">PtConstLat
+</span><a href="#local-6989586621679146978"><span class="hs-identifier hs-var">lat</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679146977"><span class="annot"><span class="annottext">Maybe (Intersect Int)
+</span><a href="#local-6989586621679146977"><span class="hs-identifier hs-var">dead</span></a></span></span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679146980"><span class="hs-keyword hs-var">label</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Maybe (Intersect Int) -&gt; Bool
+forall a. Ord a =&gt; a -&gt; Maybe (Intersect a) -&gt; Bool
+</span><a href="ConstantBranch.html#element"><span class="hs-operator hs-var">`element`</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe (Intersect Int)
+</span><a href="#local-6989586621679146977"><span class="hs-identifier hs-var">dead</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PtConstLat
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Maybe (Intersect Int)
+</span><a href="#local-6989586621679146977"><span class="hs-identifier hs-var">dead</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span>            </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PtConstLat -&gt; PtConstLat
+</span><a href="#local-6989586621679146979"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">PtConstLat
+</span><a href="#local-6989586621679146978"><span class="hs-identifier hs-var">lat</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Maybe (Intersect Int)
+</span><a href="#local-6989586621679146977"><span class="hs-identifier hs-var">dead</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="hs-comment">-- | Ignore the binary transfer function at this label if it is dead</span><span>
+</span><span id="line-33"></span><span class="annot"><a href="ConstantBranch.html#ignoreDead2"><span class="hs-identifier hs-type">ignoreDead2</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ConstantProp.html#PtConstLat"><span class="hs-identifier hs-type">PtConstLat</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="ConstantProp.html#PtConstLat"><span class="hs-identifier hs-type">PtConstLat</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="ConstantProp.html#PtConstLat"><span class="hs-identifier hs-type">PtConstLat</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="ConstantBranch.html#ConstBranchLat"><span class="hs-identifier hs-type">ConstBranchLat</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="ConstantBranch.html#ConstBranchLat"><span class="hs-identifier hs-type">ConstBranchLat</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="ConstantBranch.html#ConstBranchLat"><span class="hs-identifier hs-type">ConstBranchLat</span></a></span><span>
+</span><span id="line-34"></span><span id="ignoreDead2"><span class="annot"><span class="annottext">ignoreDead2 :: Int
+-&gt; (PtConstLat -&gt; PtConstLat -&gt; PtConstLat)
+-&gt; ConstBranchLat
+-&gt; ConstBranchLat
+-&gt; ConstBranchLat
+</span><a href="ConstantBranch.html#ignoreDead2"><span class="hs-identifier hs-var hs-var">ignoreDead2</span></a></span></span><span> </span><span id="local-6989586621679146975"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679146975"><span class="hs-keyword hs-var">label</span></a></span></span><span> </span><span id="local-6989586621679146974"><span class="annot"><span class="annottext">PtConstLat -&gt; PtConstLat -&gt; PtConstLat
+</span><a href="#local-6989586621679146974"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679146973"><span class="annot"><span class="annottext">PtConstLat
+</span><a href="#local-6989586621679146973"><span class="hs-identifier hs-var">lat1</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679146972"><span class="annot"><span class="annottext">Maybe (Intersect Int)
+</span><a href="#local-6989586621679146972"><span class="hs-identifier hs-var">dead</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679146971"><span class="annot"><span class="annottext">PtConstLat
+</span><a href="#local-6989586621679146971"><span class="hs-identifier hs-var">lat2</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Maybe (Intersect Int)
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-comment">-- the callee can not reasonably mark labels outside its scope as dead</span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679146975"><span class="hs-keyword hs-var">label</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Maybe (Intersect Int) -&gt; Bool
+forall a. Ord a =&gt; a -&gt; Maybe (Intersect a) -&gt; Bool
+</span><a href="ConstantBranch.html#element"><span class="hs-operator hs-var">`element`</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe (Intersect Int)
+</span><a href="#local-6989586621679146972"><span class="hs-identifier hs-var">dead</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PtConstLat
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Maybe (Intersect Int)
+</span><a href="#local-6989586621679146972"><span class="hs-identifier hs-var">dead</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span>            </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PtConstLat -&gt; PtConstLat -&gt; PtConstLat
+</span><a href="#local-6989586621679146974"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">PtConstLat
+</span><a href="#local-6989586621679146973"><span class="hs-identifier hs-var">lat1</span></a></span><span> </span><span class="annot"><span class="annottext">PtConstLat
+</span><a href="#local-6989586621679146971"><span class="hs-identifier hs-var">lat2</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Maybe (Intersect Int)
+</span><a href="#local-6989586621679146972"><span class="hs-identifier hs-var">dead</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span class="hs-comment">-- | Discard the analysis value at this label if it is dead</span><span>
+</span><span id="line-39"></span><span class="annot"><a href="ConstantBranch.html#constBranchId"><span class="hs-identifier hs-type">constBranchId</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="ConstantBranch.html#ConstBranchLat"><span class="hs-identifier hs-type">ConstBranchLat</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="ConstantBranch.html#ConstBranchLat"><span class="hs-identifier hs-type">ConstBranchLat</span></a></span><span>
+</span><span id="line-40"></span><span id="constBranchId"><span class="annot"><span class="annottext">constBranchId :: Int -&gt; ConstBranchLat -&gt; ConstBranchLat
+</span><a href="ConstantBranch.html#constBranchId"><span class="hs-identifier hs-var hs-var">constBranchId</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Int
+ -&gt; (PtConstLat -&gt; PtConstLat) -&gt; ConstBranchLat -&gt; ConstBranchLat)
+-&gt; (PtConstLat -&gt; PtConstLat)
+-&gt; Int
+-&gt; ConstBranchLat
+-&gt; ConstBranchLat
+forall a b c. (a -&gt; b -&gt; c) -&gt; b -&gt; a -&gt; c
+</span><span class="hs-identifier hs-var">flip</span></span><span> </span><span class="annot"><span class="annottext">Int
+-&gt; (PtConstLat -&gt; PtConstLat) -&gt; ConstBranchLat -&gt; ConstBranchLat
+</span><a href="ConstantBranch.html#ignoreDead"><span class="hs-identifier hs-var">ignoreDead</span></a></span><span> </span><span class="annot"><span class="annottext">PtConstLat -&gt; PtConstLat
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span> </span><span>
+</span><span id="line-41"></span><span>
+</span><span id="line-42"></span><span class="hs-comment">-- | Transfer function for @if@:</span><span>
+</span><span id="line-43"></span><span class="hs-comment">-- if the condition is always @true@, the @else@ branch is unreachable (dead) and the @then@ branch is made reachable,</span><span>
+</span><span id="line-44"></span><span class="hs-comment">-- and vice versa when the condition is always @false@.</span><span>
+</span><span id="line-45"></span><span class="hs-comment">-- Otherwise, both are reachable.</span><span>
+</span><span id="line-46"></span><span class="annot"><a href="ConstantBranch.html#constBranchIf"><span class="hs-identifier hs-type">constBranchIf</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ConstantProp.html#ConstEnv"><span class="hs-identifier hs-type">ConstEnv</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="ConstantProp.html#ConstLat"><span class="hs-identifier hs-type">ConstLat</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="ConstantBranch.html#ConstBranchLat"><span class="hs-identifier hs-type">ConstBranchLat</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="ConstantBranch.html#ConstBranchLat"><span class="hs-identifier hs-type">ConstBranchLat</span></a></span><span>
+</span><span id="line-47"></span><span id="constBranchIf"><span class="annot"><span class="annottext">constBranchIf :: (ConstEnv -&gt; Maybe ConstLat)
+-&gt; Int -&gt; Int -&gt; ConstBranchLat -&gt; ConstBranchLat
+</span><a href="ConstantBranch.html#constBranchIf"><span class="hs-identifier hs-var hs-var">constBranchIf</span></a></span></span><span> </span><span id="local-6989586621679146966"><span class="annot"><span class="annottext">ConstEnv -&gt; Maybe ConstLat
+</span><a href="#local-6989586621679146966"><span class="hs-identifier hs-var">cond</span></a></span></span><span> </span><span id="local-6989586621679146965"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679146965"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679146964"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679146964"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679146963"><span class="annot"><span class="annottext">PtConstLat
+</span><a href="#local-6989586621679146963"><span class="hs-identifier hs-var">lat</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679146962"><span class="annot"><span class="annottext">Maybe (Intersect Int)
+</span><a href="#local-6989586621679146962"><span class="hs-identifier hs-var">dead</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">PtConstLat
+</span><a href="#local-6989586621679146963"><span class="hs-identifier hs-var">lat</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-48"></span><span>  </span><span class="annot"><span class="annottext">PtConstLat
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PtConstLat
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Maybe (Intersect Int)
+</span><a href="#local-6989586621679146962"><span class="hs-identifier hs-var">dead</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679146961"><span class="annot"><span class="annottext">ConstEnv
+</span><a href="#local-6989586621679146961"><span class="hs-identifier hs-var">env</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">ConstEnv -&gt; Maybe ConstLat
+</span><a href="#local-6989586621679146966"><span class="hs-identifier hs-var">cond</span></a></span><span> </span><span class="annot"><span class="annottext">ConstEnv
+</span><a href="#local-6989586621679146961"><span class="hs-identifier hs-var">env</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-50"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ConstantProp.html#CB"><span class="hs-identifier hs-type">CB</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span class="hs-special">)</span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PtConstLat
+</span><a href="#local-6989586621679146963"><span class="hs-identifier hs-var">lat</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">AnIso (Set Int) (Set Int) (Intersect Int) (Intersect Int)
+-&gt; (Set Int -&gt; Set Int) -&gt; Intersect Int -&gt; Intersect Int
+forall s t a b. AnIso s t a b -&gt; (t -&gt; s) -&gt; b -&gt; a
+</span><span class="hs-identifier hs-var">under</span></span><span> </span><span class="annot"><span class="annottext">AnIso (Set Int) (Set Int) (Intersect Int) (Intersect Int)
+forall s t a b. (Coercible s a, Coercible t b) =&gt; Iso s t a b
+</span><span class="hs-identifier hs-var">coerced</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Set Int -&gt; Set Int
+forall a. Ord a =&gt; a -&gt; Set a -&gt; Set a
+</span><span class="hs-identifier hs-var">insert</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679146964"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">(Set Int -&gt; Set Int) -&gt; (Set Int -&gt; Set Int) -&gt; Set Int -&gt; Set Int
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Set Int -&gt; Set Int
+forall a. Ord a =&gt; a -&gt; Set a -&gt; Set a
+</span><span class="hs-identifier hs-var">delete</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679146965"><span class="hs-identifier hs-var">t</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Intersect Int -&gt; Intersect Int)
+-&gt; Maybe (Intersect Int) -&gt; Maybe (Intersect Int)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Maybe (Intersect Int)
+</span><a href="#local-6989586621679146962"><span class="hs-identifier hs-var">dead</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-51"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ConstantProp.html#CB"><span class="hs-identifier hs-type">CB</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PtConstLat
+</span><a href="#local-6989586621679146963"><span class="hs-identifier hs-var">lat</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">AnIso (Set Int) (Set Int) (Intersect Int) (Intersect Int)
+-&gt; (Set Int -&gt; Set Int) -&gt; Intersect Int -&gt; Intersect Int
+forall s t a b. AnIso s t a b -&gt; (t -&gt; s) -&gt; b -&gt; a
+</span><span class="hs-identifier hs-var">under</span></span><span> </span><span class="annot"><span class="annottext">AnIso (Set Int) (Set Int) (Intersect Int) (Intersect Int)
+forall s t a b. (Coercible s a, Coercible t b) =&gt; Iso s t a b
+</span><span class="hs-identifier hs-var">coerced</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Set Int -&gt; Set Int
+forall a. Ord a =&gt; a -&gt; Set a -&gt; Set a
+</span><span class="hs-identifier hs-var">insert</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679146965"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">(Set Int -&gt; Set Int) -&gt; (Set Int -&gt; Set Int) -&gt; Set Int -&gt; Set Int
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Set Int -&gt; Set Int
+forall a. Ord a =&gt; a -&gt; Set a -&gt; Set a
+</span><span class="hs-identifier hs-var">delete</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679146964"><span class="hs-identifier hs-var">f</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Intersect Int -&gt; Intersect Int)
+-&gt; Maybe (Intersect Int) -&gt; Maybe (Intersect Int)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Maybe (Intersect Int)
+</span><a href="#local-6989586621679146962"><span class="hs-identifier hs-var">dead</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-52"></span><span>    </span><span class="annot"><span class="annottext">Maybe ConstLat
+</span><span class="hs-identifier">_</span></span><span>               </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PtConstLat
+</span><a href="#local-6989586621679146963"><span class="hs-identifier hs-var">lat</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">AnIso (Set Int) (Set Int) (Intersect Int) (Intersect Int)
+-&gt; (Set Int -&gt; Set Int) -&gt; Intersect Int -&gt; Intersect Int
+forall s t a b. AnIso s t a b -&gt; (t -&gt; s) -&gt; b -&gt; a
+</span><span class="hs-identifier hs-var">under</span></span><span> </span><span class="annot"><span class="annottext">AnIso (Set Int) (Set Int) (Intersect Int) (Intersect Int)
+forall s t a b. (Coercible s a, Coercible t b) =&gt; Iso s t a b
+</span><span class="hs-identifier hs-var">coerced</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Set Int -&gt; Set Int
+forall a. Ord a =&gt; a -&gt; Set a -&gt; Set a
+</span><span class="hs-identifier hs-var">delete</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679146965"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">(Set Int -&gt; Set Int) -&gt; (Set Int -&gt; Set Int) -&gt; Set Int -&gt; Set Int
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Set Int -&gt; Set Int
+forall a. Ord a =&gt; a -&gt; Set a -&gt; Set a
+</span><span class="hs-identifier hs-var">delete</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679146964"><span class="hs-identifier hs-var">f</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Intersect Int -&gt; Intersect Int)
+-&gt; Maybe (Intersect Int) -&gt; Maybe (Intersect Int)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Maybe (Intersect Int)
+</span><a href="#local-6989586621679146962"><span class="hs-identifier hs-var">dead</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-53"></span><span>
+</span><span id="line-54"></span><span class="hs-comment">-- | Transfer function for @while@:</span><span>
+</span><span id="line-55"></span><span class="hs-comment">-- if the condition is always @false@, the body is dead, and the label after the loop is made reachable,</span><span>
+</span><span id="line-56"></span><span class="hs-comment">-- if it is always @true@, then the program loops, and the body is made reachable, and the label after is dead.</span><span>
+</span><span id="line-57"></span><span class="hs-comment">-- Otherwise, both are reachable.</span><span>
+</span><span id="line-58"></span><span class="annot"><a href="ConstantBranch.html#constBranchWhile"><span class="hs-identifier hs-type">constBranchWhile</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ConstantProp.html#ConstEnv"><span class="hs-identifier hs-type">ConstEnv</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="ConstantProp.html#ConstLat"><span class="hs-identifier hs-type">ConstLat</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="ConstantBranch.html#ConstBranchLat"><span class="hs-identifier hs-type">ConstBranchLat</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="ConstantBranch.html#ConstBranchLat"><span class="hs-identifier hs-type">ConstBranchLat</span></a></span><span>
+</span><span id="line-59"></span><span id="constBranchWhile"><span class="annot"><span class="annottext">constBranchWhile :: Maybe Int
+-&gt; (ConstEnv -&gt; Maybe ConstLat)
+-&gt; Int
+-&gt; Int
+-&gt; ConstBranchLat
+-&gt; ConstBranchLat
+</span><a href="ConstantBranch.html#constBranchWhile"><span class="hs-identifier hs-var hs-var">constBranchWhile</span></a></span></span><span> </span><span id="local-6989586621679146957"><span class="annot"><span class="annottext">Maybe Int
+</span><a href="#local-6989586621679146957"><span class="hs-identifier hs-var">succ</span></a></span></span><span> </span><span id="local-6989586621679146956"><span class="annot"><span class="annottext">ConstEnv -&gt; Maybe ConstLat
+</span><a href="#local-6989586621679146956"><span class="hs-identifier hs-var">cond</span></a></span></span><span> </span><span id="local-6989586621679146955"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679146955"><span class="hs-keyword hs-var">label</span></a></span></span><span> </span><span id="local-6989586621679146954"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679146954"><span class="hs-identifier hs-var">labelc</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679146953"><span class="annot"><span class="annottext">PtConstLat
+</span><a href="#local-6989586621679146953"><span class="hs-identifier hs-var">lat</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679146952"><span class="annot"><span class="annottext">Maybe (Intersect Int)
+</span><a href="#local-6989586621679146952"><span class="hs-identifier hs-var">dead</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">PtConstLat
+</span><a href="#local-6989586621679146953"><span class="hs-identifier hs-var">lat</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-60"></span><span>  </span><span class="annot"><span class="annottext">PtConstLat
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PtConstLat
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Maybe (Intersect Int)
+</span><a href="#local-6989586621679146952"><span class="hs-identifier hs-var">dead</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-61"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679146951"><span class="annot"><span class="annottext">ConstEnv
+</span><a href="#local-6989586621679146951"><span class="hs-identifier hs-var">env</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">ConstEnv -&gt; Maybe ConstLat
+</span><a href="#local-6989586621679146956"><span class="hs-identifier hs-var">cond</span></a></span><span> </span><span class="annot"><span class="annottext">ConstEnv
+</span><a href="#local-6989586621679146951"><span class="hs-identifier hs-var">env</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-62"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ConstantProp.html#CB"><span class="hs-identifier hs-type">CB</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PtConstLat
+</span><a href="#local-6989586621679146953"><span class="hs-identifier hs-var">lat</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">AnIso (Set Int) (Set Int) (Intersect Int) (Intersect Int)
+-&gt; (Set Int -&gt; Set Int) -&gt; Intersect Int -&gt; Intersect Int
+forall s t a b. AnIso s t a b -&gt; (t -&gt; s) -&gt; b -&gt; a
+</span><span class="hs-identifier hs-var">under</span></span><span> </span><span class="annot"><span class="annottext">AnIso (Set Int) (Set Int) (Intersect Int) (Intersect Int)
+forall s t a b. (Coercible s a, Coercible t b) =&gt; Iso s t a b
+</span><span class="hs-identifier hs-var">coerced</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Int -&gt; Set Int -&gt; Set Int) -&gt; Maybe Int -&gt; Set Int -&gt; Set Int
+forall a b. (a -&gt; b -&gt; b) -&gt; Maybe a -&gt; b -&gt; b
+</span><a href="ConstantBranch.html#doIf"><span class="hs-identifier hs-var">doIf</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Set Int -&gt; Set Int
+forall a. Ord a =&gt; a -&gt; Set a -&gt; Set a
+</span><span class="hs-identifier hs-var">delete</span></span><span> </span><span class="annot"><span class="annottext">Maybe Int
+</span><a href="#local-6989586621679146957"><span class="hs-identifier hs-var">succ</span></a></span><span> </span><span class="annot"><span class="annottext">(Set Int -&gt; Set Int) -&gt; (Set Int -&gt; Set Int) -&gt; Set Int -&gt; Set Int
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Set Int -&gt; Set Int
+forall a. Ord a =&gt; a -&gt; Set a -&gt; Set a
+</span><span class="hs-identifier hs-var">insert</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679146955"><span class="hs-keyword hs-var">label</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Intersect Int -&gt; Intersect Int)
+-&gt; Maybe (Intersect Int) -&gt; Maybe (Intersect Int)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Maybe (Intersect Int)
+</span><a href="#local-6989586621679146952"><span class="hs-identifier hs-var">dead</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-63"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ConstantProp.html#CB"><span class="hs-identifier hs-type">CB</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span class="hs-special">)</span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PtConstLat
+</span><a href="#local-6989586621679146953"><span class="hs-identifier hs-var">lat</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">AnIso (Set Int) (Set Int) (Intersect Int) (Intersect Int)
+-&gt; (Set Int -&gt; Set Int) -&gt; Intersect Int -&gt; Intersect Int
+forall s t a b. AnIso s t a b -&gt; (t -&gt; s) -&gt; b -&gt; a
+</span><span class="hs-identifier hs-var">under</span></span><span> </span><span class="annot"><span class="annottext">AnIso (Set Int) (Set Int) (Intersect Int) (Intersect Int)
+forall s t a b. (Coercible s a, Coercible t b) =&gt; Iso s t a b
+</span><span class="hs-identifier hs-var">coerced</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Int -&gt; Set Int -&gt; Set Int) -&gt; Maybe Int -&gt; Set Int -&gt; Set Int
+forall a b. (a -&gt; b -&gt; b) -&gt; Maybe a -&gt; b -&gt; b
+</span><a href="ConstantBranch.html#doIf"><span class="hs-identifier hs-var">doIf</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Set Int -&gt; Set Int
+forall a. Ord a =&gt; a -&gt; Set a -&gt; Set a
+</span><span class="hs-identifier hs-var">insert</span></span><span> </span><span class="annot"><span class="annottext">Maybe Int
+</span><a href="#local-6989586621679146957"><span class="hs-identifier hs-var">succ</span></a></span><span> </span><span class="annot"><span class="annottext">(Set Int -&gt; Set Int) -&gt; (Set Int -&gt; Set Int) -&gt; Set Int -&gt; Set Int
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Set Int -&gt; Set Int
+forall a. Ord a =&gt; a -&gt; Set a -&gt; Set a
+</span><span class="hs-identifier hs-var">delete</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679146955"><span class="hs-keyword hs-var">label</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Intersect Int -&gt; Intersect Int)
+-&gt; Maybe (Intersect Int) -&gt; Maybe (Intersect Int)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Maybe (Intersect Int)
+</span><a href="#local-6989586621679146952"><span class="hs-identifier hs-var">dead</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-64"></span><span>    </span><span class="annot"><span class="annottext">Maybe ConstLat
+</span><span class="hs-identifier">_</span></span><span>               </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PtConstLat
+</span><a href="#local-6989586621679146953"><span class="hs-identifier hs-var">lat</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">AnIso (Set Int) (Set Int) (Intersect Int) (Intersect Int)
+-&gt; (Set Int -&gt; Set Int) -&gt; Intersect Int -&gt; Intersect Int
+forall s t a b. AnIso s t a b -&gt; (t -&gt; s) -&gt; b -&gt; a
+</span><span class="hs-identifier hs-var">under</span></span><span> </span><span class="annot"><span class="annottext">AnIso (Set Int) (Set Int) (Intersect Int) (Intersect Int)
+forall s t a b. (Coercible s a, Coercible t b) =&gt; Iso s t a b
+</span><span class="hs-identifier hs-var">coerced</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Int -&gt; Set Int -&gt; Set Int) -&gt; Maybe Int -&gt; Set Int -&gt; Set Int
+forall a b. (a -&gt; b -&gt; b) -&gt; Maybe a -&gt; b -&gt; b
+</span><a href="ConstantBranch.html#doIf"><span class="hs-identifier hs-var">doIf</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Set Int -&gt; Set Int
+forall a. Ord a =&gt; a -&gt; Set a -&gt; Set a
+</span><span class="hs-identifier hs-var">delete</span></span><span> </span><span class="annot"><span class="annottext">Maybe Int
+</span><a href="#local-6989586621679146957"><span class="hs-identifier hs-var">succ</span></a></span><span> </span><span class="annot"><span class="annottext">(Set Int -&gt; Set Int) -&gt; (Set Int -&gt; Set Int) -&gt; Set Int -&gt; Set Int
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Set Int -&gt; Set Int
+forall a. Ord a =&gt; a -&gt; Set a -&gt; Set a
+</span><span class="hs-identifier hs-var">delete</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679146955"><span class="hs-keyword hs-var">label</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Intersect Int -&gt; Intersect Int)
+-&gt; Maybe (Intersect Int) -&gt; Maybe (Intersect Int)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Maybe (Intersect Int)
+</span><a href="#local-6989586621679146952"><span class="hs-identifier hs-var">dead</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-65"></span><span>
+</span><span id="line-66"></span><span class="hs-comment">-- | Apply a binary function with optional first argument, if @Nothing@, do nothing.</span><span>
+</span><span id="line-67"></span><span id="local-6989586621679147022"><span id="local-6989586621679147023"><span class="annot"><a href="ConstantBranch.html#doIf"><span class="hs-identifier hs-type">doIf</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679147023"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679147022"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679147022"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="#local-6989586621679147023"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679147022"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679147022"><span class="hs-identifier hs-type">b</span></a></span></span></span><span>
+</span><span id="line-68"></span><span id="doIf"><span class="annot"><span class="annottext">doIf :: (a -&gt; b -&gt; b) -&gt; Maybe a -&gt; b -&gt; b
+</span><a href="ConstantBranch.html#doIf"><span class="hs-identifier hs-var hs-var">doIf</span></a></span></span><span> </span><span class="annot"><span class="annottext">a -&gt; b -&gt; b
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">b -&gt; b
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span>
+</span><span id="line-69"></span><span class="annot"><a href="ConstantBranch.html#doIf"><span class="hs-identifier hs-var">doIf</span></a></span><span> </span><span id="local-6989586621679146949"><span class="annot"><span class="annottext">a -&gt; b -&gt; b
+</span><a href="#local-6989586621679146949"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679146948"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679146948"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; b -&gt; b
+</span><a href="#local-6989586621679146949"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679146948"><span class="hs-identifier hs-var">x</span></a></span></pre></body></html>

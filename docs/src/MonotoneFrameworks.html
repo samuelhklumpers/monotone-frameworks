@@ -1,0 +1,555 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# language NoImplicitPrelude #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">MonotoneFrameworks</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-4"></span><span>
+</span><span id="line-5"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Map.Strict</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">M</span></span><span>
+</span><span id="line-6"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Set</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">S</span></span><span>
+</span><span id="line-7"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Std.html"><span class="hs-identifier">Std</span></a></span><span>
+</span><span id="line-8"></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">class</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Monoid</span></span><span> </span><span class="annot"><a href="#local-6989586621679146622"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eq</span></span><span> </span><span class="annot"><a href="#local-6989586621679146622"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span id="BoundedSemiLattice"><span class="annot"><a href="MonotoneFrameworks.html#BoundedSemiLattice"><span class="hs-identifier hs-var">BoundedSemiLattice</span></a></span></span><span> </span><span id="local-6989586621679146622"><span class="annot"><a href="#local-6989586621679146622"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-10"></span><span>  </span><span id="lessOrEquals"><span class="annot"><a href="MonotoneFrameworks.html#lessOrEquals"><span class="hs-identifier hs-type">lessOrEquals</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679146622"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679146622"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-11"></span><span>  </span><span id="local-6989586621679146531"><span class="annot"><a href="MonotoneFrameworks.html#lessOrEquals"><span class="hs-identifier hs-var hs-var">lessOrEquals</span></a></span><span> </span><span id="local-6989586621679146530"><span class="annot"><span class="annottext">m
+</span><a href="#local-6989586621679146530"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679146529"><span class="annot"><span class="annottext">m
+</span><a href="#local-6989586621679146529"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">m
+</span><a href="#local-6989586621679146530"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">m -&gt; m -&gt; m
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">m
+</span><a href="#local-6989586621679146529"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">m -&gt; m -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">m
+</span><a href="#local-6989586621679146529"><span class="hs-identifier hs-var">b</span></a></span></span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span id="local-6989586621679146591"><span class="annot"><a href="MonotoneFrameworks.html#bottom"><span class="hs-identifier hs-type">bottom</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="MonotoneFrameworks.html#BoundedSemiLattice"><span class="hs-identifier hs-type">BoundedSemiLattice</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679146591"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679146591"><span class="hs-identifier hs-type">m</span></a></span></span><span>
+</span><span id="line-14"></span><span id="bottom"><span class="annot"><span class="annottext">bottom :: m
+</span><a href="MonotoneFrameworks.html#bottom"><span class="hs-identifier hs-var hs-var">bottom</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">m
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">type</span><span> </span><span id="Label"><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-var">Label</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-17"></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">data</span><span> </span><span id="MonotoneFramework"><span class="annot"><a href="MonotoneFrameworks.html#MonotoneFramework"><span class="hs-identifier hs-var">MonotoneFramework</span></a></span></span><span> </span><span id="local-6989586621679146527"><span class="annot"><a href="#local-6989586621679146527"><span class="hs-identifier hs-type">propertySpace</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-19"></span><span>  </span><span id="MonotoneFramework"><span class="annot"><a href="MonotoneFrameworks.html#MonotoneFramework"><span class="hs-identifier hs-var">MonotoneFramework</span></a></span></span><span>
+</span><span id="line-20"></span><span>    </span><span class="hs-special">{</span><span>
+</span><span id="line-21"></span><span>      </span><span class="hs-comment">-- | map of labels to the set of destination labels of all outgoing</span><span>
+</span><span id="line-22"></span><span>      </span><span class="hs-comment">-- flow from the first label</span><span>
+</span><span id="line-23"></span><span>      </span><span id="flow"><span class="annot"><span class="annottext">MonotoneFramework propertySpace -&gt; Map Label (Set Label)
+</span><a href="MonotoneFrameworks.html#flow"><span class="hs-identifier hs-var hs-var">flow</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map</span></span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Set</span></span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-24"></span><span>      </span><span id="extremalLabels"><span class="annot"><span class="annottext">MonotoneFramework propertySpace -&gt; Set Label
+</span><a href="MonotoneFrameworks.html#extremalLabels"><span class="hs-identifier hs-var hs-var">extremalLabels</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Set</span></span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-25"></span><span>      </span><span id="extremalValue"><span class="annot"><span class="annottext">MonotoneFramework propertySpace -&gt; propertySpace
+</span><a href="MonotoneFrameworks.html#extremalValue"><span class="hs-identifier hs-var hs-var">extremalValue</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679146527"><span class="hs-identifier hs-type">propertySpace</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-26"></span><span>      </span><span id="transferFunctions"><span class="annot"><span class="annottext">MonotoneFramework propertySpace
+-&gt; Map Label (propertySpace -&gt; propertySpace)
+</span><a href="MonotoneFrameworks.html#transferFunctions"><span class="hs-identifier hs-var hs-var">transferFunctions</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map</span></span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679146527"><span class="hs-identifier hs-type">propertySpace</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679146527"><span class="hs-identifier hs-type">propertySpace</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>      </span><span id="interproceduralFragment"><span class="annot"><span class="annottext">MonotoneFramework propertySpace
+-&gt; InterproceduralFragment propertySpace
+</span><a href="MonotoneFrameworks.html#interproceduralFragment"><span class="hs-identifier hs-var hs-var">interproceduralFragment</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#InterproceduralFragment"><span class="hs-identifier hs-type">InterproceduralFragment</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679146527"><span class="hs-identifier hs-type">propertySpace</span></a></span><span>
+</span><span id="line-28"></span><span>    </span><span class="hs-special">}</span><span>
+</span><span id="line-29"></span><span>
+</span><span id="line-30"></span><span class="hs-comment">-- | invariant. call label is functionally dependent on the return label</span><span>
+</span><span id="line-31"></span><span class="hs-keyword">newtype</span><span> </span><span id="InterproceduralFragment"><span class="annot"><a href="MonotoneFrameworks.html#InterproceduralFragment"><span class="hs-identifier hs-var">InterproceduralFragment</span></a></span></span><span> </span><span id="local-6989586621679146520"><span class="annot"><a href="#local-6989586621679146520"><span class="hs-identifier hs-type">propertySpace</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-32"></span><span>  </span><span id="InterproceduralFragment"><span class="annot"><a href="MonotoneFrameworks.html#InterproceduralFragment"><span class="hs-identifier hs-var">InterproceduralFragment</span></a></span></span><span>
+</span><span id="line-33"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Map</span></span><span>
+</span><span id="line-34"></span><span>      </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="hs-comment">-- call label in the case of forward flow</span><span>
+</span><span id="line-35"></span><span>      </span><span class="hs-special">(</span><span>
+</span><span id="line-36"></span><span>        </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="hs-comment">-- return label in the case of forward flow</span><span>
+</span><span id="line-37"></span><span>        </span><span class="hs-special">,</span><span>
+</span><span id="line-38"></span><span>        </span><span class="hs-comment">-- transfer function</span><span>
+</span><span id="line-39"></span><span>        </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679146520"><span class="hs-identifier hs-type">propertySpace</span></a></span><span> </span><span class="hs-comment">{-call-}</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679146520"><span class="hs-identifier hs-type">propertySpace</span></a></span><span> </span><span class="hs-comment">{-procedure-}</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679146520"><span class="hs-identifier hs-type">propertySpace</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-40"></span><span>      </span><span class="hs-special">)</span><span>
+</span><span id="line-41"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-42"></span><span>
+</span><span id="line-43"></span><span class="hs-comment">-- | interprocedural MFP solution</span><span>
+</span><span id="line-44"></span><span class="hs-comment">--</span><span>
+</span><span id="line-45"></span><span class="hs-comment">-- warning. partial. 'transferFunctions' must cover all labels except for</span><span>
+</span><span id="line-46"></span><span class="hs-comment">-- call return labels.</span><span>
+</span><span id="line-47"></span><span class="hs-comment">--</span><span>
+</span><span id="line-48"></span><span class="hs-comment">-- warning. termination is only guaranteed if 'propertySpace' satisfies the</span><span>
+</span><span id="line-49"></span><span class="hs-comment">-- /Ascending Chain Condition/.</span><span>
+</span><span id="line-50"></span><span class="annot"><a href="MonotoneFrameworks.html#mfpSolution"><span class="hs-identifier hs-type">mfpSolution</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-51"></span><span>  </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679146517"><span class="annot"><a href="#local-6989586621679146517"><span class="hs-identifier hs-type">propertySpace</span></a></span></span><span class="hs-operator">.</span><span>
+</span><span id="line-52"></span><span>  </span><span class="hs-special">(</span><span class="annot"><a href="MonotoneFrameworks.html#BoundedSemiLattice"><span class="hs-identifier hs-type">BoundedSemiLattice</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679146517"><span class="hs-identifier hs-type">propertySpace</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-53"></span><span>  </span><span class="hs-comment">-- | monotone framework</span><span>
+</span><span id="line-54"></span><span>  </span><span class="annot"><a href="MonotoneFrameworks.html#MonotoneFramework"><span class="hs-identifier hs-type">MonotoneFramework</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679146517"><span class="hs-identifier hs-type">propertySpace</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-55"></span><span>  </span><span class="hs-comment">-- | \(\mathrm{Analysis}_\circ\), \(\mathrm{Analysis}_\bullet\), and all</span><span>
+</span><span id="line-56"></span><span>  </span><span class="hs-comment">-- intermediate steps</span><span>
+</span><span id="line-57"></span><span>  </span><span class="hs-special">(</span><span>
+</span><span id="line-58"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Map</span></span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679146517"><span class="hs-identifier hs-type">propertySpace</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-59"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Map</span></span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679146517"><span class="hs-identifier hs-type">propertySpace</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-60"></span><span>    </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Map</span></span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679146517"><span class="hs-identifier hs-type">propertySpace</span></a></span><span class="hs-special">,</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span class="hs-special">)</span><span class="hs-special">]</span><span class="hs-special">)</span><span class="hs-special">]</span><span>
+</span><span id="line-61"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-62"></span><span id="mfpSolution"><span class="annot"><span class="annottext">mfpSolution :: MonotoneFramework propertySpace
+-&gt; (Map Label propertySpace, Map Label propertySpace,
+    [(Map Label propertySpace, [(Label, Label)])])
+</span><a href="MonotoneFrameworks.html#mfpSolution"><span class="hs-identifier hs-var hs-var">mfpSolution</span></a></span></span><span>
+</span><span id="line-63"></span><span>  </span><span class="hs-special">(</span><span class="annot"><a href="MonotoneFrameworks.html#MonotoneFramework"><span class="hs-identifier hs-type">MonotoneFramework</span></a></span><span> </span><span id="local-6989586621679146516"><span class="annot"><span class="annottext">Map Label (Set Label)
+</span><a href="#local-6989586621679146516"><span class="hs-identifier hs-var">flow</span></a></span></span><span> </span><span id="local-6989586621679146515"><span class="annot"><span class="annottext">Set Label
+</span><a href="#local-6989586621679146515"><span class="hs-identifier hs-var">extremalLabels</span></a></span></span><span> </span><span id="local-6989586621679146514"><span class="annot"><span class="annottext">propertySpace
+</span><a href="#local-6989586621679146514"><span class="hs-identifier hs-var">extremalValue</span></a></span></span><span> </span><span id="local-6989586621679146513"><span class="annot"><span class="annottext">Map Label (propertySpace -&gt; propertySpace)
+</span><a href="#local-6989586621679146513"><span class="hs-identifier hs-var">transferFunctions</span></a></span></span><span> </span><span id="local-6989586621679146512"><span class="annot"><span class="annottext">InterproceduralFragment propertySpace
+</span><a href="#local-6989586621679146512"><span class="hs-identifier hs-var">interproceduralFragment</span></a></span></span><span class="hs-special">)</span><span>
+</span><span id="line-64"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-65"></span><span>    </span><span class="annot"><span class="annottext">Map Label propertySpace
+</span><a href="#local-6989586621679146511"><span class="hs-identifier hs-var">analysisEntry</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-66"></span><span>    </span><span class="annot"><span class="annottext">(Label -&gt; propertySpace -&gt; propertySpace)
+-&gt; Map Label propertySpace -&gt; Map Label propertySpace
+forall k a b. (k -&gt; a -&gt; b) -&gt; Map k a -&gt; Map k b
+</span><span class="hs-identifier hs-var">M.mapWithKey</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679146509"><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146509"><span class="hs-identifier hs-var">k</span></a></span></span><span> </span><span class="annot"><span class="annottext">propertySpace
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Map Label propertySpace -&gt; Label -&gt; propertySpace
+</span><a href="#local-6989586621679146508"><span class="hs-identifier hs-var">transfer</span></a></span><span> </span><span class="annot"><span class="annottext">Map Label propertySpace
+</span><a href="#local-6989586621679146511"><span class="hs-identifier hs-var">analysisEntry</span></a></span><span> </span><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146509"><span class="hs-identifier hs-var">k</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Map Label propertySpace
+</span><a href="#local-6989586621679146511"><span class="hs-identifier hs-var">analysisEntry</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-67"></span><span>    </span><span class="annot"><span class="annottext">[(Map Label propertySpace, [(Label, Label)])]
+</span><a href="#local-6989586621679146507"><span class="hs-identifier hs-var">s</span></a></span><span>
+</span><span id="line-68"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-69"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-70"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679146507"><span class="annot"><span class="annottext">[(Map Label propertySpace, [(Label, Label)])]
+</span><a href="#local-6989586621679146507"><span class="hs-identifier hs-var">s</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679146511"><span class="annot"><span class="annottext">Map Label propertySpace
+</span><a href="#local-6989586621679146511"><span class="hs-identifier hs-var">analysisEntry</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-71"></span><span>      </span><span class="annot"><span class="annottext">([(Map Label propertySpace, [(Label, Label)])]
+ -&gt; [(Map Label propertySpace, [(Label, Label)])])
+-&gt; ([(Map Label propertySpace, [(Label, Label)])],
+    Map Label propertySpace)
+-&gt; ([(Map Label propertySpace, [(Label, Label)])],
+    Map Label propertySpace)
+forall (p :: * -&gt; * -&gt; *) a b c.
+Bifunctor p =&gt;
+(a -&gt; b) -&gt; p a c -&gt; p b c
+</span><span class="hs-identifier hs-var">first</span></span><span>
+</span><span id="line-72"></span><span>        </span><span class="hs-special">(</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Map Label propertySpace
+</span><a href="#local-6989586621679146505"><span class="hs-identifier hs-var">initialAnalysis</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">[(Label, Label)]
+</span><a href="#local-6989586621679146504"><span class="hs-identifier hs-var">initialWorkList</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Map Label propertySpace, [(Label, Label)])
+-&gt; [(Map Label propertySpace, [(Label, Label)])]
+-&gt; [(Map Label propertySpace, [(Label, Label)])]
+forall a. a -&gt; [a] -&gt; [a]
+</span><span class="hs-glyph hs-var">:</span></span><span class="hs-special">)</span><span>
+</span><span id="line-73"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="annottext">((Map Label propertySpace, [(Label, Label)])
+ -&gt; Either
+      (Map Label propertySpace)
+      (Map Label propertySpace, [(Label, Label)]))
+-&gt; (Map Label propertySpace, [(Label, Label)])
+-&gt; ([(Map Label propertySpace, [(Label, Label)])],
+    Map Label propertySpace)
+forall a b. (a -&gt; Either b a) -&gt; a -&gt; ([a], b)
+</span><a href="Std.html#iterateFinite"><span class="hs-identifier hs-var">iterateFinite</span></a></span><span> </span><span class="annot"><span class="annottext">(Map Label propertySpace, [(Label, Label)])
+-&gt; Either
+     (Map Label propertySpace)
+     (Map Label propertySpace, [(Label, Label)])
+</span><a href="#local-6989586621679146502"><span class="hs-identifier hs-var">step</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Map Label propertySpace
+</span><a href="#local-6989586621679146505"><span class="hs-identifier hs-var">initialAnalysis</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">[(Label, Label)]
+</span><a href="#local-6989586621679146504"><span class="hs-identifier hs-var">initialWorkList</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-74"></span><span>    </span><span id="local-6989586621679146505"><span class="annot"><span class="annottext">initialAnalysis :: Map Label propertySpace
+</span><a href="#local-6989586621679146505"><span class="hs-identifier hs-var hs-var">initialAnalysis</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-75"></span><span>      </span><span class="annot"><span class="annottext">(Label -&gt; propertySpace) -&gt; Set Label -&gt; Map Label propertySpace
+forall k a. (k -&gt; a) -&gt; Set k -&gt; Map k a
+</span><span class="hs-identifier hs-var">M.fromSet</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">propertySpace -&gt; Label -&gt; propertySpace
+forall a b. a -&gt; b -&gt; a
+</span><span class="hs-identifier hs-var">const</span></span><span> </span><span class="annot"><span class="annottext">propertySpace
+</span><a href="#local-6989586621679146514"><span class="hs-identifier hs-var">extremalValue</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Set Label
+</span><a href="#local-6989586621679146515"><span class="hs-identifier hs-var">extremalLabels</span></a></span><span>
+</span><span id="line-76"></span><span>      </span><span class="annot"><span class="annottext">Map Label propertySpace
+-&gt; Map Label propertySpace -&gt; Map Label propertySpace
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="hs-comment">-- left biased union</span><span>
+</span><span id="line-77"></span><span>      </span><span class="annot"><span class="annottext">(Label -&gt; propertySpace) -&gt; Set Label -&gt; Map Label propertySpace
+forall k a. (k -&gt; a) -&gt; Set k -&gt; Map k a
+</span><span class="hs-identifier hs-var">M.fromSet</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">propertySpace -&gt; Label -&gt; propertySpace
+forall a b. a -&gt; b -&gt; a
+</span><span class="hs-identifier hs-var">const</span></span><span> </span><span class="annot"><span class="annottext">propertySpace
+forall m. BoundedSemiLattice m =&gt; m
+</span><a href="MonotoneFrameworks.html#bottom"><span class="hs-identifier hs-var">bottom</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Map Label (Set Label) -&gt; Set Label
+forall k a. Map k a -&gt; Set k
+</span><span class="hs-identifier hs-var">M.keysSet</span></span><span> </span><span class="annot"><span class="annottext">Map Label (Set Label)
+</span><a href="#local-6989586621679146516"><span class="hs-identifier hs-var">flow</span></a></span><span> </span><span class="annot"><span class="annottext">Set Label -&gt; Set Label -&gt; Set Label
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Map Label (Set Label) -&gt; Set Label
+forall (t :: * -&gt; *) m. (Foldable t, Monoid m) =&gt; t m -&gt; m
+</span><span class="hs-identifier hs-var">fold</span></span><span> </span><span class="annot"><span class="annottext">Map Label (Set Label)
+</span><a href="#local-6989586621679146516"><span class="hs-identifier hs-var">flow</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-78"></span><span>    </span><span id="local-6989586621679146504"><span class="annot"><span class="annottext">initialWorkList :: [(Label, Label)]
+</span><a href="#local-6989586621679146504"><span class="hs-identifier hs-var hs-var">initialWorkList</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-79"></span><span>      </span><span class="annot"><span class="annottext">((Label, Set Label) -&gt; [(Label, Label)])
+-&gt; [(Label, Set Label)] -&gt; [(Label, Label)]
+forall (t :: * -&gt; *) m a.
+(Foldable t, Monoid m) =&gt;
+(a -&gt; m) -&gt; t a -&gt; m
+</span><span class="hs-identifier hs-var">foldMap</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-special">(</span><span id="local-6989586621679146496"><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146496"><span class="hs-identifier hs-var">l</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679146495"><span class="annot"><span class="annottext">Set Label
+</span><a href="#local-6989586621679146495"><span class="hs-identifier hs-var">ls</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146496"><span class="hs-identifier hs-var">l</span></a></span><span class="hs-special">,</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Label -&gt; (Label, Label)) -&gt; [Label] -&gt; [(Label, Label)]
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Set Label -&gt; [Label]
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; [a]
+</span><span class="hs-identifier hs-var">toList</span></span><span> </span><span class="annot"><span class="annottext">Set Label
+</span><a href="#local-6989586621679146495"><span class="hs-identifier hs-var">ls</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Map Label (Set Label) -&gt; [(Label, Set Label)]
+forall k a. Map k a -&gt; [(k, a)]
+</span><span class="hs-identifier hs-var">M.toList</span></span><span> </span><span class="annot"><span class="annottext">Map Label (Set Label)
+</span><a href="#local-6989586621679146516"><span class="hs-identifier hs-var">flow</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-80"></span><span>    </span><span class="annot"><a href="#local-6989586621679146502"><span class="hs-identifier hs-type">step</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-81"></span><span>      </span><span class="hs-comment">-- | pair of current analysis and worklist</span><span>
+</span><span id="line-82"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Map</span></span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679146517"><span class="hs-identifier hs-type">propertySpace</span></a></span><span class="hs-special">,</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span class="hs-special">)</span><span class="hs-special">]</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-83"></span><span>      </span><span class="hs-comment">-- | either result in case of termination or new state</span><span>
+</span><span id="line-84"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span>
+</span><span id="line-85"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Map</span></span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679146517"><span class="hs-identifier hs-type">propertySpace</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-comment">-- terminate</span><span>
+</span><span id="line-86"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Map</span></span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679146517"><span class="hs-identifier hs-type">propertySpace</span></a></span><span class="hs-special">,</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span class="hs-special">)</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-87"></span><span>    </span><span id="local-6989586621679146502"><span class="annot"><span class="annottext">step :: (Map Label propertySpace, [(Label, Label)])
+-&gt; Either
+     (Map Label propertySpace)
+     (Map Label propertySpace, [(Label, Label)])
+</span><a href="#local-6989586621679146502"><span class="hs-identifier hs-var hs-var">step</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679146491"><span class="annot"><span class="annottext">Map Label propertySpace
+</span><a href="#local-6989586621679146491"><span class="hs-identifier hs-var">analysisOld</span></a></span></span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679146490"><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146490"><span class="hs-identifier hs-var">l</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679146489"><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146489"><span class="hs-identifier hs-var">l'</span></a></span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span> </span><span id="local-6989586621679146488"><span class="annot"><span class="annottext">[(Label, Label)]
+</span><a href="#local-6989586621679146488"><span class="hs-identifier hs-var">workListRest</span></a></span></span><span class="hs-special">)</span><span>
+</span><span id="line-88"></span><span>      </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Map Label propertySpace -&gt; Label -&gt; propertySpace
+</span><a href="#local-6989586621679146508"><span class="hs-identifier hs-var">transfer</span></a></span><span> </span><span class="annot"><span class="annottext">Map Label propertySpace
+</span><a href="#local-6989586621679146491"><span class="hs-identifier hs-var">analysisOld</span></a></span><span> </span><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146490"><span class="hs-identifier hs-var">l</span></a></span><span> </span><span class="annot"><span class="annottext">propertySpace -&gt; propertySpace -&gt; Bool
+forall m. BoundedSemiLattice m =&gt; m -&gt; m -&gt; Bool
+</span><a href="MonotoneFrameworks.html#lessOrEquals"><span class="hs-operator hs-var">`lessOrEquals`</span></a></span><span> </span><span class="annot"><span class="annottext">Label -&gt; Map Label propertySpace -&gt; propertySpace
+forall v. Label -&gt; Map Label v -&gt; v
+</span><a href="#local-6989586621679146487"><span class="hs-identifier hs-var">analysisLookup</span></a></span><span> </span><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146489"><span class="hs-identifier hs-var">l'</span></a></span><span> </span><span class="annot"><span class="annottext">Map Label propertySpace
+</span><a href="#local-6989586621679146491"><span class="hs-identifier hs-var">analysisOld</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-89"></span><span>        </span><span class="annot"><span class="annottext">(Map Label propertySpace, [(Label, Label)])
+-&gt; Either
+     (Map Label propertySpace)
+     (Map Label propertySpace, [(Label, Label)])
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Map Label propertySpace
+</span><a href="#local-6989586621679146491"><span class="hs-identifier hs-var">analysisOld</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">[(Label, Label)]
+</span><a href="#local-6989586621679146488"><span class="hs-identifier hs-var">workListRest</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-90"></span><span>      </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-91"></span><span>        </span><span class="annot"><span class="annottext">(Map Label propertySpace, [(Label, Label)])
+-&gt; Either
+     (Map Label propertySpace)
+     (Map Label propertySpace, [(Label, Label)])
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="annot"><span class="annottext">((Map Label propertySpace, [(Label, Label)])
+ -&gt; Either
+      (Map Label propertySpace)
+      (Map Label propertySpace, [(Label, Label)]))
+-&gt; (Map Label propertySpace, [(Label, Label)])
+-&gt; Either
+     (Map Label propertySpace)
+     (Map Label propertySpace, [(Label, Label)])
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-92"></span><span>        </span><span class="hs-special">(</span><span>
+</span><span id="line-93"></span><span>          </span><span class="annot"><span class="annottext">(propertySpace -&gt; propertySpace)
+-&gt; Label -&gt; Map Label propertySpace -&gt; Map Label propertySpace
+forall k a. Ord k =&gt; (a -&gt; a) -&gt; k -&gt; Map k a -&gt; Map k a
+</span><span class="hs-identifier hs-var">M.adjust</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">propertySpace -&gt; propertySpace -&gt; propertySpace
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Map Label propertySpace -&gt; Label -&gt; propertySpace
+</span><a href="#local-6989586621679146508"><span class="hs-identifier hs-var">transfer</span></a></span><span> </span><span class="annot"><span class="annottext">Map Label propertySpace
+</span><a href="#local-6989586621679146491"><span class="hs-identifier hs-var">analysisOld</span></a></span><span> </span><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146490"><span class="hs-identifier hs-var">l</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146489"><span class="hs-identifier hs-var">l'</span></a></span><span> </span><span class="annot"><span class="annottext">Map Label propertySpace
+</span><a href="#local-6989586621679146491"><span class="hs-identifier hs-var">analysisOld</span></a></span><span>
+</span><span id="line-94"></span><span>          </span><span class="hs-special">,</span><span>
+</span><span id="line-95"></span><span>          </span><span class="hs-special">(</span><span>
+</span><span id="line-96"></span><span>            </span><span class="annot"><span class="annottext">Label -&gt; [(Label, Label)]
+</span><a href="#local-6989586621679146485"><span class="hs-identifier hs-var">outgoingFlow</span></a></span><span> </span><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146489"><span class="hs-identifier hs-var">l'</span></a></span><span> </span><span class="annot"><span class="annottext">[(Label, Label)] -&gt; [(Label, Label)] -&gt; [(Label, Label)]
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-97"></span><span>            </span><span class="hs-special">(</span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Label
+-&gt; InterproceduralFragment propertySpace
+-&gt; Maybe (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+forall propertySpace.
+Label
+-&gt; InterproceduralFragment propertySpace
+-&gt; Maybe (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+</span><a href="MonotoneFrameworks.html#lookupCall"><span class="hs-identifier hs-var">lookupCall</span></a></span><span> </span><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146489"><span class="hs-identifier hs-var">l'</span></a></span><span> </span><span class="annot"><span class="annottext">InterproceduralFragment propertySpace
+</span><a href="#local-6989586621679146512"><span class="hs-identifier hs-var">interproceduralFragment</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-98"></span><span>              </span><span class="annot"><span class="annottext">Maybe (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><span id="line-99"></span><span>              </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679146483"><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146483"><span class="hs-identifier hs-var">returnLabel</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">propertySpace -&gt; propertySpace -&gt; propertySpace
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Label -&gt; [(Label, Label)]
+</span><a href="#local-6989586621679146485"><span class="hs-identifier hs-var">outgoingFlow</span></a></span><span> </span><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146483"><span class="hs-identifier hs-var">returnLabel</span></a></span><span>
+</span><span id="line-100"></span><span>            </span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[(Label, Label)] -&gt; [(Label, Label)] -&gt; [(Label, Label)]
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-101"></span><span>            </span><span class="annot"><span class="annottext">[(Label, Label)]
+</span><a href="#local-6989586621679146488"><span class="hs-identifier hs-var">workListRest</span></a></span><span>
+</span><span id="line-102"></span><span>          </span><span class="hs-special">)</span><span>
+</span><span id="line-103"></span><span>        </span><span class="hs-special">)</span><span>
+</span><span id="line-104"></span><span>    </span><span class="annot"><a href="#local-6989586621679146502"><span class="hs-identifier hs-var">step</span></a></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679146482"><span class="annot"><span class="annottext">Map Label propertySpace
+</span><a href="#local-6989586621679146482"><span class="hs-identifier hs-var">analysis</span></a></span></span><span class="hs-special">,</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Map Label propertySpace
+-&gt; Either
+     (Map Label propertySpace)
+     (Map Label propertySpace, [(Label, Label)])
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">Map Label propertySpace
+</span><a href="#local-6989586621679146482"><span class="hs-identifier hs-var">analysis</span></a></span><span> </span><span class="hs-comment">-- terminate</span><span>
+</span><span id="line-105"></span><span>    </span><span class="annot"><a href="#local-6989586621679146508"><span class="hs-identifier hs-type">transfer</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-106"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Map</span></span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679146517"><span class="hs-identifier hs-type">propertySpace</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-107"></span><span>      </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-108"></span><span>      </span><span class="annot"><a href="#local-6989586621679146517"><span class="hs-identifier hs-type">propertySpace</span></a></span><span>
+</span><span id="line-109"></span><span>    </span><span id="local-6989586621679146508"><span class="annot"><span class="annottext">transfer :: Map Label propertySpace -&gt; Label -&gt; propertySpace
+</span><a href="#local-6989586621679146508"><span class="hs-identifier hs-var hs-var">transfer</span></a></span></span><span> </span><span id="local-6989586621679146481"><span class="annot"><span class="annottext">Map Label propertySpace
+</span><a href="#local-6989586621679146481"><span class="hs-identifier hs-var">analysisOld</span></a></span></span><span> </span><span id="local-6989586621679146480"><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146480"><span class="hs-identifier hs-var">l</span></a></span></span><span>
+</span><span id="line-110"></span><span>      </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679146479"><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146479"><span class="hs-identifier hs-var">callLabel</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679146478"><span class="annot"><span class="annottext">propertySpace -&gt; propertySpace -&gt; propertySpace
+</span><a href="#local-6989586621679146478"><span class="hs-identifier hs-var">f</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Label
+-&gt; InterproceduralFragment propertySpace
+-&gt; Maybe (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+forall propertySpace.
+Label
+-&gt; InterproceduralFragment propertySpace
+-&gt; Maybe (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+</span><a href="MonotoneFrameworks.html#lookupReturn"><span class="hs-identifier hs-var">lookupReturn</span></a></span><span> </span><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146480"><span class="hs-identifier hs-var">l</span></a></span><span> </span><span class="annot"><span class="annottext">InterproceduralFragment propertySpace
+</span><a href="#local-6989586621679146512"><span class="hs-identifier hs-var">interproceduralFragment</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-111"></span><span>        </span><span class="annot"><span class="annottext">propertySpace -&gt; propertySpace -&gt; propertySpace
+</span><a href="#local-6989586621679146478"><span class="hs-identifier hs-var">f</span></a></span><span>
+</span><span id="line-112"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Label -&gt; Map Label propertySpace -&gt; propertySpace
+forall v. Label -&gt; Map Label v -&gt; v
+</span><a href="#local-6989586621679146487"><span class="hs-identifier hs-var">analysisLookup</span></a></span><span> </span><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146479"><span class="hs-identifier hs-var">callLabel</span></a></span><span> </span><span class="annot"><span class="annottext">Map Label propertySpace
+</span><a href="#local-6989586621679146481"><span class="hs-identifier hs-var">analysisOld</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-113"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Label -&gt; Map Label propertySpace -&gt; propertySpace
+forall v. Label -&gt; Map Label v -&gt; v
+</span><a href="#local-6989586621679146487"><span class="hs-identifier hs-var">analysisLookup</span></a></span><span> </span><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146480"><span class="hs-identifier hs-var">l</span></a></span><span> </span><span class="annot"><span class="annottext">Map Label propertySpace
+</span><a href="#local-6989586621679146481"><span class="hs-identifier hs-var">analysisOld</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-114"></span><span>      </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Label -&gt; propertySpace -&gt; propertySpace
+</span><a href="#local-6989586621679146476"><span class="hs-identifier hs-var">transferFunction</span></a></span><span> </span><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146480"><span class="hs-identifier hs-var">l</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Label -&gt; Map Label propertySpace -&gt; propertySpace
+forall v. Label -&gt; Map Label v -&gt; v
+</span><a href="#local-6989586621679146487"><span class="hs-identifier hs-var">analysisLookup</span></a></span><span> </span><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146480"><span class="hs-identifier hs-var">l</span></a></span><span> </span><span class="annot"><span class="annottext">Map Label propertySpace
+</span><a href="#local-6989586621679146481"><span class="hs-identifier hs-var">analysisOld</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-115"></span><span>    </span><span class="annot"><a href="#local-6989586621679146485"><span class="hs-identifier hs-type">outgoingFlow</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span class="hs-special">)</span><span class="hs-special">]</span><span>
+</span><span id="line-116"></span><span>    </span><span id="local-6989586621679146485"><span class="annot"><span class="annottext">outgoingFlow :: Label -&gt; [(Label, Label)]
+</span><a href="#local-6989586621679146485"><span class="hs-identifier hs-var hs-var">outgoingFlow</span></a></span></span><span> </span><span id="local-6989586621679146475"><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146475"><span class="hs-identifier hs-var">l</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-117"></span><span>      </span><span class="annot"><span class="annottext">(Label -&gt; (Label, Label)) -&gt; [Label] -&gt; [(Label, Label)]
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146475"><span class="hs-identifier hs-var">l</span></a></span><span class="hs-special">,</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">([Label] -&gt; [(Label, Label)]) -&gt; [Label] -&gt; [(Label, Label)]
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-118"></span><span>      </span><span class="annot"><span class="annottext">Set Label -&gt; [Label]
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; [a]
+</span><span class="hs-identifier hs-var">toList</span></span><span> </span><span class="annot"><span class="annottext">(Set Label -&gt; [Label]) -&gt; Set Label -&gt; [Label]
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-119"></span><span>      </span><span class="annot"><span class="annottext">Set Label -&gt; Maybe (Set Label) -&gt; Set Label
+forall a. a -&gt; Maybe a -&gt; a
+</span><span class="hs-identifier hs-var">fromMaybe</span></span><span> </span><span class="annot"><span class="annottext">Set Label
+forall a. Set a
+</span><span class="hs-identifier hs-var">S.empty</span></span><span> </span><span class="annot"><span class="annottext">(Maybe (Set Label) -&gt; Set Label) -&gt; Maybe (Set Label) -&gt; Set Label
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-120"></span><span>      </span><span class="annot"><span class="annottext">Label -&gt; Map Label (Set Label) -&gt; Maybe (Set Label)
+forall k a. Ord k =&gt; k -&gt; Map k a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">M.lookup</span></span><span> </span><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146475"><span class="hs-identifier hs-var">l</span></a></span><span> </span><span class="annot"><span class="annottext">Map Label (Set Label)
+</span><a href="#local-6989586621679146516"><span class="hs-identifier hs-var">flow</span></a></span><span>
+</span><span id="line-121"></span><span>    </span><span class="hs-comment">-- | warning. partial</span><span>
+</span><span id="line-122"></span><span>    </span><span class="annot"><a href="#local-6989586621679146476"><span class="hs-identifier hs-type">transferFunction</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-123"></span><span>      </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-124"></span><span>      </span><span class="annot"><a href="#local-6989586621679146517"><span class="hs-identifier hs-type">propertySpace</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-125"></span><span>      </span><span class="annot"><a href="#local-6989586621679146517"><span class="hs-identifier hs-type">propertySpace</span></a></span><span>
+</span><span id="line-126"></span><span>    </span><span id="local-6989586621679146476"><span class="annot"><span class="annottext">transferFunction :: Label -&gt; propertySpace -&gt; propertySpace
+</span><a href="#local-6989586621679146476"><span class="hs-identifier hs-var hs-var">transferFunction</span></a></span></span><span> </span><span id="local-6989586621679146471"><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146471"><span class="hs-identifier hs-var">l</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-127"></span><span>      </span><span class="annot"><span class="annottext">(propertySpace -&gt; propertySpace)
+-&gt; Maybe (propertySpace -&gt; propertySpace)
+-&gt; propertySpace
+-&gt; propertySpace
+forall a. a -&gt; Maybe a -&gt; a
+</span><span class="hs-identifier hs-var">fromMaybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; propertySpace -&gt; propertySpace
+forall a t. (HasCallStack, IsText t) =&gt; t -&gt; a
+</span><span class="hs-identifier hs-var">error</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; propertySpace -&gt; propertySpace)
+-&gt; Text -&gt; propertySpace -&gt; propertySpace
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;transfer function missing for &quot;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Label -&gt; Text
+forall b a. (Show a, IsString b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146471"><span class="hs-identifier hs-var">l</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Maybe (propertySpace -&gt; propertySpace)
+ -&gt; propertySpace -&gt; propertySpace)
+-&gt; Maybe (propertySpace -&gt; propertySpace)
+-&gt; propertySpace
+-&gt; propertySpace
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-128"></span><span>      </span><span class="annot"><span class="annottext">Label
+-&gt; Map Label (propertySpace -&gt; propertySpace)
+-&gt; Maybe (propertySpace -&gt; propertySpace)
+forall k a. Ord k =&gt; k -&gt; Map k a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">M.lookup</span></span><span> </span><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146471"><span class="hs-identifier hs-var">l</span></a></span><span> </span><span class="annot"><span class="annottext">Map Label (propertySpace -&gt; propertySpace)
+</span><a href="#local-6989586621679146513"><span class="hs-identifier hs-var">transferFunctions</span></a></span><span>
+</span><span id="line-129"></span><span>    </span><span class="hs-comment">-- | warning. partial</span><span>
+</span><span id="line-130"></span><span>    </span><span id="local-6989586621679146577"><span class="annot"><a href="#local-6989586621679146487"><span class="hs-identifier hs-type">analysisLookup</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map</span></span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679146577"><span class="hs-identifier hs-type">v</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679146577"><span class="hs-identifier hs-type">v</span></a></span></span><span>
+</span><span id="line-131"></span><span>    </span><span id="local-6989586621679146487"><span class="annot"><span class="annottext">analysisLookup :: Label -&gt; Map Label v -&gt; v
+</span><a href="#local-6989586621679146487"><span class="hs-identifier hs-var hs-var">analysisLookup</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-132"></span><span>      </span><span class="annot"><span class="annottext">v -&gt; Maybe v -&gt; v
+forall a. a -&gt; Maybe a -&gt; a
+</span><span class="hs-identifier hs-var">fromMaybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; v
+forall a t. (HasCallStack, IsText t) =&gt; t -&gt; a
+</span><span class="hs-identifier hs-var">error</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;impossible. initialAnalysis covers all labels&quot;</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Maybe v -&gt; v)
+-&gt; (Label -&gt; Map Label v -&gt; Maybe v) -&gt; Label -&gt; Map Label v -&gt; v
+forall c d a b. (c -&gt; d) -&gt; (a -&gt; b -&gt; c) -&gt; a -&gt; b -&gt; d
+</span><a href="Std.html#.%3A"><span class="hs-operator hs-var">.:</span></a></span><span>
+</span><span id="line-133"></span><span>      </span><span class="annot"><span class="annottext">Label -&gt; Map Label v -&gt; Maybe v
+forall k a. Ord k =&gt; k -&gt; Map k a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">M.lookup</span></span><span>
+</span><span id="line-134"></span><span>
+</span><span id="line-135"></span><span class="annot"><a href="MonotoneFrameworks.html#mapFunctionWithCallLabel"><span class="hs-identifier hs-type">mapFunctionWithCallLabel</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-136"></span><span>  </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679146466"><span class="annot"><a href="#local-6989586621679146466"><span class="hs-identifier hs-type">p0</span></a></span></span><span> </span><span id="local-6989586621679146465"><span class="annot"><a href="#local-6989586621679146465"><span class="hs-identifier hs-type">p1</span></a></span></span><span class="hs-operator">.</span><span>
+</span><span id="line-137"></span><span>  </span><span class="hs-special">(</span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679146466"><span class="hs-identifier hs-type">p0</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679146466"><span class="hs-identifier hs-type">p0</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679146466"><span class="hs-identifier hs-type">p0</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679146465"><span class="hs-identifier hs-type">p1</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679146465"><span class="hs-identifier hs-type">p1</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679146465"><span class="hs-identifier hs-type">p1</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-138"></span><span>  </span><span class="annot"><a href="MonotoneFrameworks.html#InterproceduralFragment"><span class="hs-identifier hs-type">InterproceduralFragment</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679146466"><span class="hs-identifier hs-type">p0</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-139"></span><span>  </span><span class="annot"><a href="MonotoneFrameworks.html#InterproceduralFragment"><span class="hs-identifier hs-type">InterproceduralFragment</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679146465"><span class="hs-identifier hs-type">p1</span></a></span><span>
+</span><span id="line-140"></span><span id="mapFunctionWithCallLabel"><span class="annot"><span class="annottext">mapFunctionWithCallLabel :: (Label -&gt; (p0 -&gt; p0 -&gt; p0) -&gt; p1 -&gt; p1 -&gt; p1)
+-&gt; InterproceduralFragment p0 -&gt; InterproceduralFragment p1
+</span><a href="MonotoneFrameworks.html#mapFunctionWithCallLabel"><span class="hs-identifier hs-var hs-var">mapFunctionWithCallLabel</span></a></span></span><span> </span><span id="local-6989586621679146464"><span class="annot"><span class="annottext">Label -&gt; (p0 -&gt; p0 -&gt; p0) -&gt; p1 -&gt; p1 -&gt; p1
+</span><a href="#local-6989586621679146464"><span class="hs-identifier hs-var">binaryTransferFunction</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-141"></span><span>  </span><span class="annot"><span class="annottext">forall b.
+Coercible
+  (Map Label (Label, p0 -&gt; p0 -&gt; p0)
+   -&gt; Map Label (Label, p1 -&gt; p1 -&gt; p1))
+  b =&gt;
+(Map Label (Label, p0 -&gt; p0 -&gt; p0)
+ -&gt; Map Label (Label, p1 -&gt; p1 -&gt; p1))
+-&gt; b
+</span><span class="hs-identifier hs-var">coerce</span></span><span> </span><span class="hs-comment">-- ignore</span><span>
+</span><span id="line-142"></span><span>    </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Map</span></span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679146466"><span class="hs-identifier hs-type">p0</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679146466"><span class="hs-identifier hs-type">p0</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679146466"><span class="hs-identifier hs-type">p0</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map</span></span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679146465"><span class="hs-identifier hs-type">p1</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679146465"><span class="hs-identifier hs-type">p1</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679146465"><span class="hs-identifier hs-type">p1</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">((Map Label (Label, p0 -&gt; p0 -&gt; p0)
+  -&gt; Map Label (Label, p1 -&gt; p1 -&gt; p1))
+ -&gt; InterproceduralFragment p0 -&gt; InterproceduralFragment p1)
+-&gt; (Map Label (Label, p0 -&gt; p0 -&gt; p0)
+    -&gt; Map Label (Label, p1 -&gt; p1 -&gt; p1))
+-&gt; InterproceduralFragment p0
+-&gt; InterproceduralFragment p1
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-143"></span><span>    </span><span class="annot"><span class="annottext">(Label -&gt; (Label, p0 -&gt; p0 -&gt; p0) -&gt; (Label, p1 -&gt; p1 -&gt; p1))
+-&gt; Map Label (Label, p0 -&gt; p0 -&gt; p0)
+-&gt; Map Label (Label, p1 -&gt; p1 -&gt; p1)
+forall k a b. (k -&gt; a -&gt; b) -&gt; Map k a -&gt; Map k b
+</span><span class="hs-identifier hs-var">M.mapWithKey</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">((p0 -&gt; p0 -&gt; p0) -&gt; p1 -&gt; p1 -&gt; p1)
+-&gt; (Label, p0 -&gt; p0 -&gt; p0) -&gt; (Label, p1 -&gt; p1 -&gt; p1)
+forall (p :: * -&gt; * -&gt; *) b c a.
+Bifunctor p =&gt;
+(b -&gt; c) -&gt; p a b -&gt; p a c
+</span><span class="hs-identifier hs-var">second</span></span><span> </span><span class="annot"><span class="annottext">(((p0 -&gt; p0 -&gt; p0) -&gt; p1 -&gt; p1 -&gt; p1)
+ -&gt; (Label, p0 -&gt; p0 -&gt; p0) -&gt; (Label, p1 -&gt; p1 -&gt; p1))
+-&gt; (Label -&gt; (p0 -&gt; p0 -&gt; p0) -&gt; p1 -&gt; p1 -&gt; p1)
+-&gt; Label
+-&gt; (Label, p0 -&gt; p0 -&gt; p0)
+-&gt; (Label, p1 -&gt; p1 -&gt; p1)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Label -&gt; (p0 -&gt; p0 -&gt; p0) -&gt; p1 -&gt; p1 -&gt; p1
+</span><a href="#local-6989586621679146464"><span class="hs-identifier hs-var">binaryTransferFunction</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-144"></span><span>
+</span><span id="line-145"></span><span class="annot"><a href="MonotoneFrameworks.html#lookupCall"><span class="hs-identifier hs-type">lookupCall</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-146"></span><span>  </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679146569"><span class="annot"><a href="#local-6989586621679146569"><span class="hs-identifier hs-type">propertySpace</span></a></span></span><span class="hs-operator">.</span><span>
+</span><span id="line-147"></span><span>  </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-148"></span><span>  </span><span class="annot"><a href="MonotoneFrameworks.html#InterproceduralFragment"><span class="hs-identifier hs-type">InterproceduralFragment</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679146569"><span class="hs-identifier hs-type">propertySpace</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-149"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679146569"><span class="hs-identifier hs-type">propertySpace</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679146569"><span class="hs-identifier hs-type">propertySpace</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679146569"><span class="hs-identifier hs-type">propertySpace</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-150"></span><span id="lookupCall"><span class="annot"><span class="annottext">lookupCall :: Label
+-&gt; InterproceduralFragment propertySpace
+-&gt; Maybe (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+</span><a href="MonotoneFrameworks.html#lookupCall"><span class="hs-identifier hs-var hs-var">lookupCall</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-151"></span><span>  </span><span class="annot"><span class="annottext">(Label
+ -&gt; Map
+      Label (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+ -&gt; Maybe (Label, propertySpace -&gt; propertySpace -&gt; propertySpace))
+-&gt; Label
+-&gt; InterproceduralFragment propertySpace
+-&gt; Maybe (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+</span><span class="hs-identifier hs-var">coerce</span></span><span> </span><span class="hs-comment">-- ignore</span><span>
+</span><span id="line-152"></span><span>    </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map</span></span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679146569"><span class="hs-identifier hs-type">propertySpace</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679146569"><span class="hs-identifier hs-type">propertySpace</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679146569"><span class="hs-identifier hs-type">propertySpace</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679146569"><span class="hs-identifier hs-type">propertySpace</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679146569"><span class="hs-identifier hs-type">propertySpace</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679146569"><span class="hs-identifier hs-type">propertySpace</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-153"></span><span>    </span><span class="annot"><span class="annottext">Label
+-&gt; Map
+     Label (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+-&gt; Maybe (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+forall k a. Ord k =&gt; k -&gt; Map k a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">M.lookup</span></span><span>
+</span><span id="line-154"></span><span>
+</span><span id="line-155"></span><span id="local-6989586621679146461"><span class="annot"><a href="MonotoneFrameworks.html#lookupReturn"><span class="hs-identifier hs-type">lookupReturn</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-156"></span><span>  </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-157"></span><span>  </span><span class="annot"><a href="MonotoneFrameworks.html#InterproceduralFragment"><span class="hs-identifier hs-type">InterproceduralFragment</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679146461"><span class="hs-identifier hs-type">propertySpace</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-158"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679146461"><span class="hs-identifier hs-type">propertySpace</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679146461"><span class="hs-identifier hs-type">propertySpace</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679146461"><span class="hs-identifier hs-type">propertySpace</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span></span><span>
+</span><span id="line-159"></span><span id="lookupReturn"><span class="annot"><span class="annottext">lookupReturn :: Label
+-&gt; InterproceduralFragment propertySpace
+-&gt; Maybe (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+</span><a href="MonotoneFrameworks.html#lookupReturn"><span class="hs-identifier hs-var hs-var">lookupReturn</span></a></span></span><span> </span><span id="local-6989586621679146460"><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146460"><span class="hs-identifier hs-var">returnLabel</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="MonotoneFrameworks.html#InterproceduralFragment"><span class="hs-identifier hs-type">InterproceduralFragment</span></a></span><span> </span><span id="local-6989586621679146459"><span class="annot"><span class="annottext">Map Label (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+</span><a href="#local-6989586621679146459"><span class="hs-identifier hs-var">interproceduralFragment</span></a></span></span><span class="hs-special">)</span><span>
+</span><span id="line-160"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span>
+</span><span id="line-161"></span><span>    </span><span class="annot"><span class="annottext">Map Label (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+-&gt; [(Label,
+     (Label, propertySpace -&gt; propertySpace -&gt; propertySpace))]
+forall k a. Map k a -&gt; [(k, a)]
+</span><span class="hs-identifier hs-var">M.toList</span></span><span> </span><span class="annot"><span class="annottext">(Map Label (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+ -&gt; [(Label,
+      (Label, propertySpace -&gt; propertySpace -&gt; propertySpace))])
+-&gt; Map
+     Label (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+-&gt; [(Label,
+     (Label, propertySpace -&gt; propertySpace -&gt; propertySpace))]
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">((Label, propertySpace -&gt; propertySpace -&gt; propertySpace) -&gt; Bool)
+-&gt; Map
+     Label (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+-&gt; Map
+     Label (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+forall a k. (a -&gt; Bool) -&gt; Map k a -&gt; Map k a
+</span><span class="hs-identifier hs-var">M.filter</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Label -&gt; Label -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146460"><span class="hs-identifier hs-var">returnLabel</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Label -&gt; Bool)
+-&gt; ((Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+    -&gt; Label)
+-&gt; (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+-&gt; Bool
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(Label, propertySpace -&gt; propertySpace -&gt; propertySpace) -&gt; Label
+forall a b. (a, b) -&gt; a
+</span><span class="hs-identifier hs-var">fst</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Map Label (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+ -&gt; Map
+      Label (Label, propertySpace -&gt; propertySpace -&gt; propertySpace))
+-&gt; Map
+     Label (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+-&gt; Map
+     Label (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Map Label (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+</span><a href="#local-6989586621679146459"><span class="hs-identifier hs-var">interproceduralFragment</span></a></span><span>
+</span><span id="line-162"></span><span>  </span><span class="hs-keyword">of</span><span>
+</span><span id="line-163"></span><span>    </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-164"></span><span>    </span><span class="hs-special">[</span><span class="hs-special">(</span><span id="local-6989586621679146457"><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146457"><span class="hs-identifier hs-var">callLabel</span></a></span></span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679146456"><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146456"><span class="hs-identifier hs-var">_returnLabel</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679146455"><span class="annot"><span class="annottext">propertySpace -&gt; propertySpace -&gt; propertySpace
+</span><a href="#local-6989586621679146455"><span class="hs-identifier hs-var">binaryTransferFunction</span></a></span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-165"></span><span>      </span><span class="annot"><span class="annottext">(Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+-&gt; Maybe (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Label
+</span><a href="#local-6989586621679146457"><span class="hs-identifier hs-var">callLabel</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">propertySpace -&gt; propertySpace -&gt; propertySpace
+</span><a href="#local-6989586621679146455"><span class="hs-identifier hs-var">binaryTransferFunction</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-166"></span><span>    </span><span class="annot"><span class="annottext">[(Label, (Label, propertySpace -&gt; propertySpace -&gt; propertySpace))]
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text
+-&gt; Maybe (Label, propertySpace -&gt; propertySpace -&gt; propertySpace)
+forall a t. (HasCallStack, IsText t) =&gt; t -&gt; a
+</span><span class="hs-identifier hs-var">error</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;impossible. smart constructor of InterproceduralFragment.&quot;</span></span><span> </span><span class="hs-comment">-- to-do</span><span>
+</span><span id="line-167"></span></pre></body></html>

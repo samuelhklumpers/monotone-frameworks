@@ -1,0 +1,560 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Compiler</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Analyses.html"><span class="hs-identifier">Analyses</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Analyses.html#DifTrans"><span class="hs-identifier">DifTrans</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Analyses.html#Edge"><span class="hs-identifier">Edge</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Analyses.html#Inter"><span class="hs-identifier">Inter</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Analyses.html#lookupR"><span class="hs-identifier">lookupR</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Analyses.html#flipMap"><span class="hs-identifier">flipMap</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-4"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="AnalysesConversion.html"><span class="hs-identifier">AnalysesConversion</span></a></span><span>
+</span><span id="line-5"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="AttributeGrammar.html"><span class="hs-identifier">AttributeGrammar</span></a></span><span>
+</span><span id="line-6"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ConstantBranch.html"><span class="hs-identifier">ConstantBranch</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ConstantBranch.html#ConstBranchLat"><span class="hs-identifier">ConstBranchLat</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="ConstantBranch.html#Intersect"><span class="hs-identifier">Intersect</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ConstantProp.html"><span class="hs-identifier">ConstantProp</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ConstantProp.html#ConstEnv"><span class="hs-identifier">ConstEnv</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ConstantProp.html#ConstEnv"><span class="hs-identifier">ConstEnv</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="ConstantProp.html#ConstLat"><span class="hs-identifier">ConstLat</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="ConstantProp.html#PtConstLat"><span class="hs-identifier">PtConstLat</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="ConstantProp.html#constEmpty"><span class="hs-identifier">constEmpty</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ContextSensitive.html"><span class="hs-identifier">ContextSensitive</span></a></span><span>
+</span><span id="line-9"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="ContextSensitive.html#ContextSensitive"><span class="hs-identifier">ContextSensitive</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ContextSensitive.html#runTotalMap"><span class="hs-identifier">runTotalMap</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><a href="ContextSensitive.html#contextSensitize"><span class="hs-identifier">contextSensitize</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Latex.html"><span class="hs-identifier">Latex</span></a></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Lexer.html"><span class="hs-identifier">Lexer</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Lexer.html#alex"><span class="hs-identifier">alex</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="MonotoneFrameworks.html"><span class="hs-identifier">MonotoneFrameworks</span></a></span><span>
+</span><span id="line-15"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#InterproceduralFragment"><span class="hs-identifier">InterproceduralFragment</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>    </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier">Label</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>    </span><span class="annot"><a href="MonotoneFrameworks.html#MonotoneFramework"><span class="hs-identifier">MonotoneFramework</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="MonotoneFrameworks.html#MonotoneFramework"><span class="hs-identifier">MonotoneFramework</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>    </span><span class="annot"><a href="MonotoneFrameworks.html#mfpSolution"><span class="hs-identifier">mfpSolution</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Parser.html"><span class="hs-identifier">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Parser.html#happy"><span class="hs-identifier">happy</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Arrow</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Arrow</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-operator">(&amp;&amp;&amp;)</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Map</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">M</span></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Set</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">S</span></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Std.html"><span class="hs-identifier">Std</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Map</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">Set</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Std.html#intercalate"><span class="hs-identifier">intercalate</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">intersperse</span></span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Text.Pretty.Simple</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">pPrintLightBg</span></span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span>
+</span><span id="line-29"></span><span class="annot"><a href="Compiler.html#callStringLimit"><span class="hs-identifier hs-type">callStringLimit</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-30"></span><span id="callStringLimit"><span class="annot"><span class="annottext">callStringLimit :: Int
+</span><a href="Compiler.html#callStringLimit"><span class="hs-identifier hs-var hs-var">callStringLimit</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">2</span></span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="annot"><a href="Compiler.html#compile"><span class="hs-identifier hs-type">compile</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-33"></span><span id="compile"><span class="annot"><span class="annottext">compile :: String -&gt; IO ()
+</span><a href="Compiler.html#compile"><span class="hs-identifier hs-var hs-var">compile</span></a></span></span><span> </span><span id="local-6989586621679151811"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679151811"><span class="hs-identifier hs-var">source</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-34"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679151810"><span class="annot"><span class="annottext">program :: Program
+</span><a href="#local-6989586621679151810"><span class="hs-identifier hs-var hs-var">program</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Token] -&gt; Program
+</span><a href="Parser.html#happy"><span class="hs-identifier hs-var">happy</span></a></span><span> </span><span class="annot"><span class="annottext">([Token] -&gt; Program) -&gt; [Token] -&gt; Program
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; [Token]
+</span><a href="Lexer.html#alex"><span class="hs-identifier hs-var">alex</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679151811"><span class="hs-identifier hs-var">source</span></a></span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679151809"><span class="annot"><span class="annottext">synProgram :: Syn_Program
+</span><a href="#local-6989586621679151809"><span class="hs-identifier hs-var hs-var">synProgram</span></a></span></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">T_Program -&gt; Inh_Program -&gt; Syn_Program
+</span><a href="AttributeGrammar.html#wrap_Program"><span class="hs-identifier hs-var">wrap_Program</span></a></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Program -&gt; T_Program
+</span><a href="AttributeGrammar.html#sem_Program"><span class="hs-identifier hs-var">sem_Program</span></a></span><span>  </span><span class="annot"><span class="annottext">Program
+</span><a href="#local-6989586621679151810"><span class="hs-identifier hs-var">program</span></a></span><span class="hs-special">)</span><span>  </span><span class="annot"><span class="annottext">Inh_Program
+</span><a href="AttributeGrammar.html#Inh_Program"><span class="hs-identifier hs-var">Inh_Program</span></a></span><span>
+</span><span id="line-36"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679151805"><span class="annot"><span class="annottext">program' :: Program'
+</span><a href="#local-6989586621679151805"><span class="hs-identifier hs-var hs-var">program'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Syn_Program -&gt; Program'
+</span><a href="AttributeGrammar.html#labelled_Syn_Program"><span class="hs-identifier hs-var hs-var">labelled_Syn_Program</span></a></span><span> </span><span class="annot"><span class="annottext">Syn_Program
+</span><a href="#local-6989586621679151809"><span class="hs-identifier hs-var">synProgram</span></a></span><span>
+</span><span id="line-37"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679151803"><span class="annot"><span class="annottext">synProgram' :: Syn_Program'
+</span><a href="#local-6989586621679151803"><span class="hs-identifier hs-var hs-var">synProgram'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">T_Program' -&gt; Inh_Program' -&gt; Syn_Program'
+</span><a href="AttributeGrammar.html#wrap_Program%27"><span class="hs-identifier hs-var">wrap_Program'</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Program' -&gt; T_Program'
+</span><a href="AttributeGrammar.html#sem_Program%27"><span class="hs-identifier hs-var">sem_Program'</span></a></span><span> </span><span class="annot"><span class="annottext">Program'
+</span><a href="#local-6989586621679151805"><span class="hs-identifier hs-var">program'</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Inh_Program'
+</span><a href="AttributeGrammar.html#Inh_Program%27"><span class="hs-identifier hs-var">Inh_Program'</span></a></span><span>
+</span><span id="line-38"></span><span>
+</span><span id="line-39"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&quot;</span></span><span>
+</span><span id="line-40"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;# Program&quot;</span></span><span>
+</span><span id="line-41"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; String -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Syn_Program' -&gt; String
+</span><a href="AttributeGrammar.html#pretty_Syn_Program%27"><span class="hs-identifier hs-var hs-var">pretty_Syn_Program'</span></a></span><span> </span><span class="annot"><span class="annottext">Syn_Program'
+</span><a href="#local-6989586621679151803"><span class="hs-identifier hs-var">synProgram'</span></a></span><span>
+</span><span id="line-42"></span><span>
+</span><span id="line-43"></span><span>
+</span><span id="line-44"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679151797"><span class="annot"><span class="annottext">initial' :: Int
+</span><a href="#local-6989586621679151797"><span class="hs-identifier hs-var hs-var">initial'</span></a></span></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Syn_Program' -&gt; Int
+</span><a href="AttributeGrammar.html#init_Syn_Program%27"><span class="hs-identifier hs-var hs-var">init_Syn_Program'</span></a></span><span> </span><span class="annot"><span class="annottext">Syn_Program'
+</span><a href="#local-6989586621679151803"><span class="hs-identifier hs-var">synProgram'</span></a></span><span>
+</span><span id="line-45"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679151795"><span class="annot"><span class="annottext">finals' :: Set Int
+</span><a href="#local-6989586621679151795"><span class="hs-identifier hs-var hs-var">finals'</span></a></span></span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Syn_Program' -&gt; Set Int
+</span><a href="AttributeGrammar.html#final_Syn_Program%27"><span class="hs-identifier hs-var hs-var">final_Syn_Program'</span></a></span><span> </span><span class="annot"><span class="annottext">Syn_Program'
+</span><a href="#local-6989586621679151803"><span class="hs-identifier hs-var">synProgram'</span></a></span><span>
+</span><span id="line-46"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679151793"><span class="annot"><span class="annottext">edges' :: Set Edge
+</span><a href="#local-6989586621679151793"><span class="hs-identifier hs-var hs-var">edges'</span></a></span></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Syn_Program' -&gt; Set Edge
+</span><a href="AttributeGrammar.html#flow_Syn_Program%27"><span class="hs-identifier hs-var hs-var">flow_Syn_Program'</span></a></span><span> </span><span class="annot"><span class="annottext">Syn_Program'
+</span><a href="#local-6989586621679151803"><span class="hs-identifier hs-var">synProgram'</span></a></span><span>
+</span><span id="line-47"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679151791"><span class="annot"><span class="annottext">interflow' :: Set Inter
+</span><a href="#local-6989586621679151791"><span class="hs-identifier hs-var hs-var">interflow'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Syn_Program' -&gt; Set Inter
+</span><a href="AttributeGrammar.html#interflow_Syn_Program%27"><span class="hs-identifier hs-var hs-var">interflow_Syn_Program'</span></a></span><span> </span><span class="annot"><span class="annottext">Syn_Program'
+</span><a href="#local-6989586621679151803"><span class="hs-identifier hs-var">synProgram'</span></a></span><span>
+</span><span id="line-48"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679151789"><span class="annot"><span class="annottext">flow :: Flow
+</span><a href="#local-6989586621679151789"><span class="hs-identifier hs-var hs-var">flow</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Set Int -&gt; Set Edge -&gt; Set Inter -&gt; Flow
+</span><a href="AnalysesConversion.html#Flow"><span class="hs-identifier hs-var">Flow</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679151797"><span class="hs-identifier hs-var">initial'</span></a></span><span> </span><span class="annot"><span class="annottext">Set Int
+</span><a href="#local-6989586621679151795"><span class="hs-identifier hs-var">finals'</span></a></span><span> </span><span class="annot"><span class="annottext">Set Edge
+</span><a href="#local-6989586621679151793"><span class="hs-identifier hs-var">edges'</span></a></span><span> </span><span class="annot"><span class="annottext">Set Inter
+</span><a href="#local-6989586621679151791"><span class="hs-identifier hs-var">interflow'</span></a></span><span>
+</span><span id="line-49"></span><span>
+</span><span id="line-50"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&quot;</span></span><span>
+</span><span id="line-51"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;# Output&quot;</span></span><span>
+</span><span id="line-52"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;## initial&quot;</span></span><span>
+</span><span id="line-53"></span><span>  </span><span class="annot"><span class="annottext">Int -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679151797"><span class="hs-identifier hs-var">initial'</span></a></span><span>
+</span><span id="line-54"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;## finals&quot;</span></span><span>
+</span><span id="line-55"></span><span>  </span><span class="annot"><span class="annottext">Set Int -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="annottext">Set Int
+</span><a href="#local-6989586621679151795"><span class="hs-identifier hs-var">finals'</span></a></span><span>
+</span><span id="line-56"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;## flow&quot;</span></span><span>
+</span><span id="line-57"></span><span>  </span><span class="annot"><span class="annottext">Set Edge -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="annottext">Set Edge
+</span><a href="#local-6989586621679151793"><span class="hs-identifier hs-var">edges'</span></a></span><span>
+</span><span id="line-58"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;## inter-flow&quot;</span></span><span>
+</span><span id="line-59"></span><span>  </span><span class="annot"><span class="annottext">Set Inter -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="annottext">Set Inter
+</span><a href="#local-6989586621679151791"><span class="hs-identifier hs-var">interflow'</span></a></span><span>
+</span><span id="line-60"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;## call string limit&quot;</span></span><span>
+</span><span id="line-61"></span><span>  </span><span class="annot"><span class="annottext">Int -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="Compiler.html#callStringLimit"><span class="hs-identifier hs-var">callStringLimit</span></a></span><span>
+</span><span id="line-62"></span><span>
+</span><span id="line-63"></span><span>  </span><span class="hs-keyword">let</span><span>
+</span><span id="line-64"></span><span>    </span><span id="local-6989586621679151787"><span class="annot"><span class="annottext">constantPropA :: Analysis PtConstLat
+</span><a href="#local-6989586621679151787"><span class="hs-identifier hs-var hs-var">constantPropA</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-65"></span><span>      </span><span class="annot"><span class="annottext">Dir -&gt; DifTrans PtConstLat -&gt; PtConstLat -&gt; Analysis PtConstLat
+forall p. Dir -&gt; DifTrans p -&gt; p -&gt; Analysis p
+</span><a href="AnalysesConversion.html#Analysis"><span class="hs-identifier hs-var">Analysis</span></a></span><span> </span><span class="annot"><span class="annottext">Dir
+</span><a href="AnalysesConversion.html#Forward"><span class="hs-identifier hs-var">Forward</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Syn_Program' -&gt; DifTrans PtConstLat
+</span><a href="AttributeGrammar.html#constantPropagation_Syn_Program%27"><span class="hs-identifier hs-var hs-var">constantPropagation_Syn_Program'</span></a></span><span> </span><span class="annot"><span class="annottext">Syn_Program'
+</span><a href="#local-6989586621679151803"><span class="hs-identifier hs-var">synProgram'</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ConstEnv -&gt; PtConstLat
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">ConstEnv
+</span><a href="ConstantProp.html#constEmpty"><span class="hs-identifier hs-var">constEmpty</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-66"></span><span>  </span><span class="hs-keyword">let</span><span>
+</span><span id="line-67"></span><span>    </span><span class="annot"><a href="#local-6989586621679151783"><span class="hs-identifier hs-type">constantPropagationMonotoneFramework</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#MonotoneFramework"><span class="hs-identifier hs-type">MonotoneFramework</span></a></span><span> </span><span class="annot"><a href="ConstantProp.html#PtConstLat"><span class="hs-identifier hs-type">PtConstLat</span></a></span><span>
+</span><span id="line-68"></span><span>    </span><span id="local-6989586621679151783"><span class="annot"><span class="annottext">constantPropagationMonotoneFramework :: MonotoneFramework PtConstLat
+</span><a href="#local-6989586621679151783"><span class="hs-identifier hs-var hs-var">constantPropagationMonotoneFramework</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Analysis PtConstLat -&gt; Flow -&gt; MonotoneFramework PtConstLat
+forall p. Analysis p -&gt; Flow -&gt; MonotoneFramework p
+</span><a href="AnalysesConversion.html#analysisToFramework"><span class="hs-identifier hs-var">analysisToFramework</span></a></span><span> </span><span class="annot"><span class="annottext">Analysis PtConstLat
+</span><a href="#local-6989586621679151787"><span class="hs-identifier hs-var">constantPropA</span></a></span><span> </span><span class="annot"><span class="annottext">Flow
+</span><a href="#local-6989586621679151789"><span class="hs-identifier hs-var">flow</span></a></span><span>
+</span><span id="line-69"></span><span>  </span><span class="hs-keyword">let</span><span>
+</span><span id="line-70"></span><span>    </span><span class="annot"><a href="#local-6989586621679151781"><span class="hs-identifier hs-type">constantPropagationEmbellishedMonotoneFramework</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-71"></span><span>      </span><span class="annot"><a href="MonotoneFrameworks.html#MonotoneFramework"><span class="hs-identifier hs-type">MonotoneFramework</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ContextSensitive.html#ContextSensitive"><span class="hs-identifier hs-type">ContextSensitive</span></a></span><span> </span><span class="annot"><a href="ConstantProp.html#PtConstLat"><span class="hs-identifier hs-type">PtConstLat</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-72"></span><span>    </span><span id="local-6989586621679151781"><span class="annot"><span class="annottext">constantPropagationEmbellishedMonotoneFramework :: MonotoneFramework (ContextSensitive PtConstLat)
+</span><a href="#local-6989586621679151781"><span class="hs-identifier hs-var hs-var">constantPropagationEmbellishedMonotoneFramework</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-73"></span><span>      </span><span class="annot"><span class="annottext">Int
+-&gt; MonotoneFramework PtConstLat
+-&gt; MonotoneFramework (ContextSensitive PtConstLat)
+forall propertySpace.
+BoundedSemiLattice propertySpace =&gt;
+Int
+-&gt; MonotoneFramework propertySpace
+-&gt; MonotoneFramework (ContextSensitive propertySpace)
+</span><a href="ContextSensitive.html#contextSensitize"><span class="hs-identifier hs-var">contextSensitize</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="Compiler.html#callStringLimit"><span class="hs-identifier hs-var">callStringLimit</span></a></span><span> </span><span class="annot"><span class="annottext">MonotoneFramework PtConstLat
+</span><a href="#local-6989586621679151783"><span class="hs-identifier hs-var">constantPropagationMonotoneFramework</span></a></span><span>
+</span><span id="line-74"></span><span>
+</span><span id="line-75"></span><span>  </span><span class="hs-keyword">let</span><span>
+</span><span id="line-76"></span><span>    </span><span id="local-6989586621679151780"><span class="annot"><span class="annottext">constantBranchA :: Analysis ConstBranchLat
+</span><a href="#local-6989586621679151780"><span class="hs-identifier hs-var hs-var">constantBranchA</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-77"></span><span>      </span><span class="annot"><span class="annottext">Dir
+-&gt; DifTrans ConstBranchLat
+-&gt; ConstBranchLat
+-&gt; Analysis ConstBranchLat
+forall p. Dir -&gt; DifTrans p -&gt; p -&gt; Analysis p
+</span><a href="AnalysesConversion.html#Analysis"><span class="hs-identifier hs-var">Analysis</span></a></span><span> </span><span class="annot"><span class="annottext">Dir
+</span><a href="AnalysesConversion.html#Forward"><span class="hs-identifier hs-var">Forward</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Syn_Program' -&gt; DifTrans ConstBranchLat
+</span><a href="AttributeGrammar.html#constBranchT_Syn_Program%27"><span class="hs-identifier hs-var hs-var">constBranchT_Syn_Program'</span></a></span><span> </span><span class="annot"><span class="annottext">Syn_Program'
+</span><a href="#local-6989586621679151803"><span class="hs-identifier hs-var">synProgram'</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ConstEnv -&gt; PtConstLat
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">ConstEnv
+</span><a href="ConstantProp.html#constEmpty"><span class="hs-identifier hs-var">constEmpty</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Intersect Int -&gt; Maybe (Intersect Int)
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Set Int -&gt; Intersect Int
+forall a. Set a -&gt; Intersect a
+</span><a href="ConstantBranch.html#Intersect"><span class="hs-identifier hs-var">Intersect</span></a></span><span> </span><span class="annot"><span class="annottext">Set Int
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-78"></span><span>  </span><span class="hs-keyword">let</span><span>
+</span><span id="line-79"></span><span>    </span><span class="annot"><a href="#local-6989586621679151777"><span class="hs-identifier hs-type">constantPropagationBranchAwareMonotoneFramework</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#MonotoneFramework"><span class="hs-identifier hs-type">MonotoneFramework</span></a></span><span> </span><span class="annot"><a href="ConstantBranch.html#ConstBranchLat"><span class="hs-identifier hs-type">ConstBranchLat</span></a></span><span>
+</span><span id="line-80"></span><span>    </span><span id="local-6989586621679151777"><span class="annot"><span class="annottext">constantPropagationBranchAwareMonotoneFramework :: MonotoneFramework ConstBranchLat
+</span><a href="#local-6989586621679151777"><span class="hs-identifier hs-var hs-var">constantPropagationBranchAwareMonotoneFramework</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Analysis ConstBranchLat -&gt; Flow -&gt; MonotoneFramework ConstBranchLat
+forall p. Analysis p -&gt; Flow -&gt; MonotoneFramework p
+</span><a href="AnalysesConversion.html#analysisToFramework"><span class="hs-identifier hs-var">analysisToFramework</span></a></span><span> </span><span class="annot"><span class="annottext">Analysis ConstBranchLat
+</span><a href="#local-6989586621679151780"><span class="hs-identifier hs-var">constantBranchA</span></a></span><span> </span><span class="annot"><span class="annottext">Flow
+</span><a href="#local-6989586621679151789"><span class="hs-identifier hs-var">flow</span></a></span><span>
+</span><span id="line-81"></span><span>  </span><span class="hs-keyword">let</span><span>
+</span><span id="line-82"></span><span>    </span><span class="annot"><a href="#local-6989586621679151776"><span class="hs-identifier hs-type">constantPropagationBranchAwareEmbellishedMonotoneFramework</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-83"></span><span>      </span><span class="annot"><a href="MonotoneFrameworks.html#MonotoneFramework"><span class="hs-identifier hs-type">MonotoneFramework</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ContextSensitive.html#ContextSensitive"><span class="hs-identifier hs-type">ContextSensitive</span></a></span><span> </span><span class="annot"><a href="ConstantBranch.html#ConstBranchLat"><span class="hs-identifier hs-type">ConstBranchLat</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-84"></span><span>    </span><span id="local-6989586621679151776"><span class="annot"><span class="annottext">constantPropagationBranchAwareEmbellishedMonotoneFramework :: MonotoneFramework (ContextSensitive ConstBranchLat)
+</span><a href="#local-6989586621679151776"><span class="hs-identifier hs-var hs-var">constantPropagationBranchAwareEmbellishedMonotoneFramework</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-85"></span><span>      </span><span class="annot"><span class="annottext">Int
+-&gt; MonotoneFramework ConstBranchLat
+-&gt; MonotoneFramework (ContextSensitive ConstBranchLat)
+forall propertySpace.
+BoundedSemiLattice propertySpace =&gt;
+Int
+-&gt; MonotoneFramework propertySpace
+-&gt; MonotoneFramework (ContextSensitive propertySpace)
+</span><a href="ContextSensitive.html#contextSensitize"><span class="hs-identifier hs-var">contextSensitize</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="Compiler.html#callStringLimit"><span class="hs-identifier hs-var">callStringLimit</span></a></span><span> </span><span class="annot"><span class="annottext">MonotoneFramework ConstBranchLat
+</span><a href="#local-6989586621679151777"><span class="hs-identifier hs-var">constantPropagationBranchAwareMonotoneFramework</span></a></span><span>
+</span><span id="line-86"></span><span>
+</span><span id="line-87"></span><span>  </span><span class="hs-keyword">let</span><span>
+</span><span id="line-88"></span><span>    </span><span id="local-6989586621679151775"><span class="annot"><span class="annottext">strongLiveA :: Analysis (Set String)
+</span><a href="#local-6989586621679151775"><span class="hs-identifier hs-var hs-var">strongLiveA</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-89"></span><span>      </span><span class="annot"><span class="annottext">Dir -&gt; DifTrans (Set String) -&gt; Set String -&gt; Analysis (Set String)
+forall p. Dir -&gt; DifTrans p -&gt; p -&gt; Analysis p
+</span><a href="AnalysesConversion.html#Analysis"><span class="hs-identifier hs-var">Analysis</span></a></span><span> </span><span class="annot"><span class="annottext">Dir
+</span><a href="AnalysesConversion.html#Backward"><span class="hs-identifier hs-var">Backward</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Syn_Program' -&gt; DifTrans (Set String)
+</span><a href="AttributeGrammar.html#strongLive_Syn_Program%27"><span class="hs-identifier hs-var hs-var">strongLive_Syn_Program'</span></a></span><span> </span><span class="annot"><span class="annottext">Syn_Program'
+</span><a href="#local-6989586621679151803"><span class="hs-identifier hs-var">synProgram'</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Set String
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span>
+</span><span id="line-90"></span><span>  </span><span class="hs-keyword">let</span><span>
+</span><span id="line-91"></span><span>    </span><span class="annot"><a href="#local-6989586621679151772"><span class="hs-identifier hs-type">stronglyLiveVariablesMonotoneFramework</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#MonotoneFramework"><span class="hs-identifier hs-type">MonotoneFramework</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Set</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">)</span><span>
+</span><span id="line-92"></span><span>    </span><span id="local-6989586621679151772"><span class="annot"><span class="annottext">stronglyLiveVariablesMonotoneFramework :: MonotoneFramework (Set String)
+</span><a href="#local-6989586621679151772"><span class="hs-identifier hs-var hs-var">stronglyLiveVariablesMonotoneFramework</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Analysis (Set String) -&gt; Flow -&gt; MonotoneFramework (Set String)
+forall p. Analysis p -&gt; Flow -&gt; MonotoneFramework p
+</span><a href="AnalysesConversion.html#analysisToFramework"><span class="hs-identifier hs-var">analysisToFramework</span></a></span><span> </span><span class="annot"><span class="annottext">Analysis (Set String)
+</span><a href="#local-6989586621679151775"><span class="hs-identifier hs-var">strongLiveA</span></a></span><span> </span><span class="annot"><span class="annottext">Flow
+</span><a href="#local-6989586621679151789"><span class="hs-identifier hs-var">flow</span></a></span><span>
+</span><span id="line-93"></span><span>  </span><span class="hs-keyword">let</span><span>
+</span><span id="line-94"></span><span>    </span><span class="annot"><a href="#local-6989586621679151771"><span class="hs-identifier hs-type">stronglyLiveVariablesEmbellishedMonotoneFramework</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-95"></span><span>      </span><span class="annot"><a href="MonotoneFrameworks.html#MonotoneFramework"><span class="hs-identifier hs-type">MonotoneFramework</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ContextSensitive.html#ContextSensitive"><span class="hs-identifier hs-type">ContextSensitive</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Set</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-96"></span><span>    </span><span id="local-6989586621679151771"><span class="annot"><span class="annottext">stronglyLiveVariablesEmbellishedMonotoneFramework :: MonotoneFramework (ContextSensitive (Set String))
+</span><a href="#local-6989586621679151771"><span class="hs-identifier hs-var hs-var">stronglyLiveVariablesEmbellishedMonotoneFramework</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-97"></span><span>      </span><span class="annot"><span class="annottext">Int
+-&gt; MonotoneFramework (Set String)
+-&gt; MonotoneFramework (ContextSensitive (Set String))
+forall propertySpace.
+BoundedSemiLattice propertySpace =&gt;
+Int
+-&gt; MonotoneFramework propertySpace
+-&gt; MonotoneFramework (ContextSensitive propertySpace)
+</span><a href="ContextSensitive.html#contextSensitize"><span class="hs-identifier hs-var">contextSensitize</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="Compiler.html#callStringLimit"><span class="hs-identifier hs-var">callStringLimit</span></a></span><span> </span><span class="annot"><span class="annottext">MonotoneFramework (Set String)
+</span><a href="#local-6989586621679151772"><span class="hs-identifier hs-var">stronglyLiveVariablesMonotoneFramework</span></a></span><span>
+</span><span id="line-98"></span><span>
+</span><span id="line-99"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&quot;</span></span><span>
+</span><span id="line-100"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;# Analyses&quot;</span></span><span>
+</span><span id="line-101"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Each analysis result will be represented as a `Map [Label] (Map Label propertySpace)`.&quot;</span></span><span>
+</span><span id="line-102"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;That is, a map from call strings to a map from labels to properties.&quot;</span></span><span>
+</span><span id="line-103"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Absent combinations of call strings and labels are unreachable.&quot;</span></span><span>
+</span><span id="line-104"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Their properties are not restricted by the data flow equations and can be anything.&quot;</span></span><span>
+</span><span id="line-105"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Assume them to be bottom for the least solution.&quot;</span></span><span>
+</span><span id="line-106"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;`Map`s will be printed as lists.&quot;</span></span><span>
+</span><span id="line-107"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;So the printed result will look as of type `[([Label], [(Label, propertySpace)])]`.&quot;</span></span><span>
+</span><span id="line-108"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;## Constant Propagation&quot;</span></span><span>
+</span><span id="line-109"></span><span>  </span><span class="annot"><span class="annottext">(Maybe PtConstLat -&gt; String)
+-&gt; (Map Int (ContextSensitive PtConstLat),
+    Map Int (ContextSensitive PtConstLat),
+    [(Map Int (ContextSensitive PtConstLat), [Edge])])
+-&gt; IO ()
+forall propertySpace.
+(Maybe propertySpace -&gt; String)
+-&gt; (Map Int (ContextSensitive propertySpace),
+    Map Int (ContextSensitive propertySpace),
+    [(Map Int (ContextSensitive propertySpace), [Edge])])
+-&gt; IO ()
+</span><a href="Latex.html#latexPrint"><span class="hs-identifier hs-var">latexPrint</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe PtConstLat -&gt; String
+</span><a href="Latex.html#constantPropagationTex"><span class="hs-identifier hs-var">constantPropagationTex</span></a></span><span> </span><span class="annot"><span class="annottext">((Map Int (ContextSensitive PtConstLat),
+  Map Int (ContextSensitive PtConstLat),
+  [(Map Int (ContextSensitive PtConstLat), [Edge])])
+ -&gt; IO ())
+-&gt; (Map Int (ContextSensitive PtConstLat),
+    Map Int (ContextSensitive PtConstLat),
+    [(Map Int (ContextSensitive PtConstLat), [Edge])])
+-&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-110"></span><span>    </span><span class="annot"><span class="annottext">MonotoneFramework (ContextSensitive PtConstLat)
+-&gt; (Map Int (ContextSensitive PtConstLat),
+    Map Int (ContextSensitive PtConstLat),
+    [(Map Int (ContextSensitive PtConstLat), [Edge])])
+forall propertySpace.
+BoundedSemiLattice propertySpace =&gt;
+MonotoneFramework propertySpace
+-&gt; (Map Int propertySpace, Map Int propertySpace,
+    [(Map Int propertySpace, [Edge])])
+</span><a href="MonotoneFrameworks.html#mfpSolution"><span class="hs-identifier hs-var">mfpSolution</span></a></span><span> </span><span class="annot"><span class="annottext">MonotoneFramework (ContextSensitive PtConstLat)
+</span><a href="#local-6989586621679151781"><span class="hs-identifier hs-var">constantPropagationEmbellishedMonotoneFramework</span></a></span><span>
+</span><span id="line-111"></span><span>
+</span><span id="line-112"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;## Reachable Constant Propagation&quot;</span></span><span>
+</span><span id="line-113"></span><span>  </span><span class="annot"><span class="annottext">(Maybe ConstBranchLat -&gt; String)
+-&gt; (Map Int (ContextSensitive ConstBranchLat),
+    Map Int (ContextSensitive ConstBranchLat),
+    [(Map Int (ContextSensitive ConstBranchLat), [Edge])])
+-&gt; IO ()
+forall propertySpace.
+(Maybe propertySpace -&gt; String)
+-&gt; (Map Int (ContextSensitive propertySpace),
+    Map Int (ContextSensitive propertySpace),
+    [(Map Int (ContextSensitive propertySpace), [Edge])])
+-&gt; IO ()
+</span><a href="Latex.html#latexPrint"><span class="hs-identifier hs-var">latexPrint</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe ConstBranchLat -&gt; String
+</span><a href="Latex.html#constantBranchTex"><span class="hs-identifier hs-var">constantBranchTex</span></a></span><span> </span><span class="annot"><span class="annottext">((Map Int (ContextSensitive ConstBranchLat),
+  Map Int (ContextSensitive ConstBranchLat),
+  [(Map Int (ContextSensitive ConstBranchLat), [Edge])])
+ -&gt; IO ())
+-&gt; (Map Int (ContextSensitive ConstBranchLat),
+    Map Int (ContextSensitive ConstBranchLat),
+    [(Map Int (ContextSensitive ConstBranchLat), [Edge])])
+-&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-114"></span><span>    </span><span class="annot"><span class="annottext">MonotoneFramework (ContextSensitive ConstBranchLat)
+-&gt; (Map Int (ContextSensitive ConstBranchLat),
+    Map Int (ContextSensitive ConstBranchLat),
+    [(Map Int (ContextSensitive ConstBranchLat), [Edge])])
+forall propertySpace.
+BoundedSemiLattice propertySpace =&gt;
+MonotoneFramework propertySpace
+-&gt; (Map Int propertySpace, Map Int propertySpace,
+    [(Map Int propertySpace, [Edge])])
+</span><a href="MonotoneFrameworks.html#mfpSolution"><span class="hs-identifier hs-var">mfpSolution</span></a></span><span> </span><span class="annot"><span class="annottext">MonotoneFramework (ContextSensitive ConstBranchLat)
+</span><a href="#local-6989586621679151776"><span class="hs-identifier hs-var">constantPropagationBranchAwareEmbellishedMonotoneFramework</span></a></span><span>
+</span><span id="line-115"></span><span>
+</span><span id="line-116"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&quot;</span></span><span>
+</span><span id="line-117"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;## Strongly Live Variables&quot;</span></span><span>
+</span><span id="line-118"></span><span>  </span><span class="annot"><span class="annottext">(Maybe (Set String) -&gt; String)
+-&gt; (Map Int (ContextSensitive (Set String)),
+    Map Int (ContextSensitive (Set String)),
+    [(Map Int (ContextSensitive (Set String)), [Edge])])
+-&gt; IO ()
+forall propertySpace.
+(Maybe propertySpace -&gt; String)
+-&gt; (Map Int (ContextSensitive propertySpace),
+    Map Int (ContextSensitive propertySpace),
+    [(Map Int (ContextSensitive propertySpace), [Edge])])
+-&gt; IO ()
+</span><a href="Latex.html#latexPrint"><span class="hs-identifier hs-var">latexPrint</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe (Set String) -&gt; String
+</span><a href="Latex.html#strongLiveTex"><span class="hs-identifier hs-var">strongLiveTex</span></a></span><span> </span><span class="annot"><span class="annottext">((Map Int (ContextSensitive (Set String)),
+  Map Int (ContextSensitive (Set String)),
+  [(Map Int (ContextSensitive (Set String)), [Edge])])
+ -&gt; IO ())
+-&gt; (Map Int (ContextSensitive (Set String)),
+    Map Int (ContextSensitive (Set String)),
+    [(Map Int (ContextSensitive (Set String)), [Edge])])
+-&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-119"></span><span>    </span><span class="annot"><span class="annottext">MonotoneFramework (ContextSensitive (Set String))
+-&gt; (Map Int (ContextSensitive (Set String)),
+    Map Int (ContextSensitive (Set String)),
+    [(Map Int (ContextSensitive (Set String)), [Edge])])
+forall propertySpace.
+BoundedSemiLattice propertySpace =&gt;
+MonotoneFramework propertySpace
+-&gt; (Map Int propertySpace, Map Int propertySpace,
+    [(Map Int propertySpace, [Edge])])
+</span><a href="MonotoneFrameworks.html#mfpSolution"><span class="hs-identifier hs-var">mfpSolution</span></a></span><span> </span><span class="annot"><span class="annottext">MonotoneFramework (ContextSensitive (Set String))
+</span><a href="#local-6989586621679151771"><span class="hs-identifier hs-var">stronglyLiveVariablesEmbellishedMonotoneFramework</span></a></span><span>
+</span><span id="line-120"></span><span>
+</span><span id="line-121"></span><span class="hs-comment">-- | &quot;pretty&quot; print a solution to a monotone framework</span><span>
+</span><span id="line-122"></span><span id="local-6989586621679151766"><span class="annot"><a href="Compiler.html#prettyPrint"><span class="hs-identifier hs-type">prettyPrint</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-123"></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Show</span></span><span> </span><span class="annot"><a href="#local-6989586621679151766"><span class="hs-identifier hs-type">propertySpace</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-124"></span><span>  </span><span class="annot"><a href="AnalysesConversion.html#Analysis"><span class="hs-identifier hs-type">Analysis</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679151766"><span class="hs-identifier hs-type">propertySpace</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-125"></span><span>  </span><span class="hs-special">(</span><span>
+</span><span id="line-126"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Map</span></span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ContextSensitive.html#ContextSensitive"><span class="hs-identifier hs-type">ContextSensitive</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679151766"><span class="hs-identifier hs-type">propertySpace</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-127"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Map</span></span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ContextSensitive.html#ContextSensitive"><span class="hs-identifier hs-type">ContextSensitive</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679151766"><span class="hs-identifier hs-type">propertySpace</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-128"></span><span>    </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Map</span></span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ContextSensitive.html#ContextSensitive"><span class="hs-identifier hs-type">ContextSensitive</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679151766"><span class="hs-identifier hs-type">propertySpace</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span class="hs-special">)</span><span class="hs-special">]</span><span class="hs-special">)</span><span class="hs-special">]</span><span>
+</span><span id="line-129"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-130"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span><span>
+</span><span id="line-131"></span><span id="prettyPrint"><span class="annot"><span class="annottext">prettyPrint :: Analysis propertySpace
+-&gt; (Map Int (ContextSensitive propertySpace),
+    Map Int (ContextSensitive propertySpace),
+    [(Map Int (ContextSensitive propertySpace), [Edge])])
+-&gt; IO ()
+</span><a href="Compiler.html#prettyPrint"><span class="hs-identifier hs-var hs-var">prettyPrint</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AnalysesConversion.html#Analysis"><span class="hs-identifier hs-type">Analysis</span></a></span><span> </span><span class="hs-special">{</span><span id="local-6989586621679151764"><span class="annot"><span class="annottext">Dir
+direction :: forall p. Analysis p -&gt; Dir
+direction :: Dir
+</span><a href="AnalysesConversion.html#direction"><span class="hs-identifier hs-var hs-var">direction</span></a></span></span><span class="hs-special">}</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679151762"><span class="annot"><span class="annottext">Map Int (ContextSensitive propertySpace)
+</span><a href="#local-6989586621679151762"><span class="hs-identifier hs-var">solution_circ</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679151761"><span class="annot"><span class="annottext">Map Int (ContextSensitive propertySpace)
+</span><a href="#local-6989586621679151761"><span class="hs-identifier hs-var">solution_bullet</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679151760"><span class="annot"><span class="annottext">[(Map Int (ContextSensitive propertySpace), [Edge])]
+</span><a href="#local-6989586621679151760"><span class="hs-identifier hs-var">_steps</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-132"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;### entry properties&quot;</span></span><span> </span><span class="annot"><span class="annottext">IO () -&gt; IO () -&gt; IO ()
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f a -&gt; f b -&gt; f b
+</span><span class="hs-operator hs-var">*&gt;</span></span><span>
+</span><span id="line-133"></span><span>  </span><span class="annot"><span class="annottext">Map Int (ContextSensitive propertySpace) -&gt; IO ()
+forall propertySpace.
+Show propertySpace =&gt;
+Map Int (ContextSensitive propertySpace) -&gt; IO ()
+</span><a href="#local-6989586621679151759"><span class="hs-identifier hs-var">p</span></a></span><span> </span><span class="annot"><span class="annottext">Map Int (ContextSensitive propertySpace)
+</span><a href="#local-6989586621679151758"><span class="hs-identifier hs-var">entry</span></a></span><span> </span><span class="annot"><span class="annottext">IO () -&gt; IO () -&gt; IO ()
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f a -&gt; f b -&gt; f b
+</span><span class="hs-operator hs-var">*&gt;</span></span><span>
+</span><span id="line-134"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;### exit properties&quot;</span></span><span> </span><span class="annot"><span class="annottext">IO () -&gt; IO () -&gt; IO ()
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f a -&gt; f b -&gt; f b
+</span><span class="hs-operator hs-var">*&gt;</span></span><span>
+</span><span id="line-135"></span><span>  </span><span class="annot"><span class="annottext">Map Int (ContextSensitive propertySpace) -&gt; IO ()
+forall propertySpace.
+Show propertySpace =&gt;
+Map Int (ContextSensitive propertySpace) -&gt; IO ()
+</span><a href="#local-6989586621679151759"><span class="hs-identifier hs-var">p</span></a></span><span> </span><span class="annot"><span class="annottext">Map Int (ContextSensitive propertySpace)
+</span><a href="#local-6989586621679151757"><span class="hs-identifier hs-var">exit</span></a></span><span>
+</span><span id="line-136"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-137"></span><span>    </span><span id="local-6989586621679151758"><span class="annot"><span class="annottext">entry :: Map Int (ContextSensitive propertySpace)
+</span><a href="#local-6989586621679151758"><span class="hs-identifier hs-var hs-var">entry</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-138"></span><span>      </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Dir
+</span><a href="#local-6989586621679151764"><span class="hs-identifier hs-var">direction</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-139"></span><span>        </span><span class="annot"><span class="annottext">Dir
+</span><a href="AnalysesConversion.html#Forward"><span class="hs-identifier hs-var">Forward</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Map Int (ContextSensitive propertySpace)
+</span><a href="#local-6989586621679151762"><span class="hs-identifier hs-var">solution_circ</span></a></span><span>
+</span><span id="line-140"></span><span>        </span><span class="annot"><span class="annottext">Dir
+</span><a href="AnalysesConversion.html#Backward"><span class="hs-identifier hs-var">Backward</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Map Int (ContextSensitive propertySpace)
+</span><a href="#local-6989586621679151761"><span class="hs-identifier hs-var">solution_bullet</span></a></span><span>
+</span><span id="line-141"></span><span>    </span><span id="local-6989586621679151757"><span class="annot"><span class="annottext">exit :: Map Int (ContextSensitive propertySpace)
+</span><a href="#local-6989586621679151757"><span class="hs-identifier hs-var hs-var">exit</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-142"></span><span>      </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Dir
+</span><a href="#local-6989586621679151764"><span class="hs-identifier hs-var">direction</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-143"></span><span>        </span><span class="annot"><span class="annottext">Dir
+</span><a href="AnalysesConversion.html#Forward"><span class="hs-identifier hs-var">Forward</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Map Int (ContextSensitive propertySpace)
+</span><a href="#local-6989586621679151761"><span class="hs-identifier hs-var">solution_bullet</span></a></span><span>
+</span><span id="line-144"></span><span>        </span><span class="annot"><span class="annottext">Dir
+</span><a href="AnalysesConversion.html#Backward"><span class="hs-identifier hs-var">Backward</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Map Int (ContextSensitive propertySpace)
+</span><a href="#local-6989586621679151762"><span class="hs-identifier hs-var">solution_circ</span></a></span><span>
+</span><span id="line-145"></span><span>    </span><span id="local-6989586621679151858"><span class="annot"><a href="#local-6989586621679151759"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-146"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Show</span></span><span> </span><span class="annot"><a href="#local-6989586621679151858"><span class="hs-identifier hs-type">propertySpace</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-147"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Map</span></span><span> </span><span class="annot"><a href="MonotoneFrameworks.html#Label"><span class="hs-identifier hs-type">Label</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ContextSensitive.html#ContextSensitive"><span class="hs-identifier hs-type">ContextSensitive</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679151858"><span class="hs-identifier hs-type">propertySpace</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span><span>
+</span><span id="line-148"></span><span>    </span><span id="local-6989586621679151759"><span class="annot"><span class="annottext">p :: Map Int (ContextSensitive propertySpace) -&gt; IO ()
+</span><a href="#local-6989586621679151759"><span class="hs-identifier hs-var hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-149"></span><span>      </span><span class="annot"><span class="annottext">[([Int], [(Int, propertySpace)])] -&gt; IO ()
+forall (m :: * -&gt; *) a. (MonadIO m, Show a) =&gt; a -&gt; m ()
+</span><span class="hs-identifier hs-var">pPrintLightBg</span></span><span> </span><span class="annot"><span class="annottext">([([Int], [(Int, propertySpace)])] -&gt; IO ())
+-&gt; (Map Int (ContextSensitive propertySpace)
+    -&gt; [([Int], [(Int, propertySpace)])])
+-&gt; Map Int (ContextSensitive propertySpace)
+-&gt; IO ()
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span>
+</span><span id="line-150"></span><span>      </span><span class="annot"><span class="annottext">Map [Int] [(Int, propertySpace)]
+-&gt; [([Int], [(Int, propertySpace)])]
+forall k a. Map k a -&gt; [(k, a)]
+</span><span class="hs-identifier hs-var">M.toList</span></span><span> </span><span class="annot"><span class="annottext">(Map [Int] [(Int, propertySpace)]
+ -&gt; [([Int], [(Int, propertySpace)])])
+-&gt; (Map Int (ContextSensitive propertySpace)
+    -&gt; Map [Int] [(Int, propertySpace)])
+-&gt; Map Int (ContextSensitive propertySpace)
+-&gt; [([Int], [(Int, propertySpace)])]
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span>
+</span><span id="line-151"></span><span>      </span><span class="annot"><span class="annottext">(Map Int propertySpace -&gt; [(Int, propertySpace)])
+-&gt; Map [Int] (Map Int propertySpace)
+-&gt; Map [Int] [(Int, propertySpace)]
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">Map Int propertySpace -&gt; [(Int, propertySpace)]
+forall k a. Map k a -&gt; [(k, a)]
+</span><span class="hs-identifier hs-var">M.toList</span></span><span> </span><span class="annot"><span class="annottext">(Map [Int] (Map Int propertySpace)
+ -&gt; Map [Int] [(Int, propertySpace)])
+-&gt; (Map Int (ContextSensitive propertySpace)
+    -&gt; Map [Int] (Map Int propertySpace))
+-&gt; Map Int (ContextSensitive propertySpace)
+-&gt; Map [Int] [(Int, propertySpace)]
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span>
+</span><span id="line-152"></span><span>      </span><span class="annot"><span class="annottext">(Map Int propertySpace
+ -&gt; Map Int propertySpace -&gt; Map Int propertySpace)
+-&gt; ([Int] -&gt; [Int])
+-&gt; Map [Int] (Map Int propertySpace)
+-&gt; Map [Int] (Map Int propertySpace)
+forall k2 a k1.
+Ord k2 =&gt;
+(a -&gt; a -&gt; a) -&gt; (k1 -&gt; k2) -&gt; Map k1 a -&gt; Map k2 a
+</span><span class="hs-identifier hs-var">M.mapKeysWith</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String
+-&gt; Map Int propertySpace
+-&gt; Map Int propertySpace
+-&gt; Map Int propertySpace
+forall a. HasCallStack =&gt; String -&gt; a
+</span><span class="hs-identifier hs-var">error</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;impossible. reverse is bijective.&quot;</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[Int] -&gt; [Int]
+forall a. [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">reverse</span></span><span> </span><span class="annot"><span class="annottext">(Map [Int] (Map Int propertySpace)
+ -&gt; Map [Int] (Map Int propertySpace))
+-&gt; (Map Int (ContextSensitive propertySpace)
+    -&gt; Map [Int] (Map Int propertySpace))
+-&gt; Map Int (ContextSensitive propertySpace)
+-&gt; Map [Int] (Map Int propertySpace)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span>
+</span><span id="line-153"></span><span>      </span><span class="annot"><span class="annottext">Map Int (Map [Int] propertySpace)
+-&gt; Map [Int] (Map Int propertySpace)
+forall k m v. (Ord k, Ord m) =&gt; Map k (Map m v) -&gt; Map m (Map k v)
+</span><a href="Analyses.html#flipMap"><span class="hs-identifier hs-var">flipMap</span></a></span><span> </span><span class="annot"><span class="annottext">(Map Int (Map [Int] propertySpace)
+ -&gt; Map [Int] (Map Int propertySpace))
+-&gt; (Map Int (ContextSensitive propertySpace)
+    -&gt; Map Int (Map [Int] propertySpace))
+-&gt; Map Int (ContextSensitive propertySpace)
+-&gt; Map [Int] (Map Int propertySpace)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span>
+</span><span id="line-154"></span><span>      </span><span class="annot"><span class="annottext">(ContextSensitive propertySpace -&gt; Map [Int] propertySpace)
+-&gt; Map Int (ContextSensitive propertySpace)
+-&gt; Map Int (Map [Int] propertySpace)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">ContextSensitive propertySpace -&gt; Map [Int] propertySpace
+forall propertySpace.
+ContextSensitive propertySpace -&gt; Map [Int] propertySpace
+</span><a href="ContextSensitive.html#runTotalMap"><span class="hs-identifier hs-var hs-var">runTotalMap</span></a></span><span>
+</span><span id="line-155"></span><span>
+</span><span id="line-156"></span><span>
+</span><span id="line-157"></span><span id="local-6989586621679151749"><span id="local-6989586621679151750"><span id="local-6989586621679151751"><span class="annot"><a href="Compiler.html#secondOf3"><span class="hs-identifier hs-type">secondOf3</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679151751"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679151750"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679151749"><span class="hs-identifier hs-type">c</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679151750"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-158"></span><span id="secondOf3"><span class="annot"><span class="annottext">secondOf3 :: (a, b, c) -&gt; b
+</span><a href="Compiler.html#secondOf3"><span class="hs-identifier hs-var hs-var">secondOf3</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
+</span><span class="hs-identifier">_</span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679151747"><span class="annot"><span class="annottext">b
+</span><a href="#local-6989586621679151747"><span class="hs-identifier hs-var">b</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">c
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">b
+</span><a href="#local-6989586621679151747"><span class="hs-identifier hs-var">b</span></a></span><span>
+</span><span id="line-159"></span></pre></body></html>
