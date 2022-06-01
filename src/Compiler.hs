@@ -1,6 +1,7 @@
 module Compiler where
 
-import Analyses (DifTrans, Dir (..), Edge, Inter (..), lookupR)
+import Analyses (DifTrans, Edge, Inter (..), lookupR)
+import AnalysesConversion
 import AttributeGrammar
 import ConstantBranch (ConstBranchLat, Intersect(..))
 import ConstantProp (ConstEnv (ConstEnv), ConstLat (..), PtConstLat, constEmpty)
@@ -8,6 +9,7 @@ import ContextSensitive
   ( ContextSensitive (runTotalMap),
     contextSensitize,
   )
+import Latex
 import Lexer (alex)
 import MonotoneFrameworks
   ( InterproceduralFragment (..),
@@ -23,63 +25,9 @@ import Data.Set qualified as S
 import Std (Map, Set, intercalate, intersperse)
 import Text.Pretty.Simple (pPrintLightBg)
 
+
 callStringLimit :: Int
 callStringLimit = 2
-
-data Flow = Flow {
-  initial   :: Int,
-  finals    :: Set Int,
-  edges     :: Set Edge,
-  interflow :: Set Inter
-}
-
-data Analysis p = Analysis {
-  direction :: Dir,
-  difTrans   :: DifTrans p,
-  extremal   :: p
-}
-
-swap :: (a, b) -> (b, a)
-swap (a, b) = (b, a)
-
-unpackFlow :: Bool -> Flow -> (Set Int, Set Edge, Set Inter)
-unpackFlow backward flow = (a, b, c)
-  where
-    a = if backward then finals flow else S.singleton (initial flow)
-
-    es = edges flow
-    b = if backward then S.map swap es else es
-
-    swapInter (Inter x y z w) = Inter w z y x
-    is = interflow flow
-    c = if backward then S.map swapInter is else is
-
-group :: (Ord a, Ord b) => [(a, b)] -> M.Map a (Set b)
-group []          = mempty
-group ((a, b):xs) = M.alter h a $ group xs
-  where
-    h Nothing  = Just $ S.singleton b
-    h (Just u) = Just $ S.insert b u
-
-prepare :: Analysis p -> Flow -> MonotoneFramework p
-prepare ana flow =
-  MonotoneFramework
-    outgoing
-    exL
-    exV
-    transferFunctions'
-    (InterproceduralFragment $
-      M.fromList [(c, (r, lookupR r trans)) | Inter c _ _ r <- S.toList inter]
-    )
-  where
-    exV  = extremal ana
-    trans = difTrans ana
-
-    (exL, flow', inter) = unpackFlow (direction ana == Backward) flow
-
-    outgoing = group $ S.toList flow'
-
-    (transferFunctions', _) = trans
 
 compile :: String -> IO ()
 compile source = do
@@ -114,7 +62,7 @@ compile source = do
 
   let
     constantPropA =
-      Analysis Forward (constantPropagation_Syn_Program' synProgram') (Just constEmpty)
+      Analysis Forward (valSpace_Syn_Program' synProgram') (Just constEmpty)
   let
     constantPropagationMonotoneFramework :: MonotoneFramework PtConstLat
     constantPropagationMonotoneFramework = prepare constantPropA flow
@@ -204,67 +152,6 @@ prettyPrint (Analysis {direction}) (solution_circ, solution_bullet, _steps) =
       M.mapKeysWith (error "impossible. reverse is bijective.") reverse .
       flipMap .
       fmap runTotalMap
-
-latexPrint ::
-  (Maybe propertySpace -> String) ->
-  (
-    Map Label (ContextSensitive propertySpace),
-    Map Label (ContextSensitive propertySpace),
-    [(Map Label (ContextSensitive propertySpace), [(Label, Label)])]
-  ) ->
-  IO ()
-latexPrint p (entry, exit, _steps) =
-  putStr "\\[" *>
-  putStr (latexPrinter "Entry" p entry) *>
-  putStrLn "\\hspace{1em}" *>
-  putStr (latexPrinter "Exit" p exit) *>
-  putStrLn "\\]" *>
-  putStrLn ""
-
-latexPrinter :: String -> (Maybe propertySpace -> String) -> Map Label (ContextSensitive propertySpace) -> String
-latexPrinter name p a = unlines (header : "\\hline" : labels :  body ++ [footer])
-  where
-  analysis  = fmap runTotalMap a
-  analysisT = flipMap analysis
-  rows      = M.keys analysis
-  cols      = M.keys analysisT
-
-  findAll ks m = fmap (`M.lookup` m) ks
-  printRow i   = show i ++ " & " ++ intercalate " & " (fmap p (findAll cols $ analysis M.! i)) ++ " \\\\"
-
-  header = "\\begin{array}{|" ++ intercalate "|" (replicate (1 + length cols) "c") ++ "|}"
-  labels = "\\text{" ++ name ++ "} & {" ++ intercalate "} & {" (fmap show cols) ++ "}\\\\"
-  body   = ["\\hline"] ++ intersperse "\\hline" (fmap printRow rows) ++ ["\\hline"]
-  footer = "\\end{array}"
-
-constantPropagationTex :: Maybe PtConstLat -> String
-constantPropagationTex (Just (Just e)) = constEnvTex e
-constantPropagationTex _                          = ""
-
-constEnvTex :: ConstEnv -> String
-constEnvTex (ConstEnv e) = intercalate ", " $ p <$> M.toList e
-  where
-    p (k, CI n) = k ++ " \\mapsto " ++ show n
-    p (k, CB n) = k ++ " \\mapsto " ++ show n
-
-constantBranchTex :: Maybe ConstBranchLat -> String
-constantBranchTex Nothing       = ""
-constantBranchTex (Just (c, d)) = pc c ++ "; " ++ pd d
-  where
-    pc Nothing  = "\\bot"
-    pc (Just e) = constEnvTex e
-
-    pd Nothing              = "U"
-    pd (Just (Intersect x)) = setTex show x
-
-setTex :: (a -> String) -> Set a -> String
-setTex p s
-  | S.null s = "\\emptyset"
-  | otherwise   = "\\{" ++ intercalate ", " (p <$> S.toList s) ++ "\\}"
-
-strongLiveTex :: Maybe (Set String) -> String
-strongLiveTex Nothing  = "\\bot"
-strongLiveTex (Just x) = setTex id x
 
 flipMap :: (Ord k, Ord m) => M.Map k (M.Map m v) -> M.Map m (M.Map k v)
 flipMap = fmap M.fromList . groupBy' h . rotate . M.toList . fmap M.toList

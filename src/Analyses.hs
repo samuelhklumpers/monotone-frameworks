@@ -4,8 +4,6 @@ import Data.Map.Strict qualified as M
 import Data.Maybe qualified as Maybe
 import Std (first, second)
 
-data Dir = Forward | Backward deriving (Show, Eq)
-
 -- * Transfer functions per label
 type DifTrans m = (M.Map Int (m -> m), M.Map Int (m -> m -> m))
 
