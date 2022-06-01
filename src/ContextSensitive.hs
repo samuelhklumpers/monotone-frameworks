@@ -19,14 +19,16 @@ newtype ContextSensitive propertySpace =
   deriving (Show, Eq)
   deriving (Functor) via Map [Label]
 
+-- | make a monotone framework instance context sensitive
 contextSensitize ::
   forall propertySpace.
   (BoundedSemiLattice propertySpace) =>
+  -- | call string limit
   Int ->
   MonotoneFramework propertySpace ->
   MonotoneFramework (ContextSensitive propertySpace)
 contextSensitize
-  callStringsLimit
+  callStringLimit
   (MonotoneFramework flow extremalLabels extremalValue transferFunctions interproceduralFragment)
   = MonotoneFramework
     flow
@@ -37,7 +39,7 @@ contextSensitize
         case lookupCall l interproceduralFragment of
           Nothing -> transferFunction
           Just _ ->
-            mapContexts (take callStringsLimit . (l :))
+            mapContexts (take callStringLimit . (l :))
             .
             transferFunction
       )
@@ -51,7 +53,7 @@ contextSensitize
               p
               (fromMaybe bottom $
                 lookupContext
-                  (take callStringsLimit (callLabel : callString))
+                  (take callStringLimit (callLabel : callString))
                   propertyReturn
               )
           )
