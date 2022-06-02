@@ -106,17 +106,32 @@ compile source = do
   putStrLn "`Map`s will be printed as lists."
   putStrLn "So the printed result will look as of type `[([Label], [(Label, propertySpace)])]`."
   putStrLn "## Constant Propagation"
-  latexPrint constantPropagationTex $
+  prettyPrint constantPropA $
     mfpSolution constantPropagationEmbellishedMonotoneFramework
 
   putStrLn "## Reachable Constant Propagation"
-  latexPrint constantBranchTex $
+  prettyPrint constantBranchA $
     mfpSolution constantPropagationBranchAwareEmbellishedMonotoneFramework
 
   putStrLn ""
   putStrLn "## Strongly Live Variables"
-  latexPrint strongLiveTex $
+  prettyPrint strongLiveA $
     mfpSolution stronglyLiveVariablesEmbellishedMonotoneFramework
+
+  -- uncomment if you want latex encoded tables
+
+  -- putStrLn "## Constant Propagation"
+  -- latexPrint constantPropagationTex $
+  --   mfpSolution constantPropagationEmbellishedMonotoneFramework
+
+  -- putStrLn "## Reachable Constant Propagation"
+  -- latexPrint constantBranchTex $
+  --   mfpSolution constantPropagationBranchAwareEmbellishedMonotoneFramework
+
+  -- putStrLn ""
+  -- putStrLn "## Strongly Live Variables"
+  -- latexPrint strongLiveTex $
+  --   mfpSolution stronglyLiveVariablesEmbellishedMonotoneFramework
 
 -- | "pretty" print a solution to a monotone framework
 prettyPrint ::
