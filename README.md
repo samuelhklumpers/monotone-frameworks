@@ -14,11 +14,13 @@ which can then be promoted to embellished frameworks,
 and be solved by the data flow equation solver described in NNH05.
 
 Implemented extensions:
-- handle `print` statements
-- handle `break` and `continue`
-- handle boolean assignment `b=`
-- introduce constants for operations that are sometimes constant in one parameter (e.g. `x && false == false`)
+- Embellished instance for the strongly live variables analysis
+- Add the branch aware constant propagation analysis of *our own design*
+- Make some operations create constants even if one operand is not constant (e.g. `&& false`)
+- Implement `print` statement (and alter lexer and parser)
+- Implement `break` and `continue` language constructs
+- Hack lexer and parser to handle boolean assignments.
 
 Documentation:
-- can be built using `stack haddock`, or viewed at https://htmlpreview.github.io/?https://github.com/samuelhklumpers/monotone-frameworks/blob/main/docs/index.html
+- can be built using `stack haddock`, or viewed at https://rednaz.12hp.de/monotone_frameworks
 - in your_tex_output_here.html
