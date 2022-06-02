@@ -1,9 +1,9 @@
 module Analyses where
 
+import Control.Arrow ((&&&))
 import Data.Map.Strict qualified as M
 import Data.Maybe qualified as Maybe
 import Std (first, second)
-import Control.Arrow ((&&&))
 
 -- | Transfer functions per label, grouped by unary and binary
 type DifTrans m = (M.Map Int (m -> m), M.Map Int (m -> m -> m))

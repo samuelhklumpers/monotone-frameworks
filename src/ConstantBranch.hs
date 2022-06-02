@@ -2,9 +2,9 @@ module ConstantBranch where
 
 import ConstantProp (ConstEnv, ConstLat (CB), PtConstLat)
 import MonotoneFrameworks (BoundedSemiLattice)
-import Control.Lens(under, coerced)
 
-import Data.Set (Set, insert, intersection, member, delete)
+import Control.Lens (coerced, under)
+import Data.Set (Set, delete, insert, intersection, member)
 
 
 -- | Newtype for sets with the intersection semigroup (as opposed to union).

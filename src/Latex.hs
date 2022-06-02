@@ -1,26 +1,13 @@
 module Latex where
 
-import Analyses (DifTrans, Edge, Inter (..), lookupR, flipMap)
-import AnalysesConversion
-import AttributeGrammar
-import ConstantBranch (ConstBranchLat, Intersect(..))
-import ConstantProp (ConstEnv (ConstEnv), ConstLat (..), PtConstLat, constEmpty)
-import ContextSensitive
-  ( ContextSensitive (runTotalMap),
-    contextSensitize,
-  )
-import Lexer (alex)
-import MonotoneFrameworks
-  ( InterproceduralFragment (..),
-    Label,
-    MonotoneFramework (MonotoneFramework),
-    mfpSolution,
-  )
-import Parser (happy)
+import Analyses (flipMap)
+import ConstantBranch (ConstBranchLat, Intersect (Intersect))
+import ConstantProp (ConstEnv (ConstEnv), ConstLat (CB, CI), PtConstLat)
+import ContextSensitive (ContextSensitive (runTotalMap))
+import MonotoneFrameworks (Label)
 
-import Control.Arrow (Arrow ((&&&)))
-import qualified Data.Map as M
-import qualified Data.Set as S
+import Data.Map qualified as M
+import Data.Set qualified as S
 import Std (Map, Set, intercalate, intersperse)
 
 -- | Format and print an analysis result as a latex array

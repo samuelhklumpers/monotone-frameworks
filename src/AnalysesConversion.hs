@@ -1,26 +1,14 @@
 module AnalysesConversion where
 
-import Analyses (DifTrans, Edge, Inter (..), lookupR)
-import AttributeGrammar
-import ConstantBranch (ConstBranchLat, Intersect(..))
-import ConstantProp (ConstEnv (ConstEnv), ConstLat (..), PtConstLat, constEmpty)
-import ContextSensitive
-  ( ContextSensitive (runTotalMap),
-    contextSensitize,
-  )
-import Lexer (alex)
+import Analyses (DifTrans, Edge, Inter (Inter), lookupR)
 import MonotoneFrameworks
-  ( InterproceduralFragment (..),
-    Label,
+  ( InterproceduralFragment (InterproceduralFragment),
     MonotoneFramework (MonotoneFramework),
-    mfpSolution,
   )
-import Parser (happy)
 
-import Control.Arrow (Arrow ((&&&)))
-import qualified Data.Map as M
-import qualified Data.Set as S
-import Std (Map, Set, intercalate, intersperse)
+import Data.Map qualified as M
+import Data.Set qualified as S
+import Std (Set)
     
 data Dir = Forward | Backward deriving (Show, Eq)
 

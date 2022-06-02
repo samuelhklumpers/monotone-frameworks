@@ -2,7 +2,7 @@ module StrongLive where
 
 import MonotoneFrameworks (BoundedSemiLattice)
 
-import Data.Set (Set, insert, delete, union, member, singleton, difference, fromList)
+import Data.Set (Set, delete, difference, fromList, insert, member, union)
 import Std (compose)
 
 instance BoundedSemiLattice (Set String)

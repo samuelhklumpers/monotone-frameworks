@@ -1,29 +1,32 @@
 module Compiler where
 
-import Analyses (DifTrans, Edge, Inter (..), lookupR, flipMap)
+import Analyses (flipMap)
 import AnalysesConversion
+  ( Analysis (Analysis, direction),
+    Dir (Backward, Forward),
+    Flow (Flow),
+    analysisToFramework,
+  )
 import AttributeGrammar
-import ConstantBranch (ConstBranchLat, Intersect(..))
-import ConstantProp (ConstEnv (ConstEnv), ConstLat (..), PtConstLat, constEmpty)
+import ConstantBranch (ConstBranchLat, Intersect (Intersect))
+import ConstantProp (PtConstLat, constEmpty)
 import ContextSensitive
   ( ContextSensitive (runTotalMap),
     contextSensitize,
   )
 import Latex
-import Lexer (alex)
-import MonotoneFrameworks
-  ( InterproceduralFragment (..),
-    Label,
-    MonotoneFramework (MonotoneFramework),
-    mfpSolution,
+  ( constantBranchTex,
+    constantPropagationTex,
+    latexPrint,
+    strongLiveTex,
   )
+import Lexer (alex)
+import MonotoneFrameworks (Label, MonotoneFramework, mfpSolution)
 import Parser (happy)
 
-import Control.Arrow (Arrow ((&&&)))
 import Data.Map qualified as M
-import Data.Set qualified as S
-import Std (Map, Set, intercalate, intersperse)
 import Text.Pretty.Simple (pPrintLightBg)
+import Std (Map, Set)
 
 
 callStringLimit :: Int
