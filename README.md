@@ -22,5 +22,5 @@ Implemented extensions:
 - Hack lexer and parser to handle boolean assignments.
 
 Documentation:
-- in documentation.pdf
+- in [`documentation.pdf`](documentation.pdf)
 - can be built using `stack haddock`, or viewed at https://rednaz.12hp.de/monotone_frameworks
